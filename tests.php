@@ -2,22 +2,14 @@
 
 include "Phersistent.php";
 
-/*
-class PhersistentAttribute {
-   private $name;
-   private $type;
-   public function __construct($name, $type)
-   {
-      $this->name = $name;
-      $this->type = $type;
-   }
-}
-*/
+// Coleccion global de definiciones de clases
+$classDefinitions = array();
+
 
 class MyPhersistent extends Phersistent {
 
    public $age = 'integer'; //new PhersistentAttribute('age', 'integer'); // solo puede inicialzar con valores constantes
-   //public $clax = __CLASS__;
+   
    /*
    static private $instance = null;
 
@@ -35,7 +27,6 @@ class MyPhersistent extends Phersistent {
    
    public function __construct()
    {
-      //$this->clax = __CLASS__;
       $this->hasMany('users', 'User');
       $this->hasOne('aaa', 'Opa');
    }
@@ -75,16 +66,75 @@ class AnotherPhersistent extends Phersistent {
 //$MyPhersistent = MyPhersistent::getInstance();
 $MyPhersistent = new MyPhersistent();
 $SubclassPhersistent = new SubclassPhersistent();
+$AnotherPhersistent = new AnotherPhersistent();
 //var_dump($MyPhersistent);
 
+
+// Coleccion de definiciones de clases, necesario para MTI
+$classDefinitions[ 'Phersistent' ] = new Phersistent(); // base
+$classDefinitions[ get_class($MyPhersistent) ] = $MyPhersistent;
+$classDefinitions[ get_class($SubclassPhersistent) ] = $SubclassPhersistent;
+$classDefinitions[ get_class($AnotherPhersistent) ] = $AnotherPhersistent;
+
+
+// Array( [date] => date  [age] => integer)
+//print_r( get_object_vars($SubclassPhersistent) );
+
+
 echo "Class Definition Fields\n";
-foreach ($MyPhersistent as $attr=>$type) echo "$attr = $type\n";
+//foreach ($MyPhersistent as $attr=>$type) echo "$attr = $type\n";
 
 $instance = $MyPhersistent->create(array('age'=>5));
 $instance2 = $MyPhersistent->create(array('age'=>6));
 $instance->addToUsers($instance2);
 
 $instance3 = $SubclassPhersistent->create(array('age'=>7, 'date'=>'2013-10-24'));
+
+
+// *** Recorrer ancestros usando instancias (dinamico)
+$c = $instance3->getClass();
+$i = 0;
+while ($c != null)
+{
+   for ($j=0;$j<$i;$j++) echo " ";
+   if ($i >0) echo "|_";
+
+   echo $c. "\n";
+   
+   // TODO; para saber que campos fueron declarados en cada
+   //       superclase, es necesario tener la instancia de esa
+   //       superclase. Las instancias de superclase no estan
+   //       asociadas al objeto instancia. Pero las instancias
+   //       de definiciones de clases, deberian estar en un
+   //       contenedor global de definiciones. Esto es para
+   //       guardar estructuras de herencia en tablas separadas.
+   //
+   // Las subclases tienen todos los atributos, las superclases
+   // tienen menos. Para saber los atributos que se declaran en
+   // la clase es necesario restarles los atributos de su padre.
+   //print_r( get_object_vars( $classDefinitions[$c] ) );
+   
+   $thisAttrs = get_object_vars( $classDefinitions[$c] );
+   $c = get_parent_class($c);
+   
+   if ($c != null)
+      $parentAttrs = get_object_vars( $classDefinitions[$c] );
+   else
+      $parentAttrs = array();
+   
+   $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
+   foreach ($declaredAttrs as $attr=>$type)
+   {
+      echo " ";
+      for ($j=0;$j<$i;$j++) echo " ";
+      echo $attr ." (". $type ."), ";
+   }
+   echo "\n";
+   
+   $i++;
+}
+
+
 
 echo "Instances Fields\n";
 //print_r($instance);

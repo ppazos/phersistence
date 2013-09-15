@@ -29,6 +29,15 @@ class PhInstance {
          $attr = lcfirst( substr($method, 3) ); // xYZ
          return $this->get( $attr );
       }
+      
+      // setXXX
+      // The value should be converted to the right type e.g. string dates -> DateTime
+      if ( substr($method,0,3) == "set" )
+      {
+         // TODO
+         //$attr = lcfirst( substr($method, 3) ); // xYZ
+         //return $this->get( $attr );
+      }
    }
 
    
