@@ -10,10 +10,14 @@ class MyPhersistent extends Phersistent {
 
    public $age = self::INT; //'integer'; //new PhersistentAttribute('age', 'integer'); // solo puede inicialzar con valores constantes
 
+   // TESTS has one as normal declared fields
+   public $another = AnotherPhersistent::class; // without rel name
+   public $another2 = array(AnotherPhersistent::class, 'myrelname');
+
    public function __construct()
    {
       //$this->hasMany('users', SubclassPhersistent::class);
-      $this->hasOne('another', AnotherPhersistent::class);
+      //$this->hasOne('another', AnotherPhersistent::class);
    }
 
    public function __toString()
@@ -54,25 +58,35 @@ class AnotherPhersistent extends Phersistent {
 $man = new PhersistentDefManager();
 $classDefinitions = $man->getDefinitions();
 
-/*
+echo "Class Definitions\n";
 print_r($man->getDefinitions());
-return;
-*/
+echo "\n";
 
 // Our declared classes
 //print_r(get_declared_classes());
+/*
 foreach (get_declared_classes() as $k=>$v)
 {
    if (is_subclass_of($v, 'Phersistent'))
       echo "$v\n";
 }
+*/
 
 // Array( [date] => date  [age] => integer)
 //print_r( get_object_vars($SubclassPhersistent) );
 
 
-echo "Class Definition Fields\n";
-//foreach ($MyPhersistent as $attr=>$type) echo "$attr = $type\n";
+echo "Class Definition MyPhersistent Fields\n";
+foreach ($MyPhersistent as $attr=>$type)
+   echo "$attr = $type\n";
+
+echo "\n";
+
+echo "Class Definition SubclassPhersistent Fields\n";
+foreach ($SubclassPhersistent as $attr=>$type)
+   echo "$attr = $type\n";
+
+echo "\n";
 
 /* this and the code below are equivalent
 $instance = $man->create(MyPhersistent::class, array('age'=>5));
@@ -81,6 +95,7 @@ $instance->addToUsers($instance2);
 $instance3 = $man->create(SubclassPhersistent::class, array('date'=>'2013-10-24'));
 */
 
+echo "Class Instances Creation\n";
 // This works because the definitions are declared as globals with the same name of the class added to the manager
 $instance = $MyPhersistent->create(array('age'=>5));
 $instance2 = $MyPhersistent->create(array('age'=>6));
@@ -94,13 +109,16 @@ $instance3->addToComposite($instance2);
 // 'age'=>7,
 $instance3->setAge(7);
 
+echo "\n";
+
 // *** Recorrer ancestros usando instancias (dinamico)
+echo "Instance Inheritance Structure and Attr Declarations\n";
 $c = $instance3->getClass();
 $i = 0;
 while ($c != null)
 {
    for ($j=0;$j<$i;$j++) echo " ";
-   if ($i >0) echo "|_";
+   if ($i >0) echo "|=>";
 
    echo $c. "\n";
 
@@ -128,9 +146,8 @@ while ($c != null)
    $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
    foreach ($declaredAttrs as $attr=>$type)
    {
-      echo " ";
       for ($j=0;$j<$i;$j++) echo " ";
-      echo $attr ." (". $type ."), ";
+      echo " + ". $attr ." (". $type ."), ";
    }
    echo "\n";
 
@@ -138,8 +155,29 @@ while ($c != null)
 }
 
 
+echo "Class Declared Fields\n";
+echo "Shows fields declared on the class and inherited from parent\n";
 
-echo "Instances Fields\n";
+print_r(get_object_vars($SubclassPhersistent));
+print_r(get_class_vars($SubclassPhersistent));
+print_r(get_object_vars($instance3->getClass())); // empty
+print_r(get_class_vars($instance3->getClass()));
+
+echo "\n";
+
+echo "Instances Definition Merged\n";
+print_r($instance3->getDefinition());
+echo "\n";
+
+echo "Instances Definition Full\n";
+print_r($instance3->getDefinition(true));
+echo "\n";
+
+
+print_r(AnotherPhersistent::class);
+
+
+echo "Instance Full Structure\n";
 //print_r($instance);
 print_r($instance3);
 

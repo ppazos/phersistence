@@ -85,6 +85,75 @@ class PhInstance {
    {
       return get_class($this->phclass);
    }
+
+   /**
+    * Returns the class declaration. With $full = false, returns the mergede declaration,
+    * with $full = true, returns the inheritance declaration with own fields for each class.
+    */
+   public function getDefinition($full = false)
+   {
+      if (!$full)
+        return $this->phclass;
+
+      // TODO: missing hasMany, the issue is hasMany is a call to a function, not a declaration yet.
+
+      $definition = array();
+      $c = $this->getClass();
+      $def = &$definition;
+      while ($c != null)
+      {
+         $def['__class'] = $c;
+
+         // TODO; para saber que campos fueron declarados en cada
+         //       superclase, es necesario tener la instancia de esa
+         //       superclase. Las instancias de superclase no estan
+         //       asociadas al objeto instancia. Pero las instancias
+         //       de definiciones de clases, deberian estar en un
+         //       contenedor global de definiciones. Esto es para
+         //       guardar estructuras de herencia en tablas separadas.
+         //
+         // Las subclases tienen todos los atributos, las superclases
+         // tienen menos. Para saber los atributos que se declaran en
+         // la clase es necesario restarles los atributos de su padre.
+         //print_r( get_object_vars( $classDefinitions[$c] ) );
+
+         $thisAttrs = get_class_vars($c); // $classDefinitions[$c]
+
+         $c = get_parent_class($c);
+
+         if ($c != null)
+            $parentAttrs = get_class_vars($c);
+         else
+            $parentAttrs = array();
+
+         $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
+
+         foreach ($declaredAttrs as $attr=>$type)
+         {
+            $def[$attr] = $type;
+
+            if (is_subclass_of($type, 'Phersistent'))
+            {
+               echo "$attr is has one\n";
+            }
+            if (is_array($type))
+            {
+               if (is_subclass_of($type[0], 'Phersistent'))
+               {
+                  echo "$attr is has one with relname $type[1]\n";
+               }
+            }
+         }
+
+         if ($c != null)
+         {
+            $def['__parent'] = array();
+            $def = &$def['__parent'];
+         }
+      }
+
+      return $definition;
+   }
 }
 
 class Phersistent {
@@ -104,12 +173,32 @@ class Phersistent {
    private $__many = array();
    private $__one = array();
 
+   public function __construct()
+   {
+      // set hasOne from declared associations
+      $fields = get_class_vars($this);
+      foreach ($fields as $attr => $value)
+      {
+         if (is_subclass_of($type, 'Phersistent'))
+         {
+            $this->hasOne($attr, $value);
+         }
+         if (is_array($type))
+         {
+            if (is_subclass_of($type[0], 'Phersistent'))
+            {
+               $this->hasOne($attr, $type[0], $type[1]);
+            }
+         }
+      }
+   }
+
    /**
     * $name UML relationship target name
     * $class target class
     * $relName UML relationship name
     */
-   protected function hasOne($name, $class, $relName = null)
+   private function hasOne($name, $class, $relName = null)
    {
       $this->__one[$name] = new StdClass();
       $this->__one[$name]->class = $class; // A subclass of Phersistent
@@ -140,6 +229,7 @@ class Phersistent {
       $ins = new PhInstance();
 
       // Inject attributes declared on concrete subclass on new instance
+      // This reads the own and inherited attributes of the custom Phersistent class
       foreach ($this as $attr=>$type)
       {
          // dont inject internal hasMany and hasOne definitions
@@ -173,6 +263,9 @@ class Phersistent {
       }
 
 
+      // phclass merges all the inherited attr declarations from parent classes
+      // it doesn't allow to reconstruct the separate definitions for multiple
+      // table inheritance mapping
       $ins->phclass = $this;
       $ins->id = null;       // Default value
       $ins->deleted = false; // Default value
