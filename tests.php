@@ -256,4 +256,5 @@ if (function_exists("openssl_random_pseudo_bytes"))
    echo guidv4(openssl_random_pseudo_bytes(16)) ."\n";
  }
 if (function_exists("random_bytes")) echo guidv4(random_bytes(16));
+
 ?>
