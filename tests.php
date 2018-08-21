@@ -257,4 +257,11 @@ if (function_exists("openssl_random_pseudo_bytes"))
  }
 if (function_exists("random_bytes")) echo guidv4(random_bytes(16));
 
+
+// test date to iso 8601
+echo (new DateTime('17 Oct 2008'))->format('c') ."\n"; // TZ with :
+echo (new DateTime('17 Oct 2008'))->format(DateTime::ATOM) ."\n"; // same as 'c'
+echo (new DateTime('17 Oct 2008'))->format(DateTime::ISO8601) ."\n"; // TZ as -0300 without the :
+echo gmdate('c', strtotime('17 Oct 2008')) ."\n"; // UTC with +00:00
+echo gmdate(DateTime::ATOM, strtotime('17 Oct 2008')) ."\n"; // UTC with +00:00
 ?>

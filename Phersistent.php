@@ -167,6 +167,7 @@ class Phersistent {
    const DATE     = 'date';
    const TIME     = 'time';
    const DATETIME = 'datetime';
+   const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
    const TEXT     = 'text';
 
 
@@ -243,7 +244,10 @@ class Phersistent {
          if (isset($attrs[$attr])) $value = $attrs[$attr];
 
          // Injects the attribute and sets the value
-         $ins->{$attr} = $value;
+         //$ins->{$attr} = $value; // this injects and sets the value but doesnt verifies it is a valid value
+         $ins->{$attr} = NULL; // injects the attribute
+         $setMethod = 'set'.$attr;
+         $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
       }
 
       // Inject many
