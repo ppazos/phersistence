@@ -1,0 +1,216 @@
+<?php
+
+namespace drivers;
+
+class MySQL {
+
+  private $connection = NULL;
+  private $using_dbname;
+  private $last_query;
+  private $last_result;
+  private $query_count;
+  private $transaction_on = false;
+
+  function __construct()
+  {
+    // exception on construct breaks autoloader
+    //if (!function_exists('mysqli_connect')) throw new Exception("MySQLi not loaded");
+
+    $this->query_count = 0;
+  }
+
+  /** ******************************
+   * Connection
+   */
+
+  function connect($dbhost, $dbuser, $dbpass, $dbname = null)
+  {
+    if (!function_exists('mysqli_connect')) throw new \Exception("MySQLi not loaded");
+
+    $this->connection = mysqli_connect($dbhost, $dbuser, $dbpass);
+
+    \logger\Logger::log("MySQL::connect ". $this->connection->host_info);
+
+    if (!$this->connection)
+    {
+      throw new \Exception("Can't connect to MySQL: " . mysqli_connect_error() );
+    }
+
+    if (!is_null($dbname))
+    {
+      $this->selectDB($dbname);
+    }
+  }
+
+  function select_db ($dbname)
+  {
+    if (!$this->connection)
+    {
+      throw new \Exception("No connection to MySQL");
+    }
+
+    if (!mysqli_select_db($this->connection, $dbname)) // Por si estoy trabajando con muchas conecciones
+    {
+      throw new \Exception("Error selecting db '$dbname', please check it exists.", 666);
+    }
+
+    $this->using_dbname = $dbname;
+  }
+
+  function close()
+  {
+     \logger\Logger::log("MySQL::close ". $this->connection->host_info);
+     if ($this->connection !== NULL)
+     {
+        mysqli_close($this->connection);
+        $this->connection = NULL;
+     }
+  }
+
+  /** ******************************
+   * Query
+   */
+
+  /**
+   * Executes am insert update or delete (queries that do not return any data).
+   */
+  function execute($q)
+  {
+    \logger\Logger::log("MySQL::execute ". $q);
+
+    if (!$this->connection)
+    {
+      throw new \Exception("No connection to MySQL");
+    }
+
+    $this->last_query = $q;
+
+    if (!mysqli_query($this->connection, $q))
+      throw new \Exception('Query error: ' . mysqli_error($this->connection));
+
+    $this->query_count++;
+    return true; // TODO: return affected rows
+  }
+
+  /**
+   * Executes a query that returns a result
+   */
+  function query($q)
+  {
+    \logger\Logger::log("MySQL::execute ". $q);
+
+    if (!$this->connection)
+    {
+      throw new \Exception("No connection to MySQL");
+    }
+
+    $this->last_query = $q;
+
+    if (!$result = mysqli_query($this->connection, $q))
+
+    if (!$result = mysql_query($query, $this->connection))
+      throw new \Exception('Query error: ' . mysqli_error($this->connection));
+
+    $this->query_count++;
+
+    $this->last_result = $result;
+
+    return $result;
+  }
+
+
+  /** ******************************
+   * Inspection
+   */
+
+  function table_exists($table_name)
+  {
+    $f = $this->query('SHOW TABLES FROM '. $this->using_dbname .' WHERE tables_in_'. $this->using_dbname .'="'. $table_name .'"');
+    return $f->num_rows > 0;
+  }
+
+  function column_exists($table_name, $column_name)
+  {
+
+  }
+
+  function index_exists($table_name, $index_name)
+  {
+    $found = false;
+    $idx = $this->get_indexes($table_name);
+    while ($row = $idx->fetch_assoc())
+    {
+      if ($row['Key_name'] == $index_name)
+      {
+        $found = true;
+        break;
+      }
+    }
+    $idx->close();
+    return $found;
+  }
+
+  function get_indexes($table_name)
+  {
+    $i = $this->query('SHOW INDEX FROM '. $table_name);
+    /*
+    row = Array
+    (
+        [Table] => employer
+        [Non_unique] => 1
+        [Key_name] => fk_payor
+        [Seq_in_index] => 1
+        [Column_name] => payor_id
+        [Collation] => A
+        [Cardinality] => 0
+        [Sub_part] =>
+        [Packed] =>
+        [Null] => YES
+        [Index_type] => BTREE
+        [Comment] =>
+        [Index_comment] =>
+    )
+    */
+    return $i;
+  }
+
+
+  /** ******************************
+   * Schema manipulation
+   */
+
+
+   /** ******************************
+    * Worksing with transactions
+    */
+  function transaction_start($is_read_only = false)
+  {
+    if ($is_read_only)
+      mysqli_begin_transaction($this->connection, MYSQLI_TRANS_START_READ_ONLY);
+    else
+      mysqli_begin_transaction($this->connection, MYSQLI_TRANS_START_READ_WRITE);
+
+    $this->transaction_on = true;
+  }
+
+  function transaction_commit()
+  {
+    if (!$this->transaction_on)
+    {
+      throw new \Exception('No active transaction to commit');
+    }
+    mysqli_commit($this->connection);
+    $this->transaction_on = false;
+  }
+
+  function transaction_rollback()
+  {
+    if (!$this->transaction_on)
+    {
+      throw new \Exception('No active transaction to rollback');
+    }
+    mysqli_rollback($this->connection);
+    $this->transaction_on = false;
+  }
+}
+?>
