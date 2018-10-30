@@ -1,5 +1,7 @@
 <?php
 
+namespace phersistent;
+
 class PhCollection implements Iterator { // implements Traversable {
 
    private $position = 0;

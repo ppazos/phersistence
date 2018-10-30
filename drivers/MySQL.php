@@ -129,9 +129,56 @@ class MySQL {
     return $f->num_rows > 0;
   }
 
+  function get_tables()
+  {
+    $tables = array();
+    $ts = $this->query('SHOW TABLES');
+    while ($row = $ts->fetch_assoc())
+    {
+      $tables[] = $row['Tables_in_'.$this->using_dbname];
+    }
+    $ts->close();
+    return $tables;
+  }
+
+  function get_create_tables()
+  {
+    $create_tables = array();
+    $tables = $this->get_tables();
+    foreach ($tables as $table)
+    {
+      $res = $this->query('SHOW CREATE TABLE '. $table);
+      $create_tables[] = $res->fetch_assoc();
+    }
+
+    return $create_tables;
+  }
+
   function column_exists($table_name, $column_name)
   {
-
+    /*
+    Array
+    (
+        [Field] => id
+        [Type] => int(11)
+        [Null] => NO
+        [Key] => PRI
+        [Default] =>
+        [Extra] => auto_increment
+    )
+    */
+    $found = false;
+    $t = $this->query('DESCRIBE '.$table_name);
+    while ($row = $t->fetch_assoc())
+    {
+      if ($row['Field'] == $column_name)
+      {
+        $found = true;
+        break;
+      }
+    }
+    $t->close();
+    return $found;
   }
 
   function index_exists($table_name, $index_name)
@@ -179,6 +226,103 @@ class MySQL {
    * Schema manipulation
    */
 
+  /**
+   * Creates a table with id column that is PK. MySQL doesn't support the creation of a table without columns.
+   */
+  function create_table($table_name)
+  {
+    $this->execute('CREATE TABLE '.$table_name .' (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id))');
+  }
+
+  /**
+   * Adds a column to a table.
+   *
+   * @param string $table_name name of the table that will be modified
+   * @param string $column_name name of the column to be added
+   * @param string $data_type type of the column, should be a valid MySQL data type
+   * @param boolean $nullable true if the column accepts null values, false otherwise
+   * @param string $default if not null, will set the default value for the column
+   */
+  function add_column($table_name, $column_name, $data_type, $nullable, $default = null)
+  {
+    // ALTER TABLE table ADD COLUMN column_name column_definition;
+    // column definition: data_type NULL|NOT NULL [AUTO_INCREMENT] DEFAULT def
+
+    // Auto increment is not used because MySQL only allows that on PKs and the PK is added automatically on create_table.
+    /*
+    // auto increment only allowed on integer values
+    $int_types = array('INTEGER', 'INT', 'BIGINT', 'MEDIUMINT', 'SMALLINT', 'TINYINT');
+    if ($auto_increment && !in_array(strtoupper($data_type), $int_types))
+    {
+      $auto_increment = false;
+    }
+    */
+
+    $default_string = '';
+    if (!is_null($default)) $default_string = 'DEFAULT '. $default;
+
+    $this->execute('ALTER TABLE '.$table_name .' ADD COLUMN '. $column_name .' '. $data_type .' '. ($nullable ? 'NULL' : 'NOT NULL') .' '. $default_string);
+  }
+
+  /**
+   * Sets a column as primary key of the table. Only allows one column PKs.
+   */
+  /* Removed because PK is added automatically on create_table
+  function set_pk($table_name, $column_name)
+  {
+    // ALTER TABLE t1 ADD PRIMARY KEY(id);
+    $this->execute('ALTER TABLE '. $table_name .' ADD PRIMARY KEY('. $column_name .')');
+  }
+  */
+
+  /**
+   * Adds a unique constraint over a set of columns of a table.
+   *
+   * @param string $table_name
+   * @param array $column_names
+   * @param string $constraint_name
+   */
+  function add_unique($table_name, $column_names, $constraint_name)
+  {
+    // ALTER TABLE t ADD CONSTRAINT constraint_name UNIQUE(column_name_1,column_name_2)
+    $columns_string = '';
+    foreach ($column_names as $col)
+    {
+      $columns_string .= $col .', ';
+    }
+    $columns_string = substr($columns_string, 0, -2);
+
+    $this->execute('ALTER TABLE '. $table_name .' ADD CONSTRAINT '. $constraint_name .' UNIQUE KEY ('. $columns_string .')');
+  }
+
+  /**
+   * Adds an index over a set of columns of a table.
+   *
+   * @param string $table_name
+   * @param array $column_names
+   * @param string $index_name
+   */
+  function add_index($table_name, $column_names, $index_name)
+  {
+    $columns_string = '';
+    foreach ($column_names as $col)
+    {
+      $columns_string .= $col .', ';
+    }
+    $columns_string = substr($columns_string, 0, -2);
+
+    $this->execute('CREATE INDEX '. $index_name .' ON '. $table_name .'('. $columns_string .')');
+  }
+
+  function add_fk($table_name, $column_name, $fk_name, $ref_table_name, $ref_column_name)
+  {
+    $this->execute('ALTER TABLE '. $table_name .' ADD CONSTRAINT '. $fk_name .' FOREIGN KEY ('. $column_name .') REFERENCES '. $ref_table_name .'('. $ref_column_name .')');
+  }
+
+  function remove_column()
+  {
+    // TDB
+  }
 
    /** ******************************
     * Worksing with transactions

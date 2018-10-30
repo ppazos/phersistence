@@ -37,6 +37,10 @@ while ($row = $idx->fetch_assoc())
 }
 $idx->close();
 
+$ts = $d->get_tables();
+foreach ($ts as $t) echo $t . PHP_EOL;
+
+assert($d->column_exists('payor', 'ein'), 'Table payor does not contain column ein');
 
 //$d->execute('INSERT INTO payor(company, ein) VALUES ("Insurance A", "01-1234567")');
 $r = $d->query('SELECT * FROM payor');
@@ -54,6 +58,44 @@ if($r)
   $r->close();
 }
 
+
+// DB manipulation
+/*
+$d->create_table('test'); // adds the id column
+$d->add_column('test', 'age', 'int', true);
+$d->add_column('test', 'name', 'varchar(255)', false);
+//$d->set_pk('test', 'id');
+//$d->set_pk('test', 'name');
+$d->add_index('test', array('age', 'name'), 'an');
+$d->add_fk('test', 'age', 'fk_payor', 'payor', 'id');
+
+$idx = $d->get_indexes('test');
+while ($row = $idx->fetch_assoc())
+{
+  print_r($row);
+}
+$idx->close();
+*/
+
+$cts = $d->get_create_tables();
+foreach ($cts as $ct)
+{
+  print_r($ct);
+  /*
+  Array
+  (
+    [Table] => test
+    [Create Table] => CREATE TABLE `test` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `age` int(11) DEFAULT NULL,
+      `name` varchar(255) NOT NULL,
+      PRIMARY KEY (`id`),
+      KEY `an` (`age`,`name`),
+      CONSTRAINT `fk_payor` FOREIGN KEY (`age`) REFERENCES `payor` (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+  )
+  */
+}
 
 $d->close();
 

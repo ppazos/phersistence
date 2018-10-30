@@ -1,6 +1,10 @@
 <?php
 
-include_once "PhCollection.php";
+namespace phersistent;
+
+use \StdClass;
+
+//include_once "PhCollection.php";
 
 class PhInstance {
 
@@ -16,7 +20,7 @@ class PhInstance {
 
    private function set($attr, $value)
    {
-      return $this->{$attr} = $value;
+     $this->{$attr} = $value;
    }
 
    public function __call($method, $args)
@@ -41,6 +45,7 @@ class PhInstance {
          {
             throw new Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
          }
+
          return $this->get( $attr );
       }
 
@@ -48,10 +53,10 @@ class PhInstance {
       // The value should be converted to the right type e.g. string dates -> DateTime
       if ( substr($method,0,3) == "set" )
       {
-         //echo $method;
+         //echo $method . PHP_EOL;
          //print_r($args);
 
-         $attr = lcfirst( substr($method, 3) ); // xxx
+         $attr = lcfirst(substr($method, 3)); // xxx
          if (!property_exists($this, $attr))
          {
             throw new Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
@@ -64,12 +69,10 @@ class PhInstance {
          // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
 
          $this->set($attr, $args[0]);
-
-         // TODO
-         //$attr = lcfirst( substr($method, 3) ); // xYZ
-         //return $this->get( $attr );
          return;
       }
+
+      // TODO: remove from
 
       // method not found
    }
@@ -132,13 +135,13 @@ class PhInstance {
          {
             $def[$attr] = $type;
 
-            if (is_subclass_of($type, 'Phersistent'))
+            if (is_subclass_of($type, '\phersistent\Phersistent'))
             {
                echo "$attr is has one\n";
             }
             if (is_array($type))
             {
-               if (is_subclass_of($type[0], 'Phersistent'))
+               if (is_subclass_of($type[0], '\phersistent\Phersistent'))
                {
                   echo "$attr is has one with relname $type[1]\n";
                }
@@ -154,47 +157,75 @@ class PhInstance {
 
       return $definition;
    }
+
+  // DB interaction functions
+  public function save()
+  {
+    // 0. validate objects against constraints (TBD)
+    // 1. transform object instance into database elements
+    // 2. provide elements to DAL
+    // 3. DAL will load the driver and do the ORM
+    // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
+  }
+
 }
 
 class Phersistent {
 
-   // Basic attribute types
-   const INT      = 'int';
-   const LONG     = 'long';
-   const FLOAT    = 'float';
-   const DOUBLE   = 'double';
-   const BOOLEAN  = 'boolean';
-   const DATE     = 'date';
-   const TIME     = 'time';
-   const DATETIME = 'datetime';
-   const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
-   const TEXT     = 'text';
+  // Basic attribute types
+  const INT      = 'int';
+  const LONG     = 'long';
+  const FLOAT    = 'float';
+  const DOUBLE   = 'double';
+  const BOOLEAN  = 'boolean';
+  const DATE     = 'date';
+  const TIME     = 'time';
+  const DATETIME = 'datetime';
+  const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
+  const TEXT     = 'text';
 
+  // This code is used for has_one to mark the link as not loaded when lazy loading
+  // and to differentiate from the NULL value that is valid for has one.
+  const NOT_LOADED_ASSOC = -1;
 
-   private $__many = array();
-   private $__one = array();
+  private $__many = array();
+  private $__one = array();
+  private $__manager;
 
-   public function __construct()
-   {
-      // set hasOne from declared associations
-      $fields = get_class_vars($this);
-      foreach ($fields as $attr => $value)
+  public function __construct()
+  {
+    // set hasOne from declared associations
+    //echo get_class($this) . PHP_EOL; // A, B, C
+    //echo __CLASS__ . PHP_EOL; // Phersistent, Phersistent, Phersistent
+
+    //$fields = get_class_vars($this);
+    $fields = get_object_vars($this); //get_class_vars(get_class($this));
+
+    //print_r(get_object_vars($this));
+    //print_r($fields);
+
+    foreach ($fields as $attr => $type)
+    {
+      //echo $attr .PHP_EOL;
+
+      // avoid Phersistent fields
+      if ($attr == '__one' || $attr == '__many') continue;
+
+      if (is_subclass_of($type, '\phersistent\Phersistent'))
       {
-         if (is_subclass_of($type, 'Phersistent'))
-         {
-            $this->hasOne($attr, $value);
-         }
-         if (is_array($type))
-         {
-            if (is_subclass_of($type[0], 'Phersistent'))
-            {
-               $this->hasOne($attr, $type[0], $type[1]);
-            }
-         }
+        $this->hasOne($attr, $type);
       }
-   }
+      if (is_array($type))
+      {
+        if (is_subclass_of($type[0], '\phersistent\Phersistent'))
+        {
+          $this->hasOne($attr, $type[0], $type[1]);
+        }
+      }
+    }
+  }
 
-   /**
+  /**
     * $name UML relationship target name
     * $class target class
     * $relName UML relationship name
@@ -231,12 +262,23 @@ class Phersistent {
 
       // Inject attributes declared on concrete subclass on new instance
       // This reads the own and inherited attributes of the custom Phersistent class
-      foreach ($this as $attr=>$type)
+      //foreach ($this as $attr=>$type)
+      $fields = $this->get_all_fields();
+      foreach ($fields as $attr => $type)
       {
          // dont inject internal hasMany and hasOne definitions
-         if ($attr == '__one' || $attr == '__many') continue;
+         //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
 
          //echo "create $attr = $type\n";
+         /*
+         if (array_key_exists($attr, $this->__one))
+         {
+           echo $attr .' es HO '. PHP_EOL;
+         }
+         */
+
+         // has many is injected below
+         if (array_key_exists($attr, $this->__many)) continue;
 
          // Set values
          // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
@@ -244,10 +286,43 @@ class Phersistent {
          if (isset($attrs[$attr])) $value = $attrs[$attr];
 
          // Injects the attribute and sets the value
-         //$ins->{$attr} = $value; // this injects and sets the value but doesnt verifies it is a valid value
+
+         /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
+            is not null on the database and this link is lazy loaded, so the ROM
+            should set this, not this constructor.
+         if (array_key_exists($attr, $this->__one))
+         {
+           $ins->{$attr} = self::NOT_LOADED_ASSOC;
+         }
+         else
+         {
+            $ins->{$attr} = NULL; // injects the attribute
+         }
+         */
+
+         // injects the FK attribute,
+         // TODO: this attribute should be set when the associated object is saved
+         if (array_key_exists($attr, $this->__one))
+         {
+           $ins->{$attr.'_id'} = NULL;
+         }
          $ins->{$attr} = NULL; // injects the attribute
-         $setMethod = 'set'.$attr;
-         $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
+
+
+         // if value comes in properties, set that value
+         if (array_key_exists($attr, $attrs))
+         {
+           $setMethod = 'set'.$attr;
+
+           // the user wants to create an object from the array of values
+           if (array_key_exists($attr, $this->__one) && is_array($value))
+           {
+             // creates an instance of the class declared in the HO attr with the value array
+             $value = $this->__manager->create($this->{$attr}, $value);
+           }
+
+           $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
+         }
       }
 
       // Inject many
@@ -261,10 +336,12 @@ class Phersistent {
       }
 
       // Inject one
+      /* has one is injected as a normal attribute
       foreach ($this->__one as $attr=>$rel)
       {
          $ins->{$attr} = NULL;
       }
+      */
 
 
       // phclass merges all the inherited attr declarations from parent classes
@@ -287,7 +364,46 @@ class Phersistent {
 
    public function isValidDef($otherClassName)
    {
-      return is_subclass_of($otherClassName, 'Phersistent');
+      return is_subclass_of($otherClassName, '\phersistent\Phersistent');
+   }
+
+
+   public function get_parent()
+   {
+     return get_parent_class($this);
+   }
+
+   /**
+    * Returns all declared fields, on own class and inherited from parent.
+    */
+   public function get_all_fields()
+   {
+     $raw_fields = get_object_vars($this);
+     return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>''));
+   }
+
+   /**
+    * Retuns only declared fields on the specific class and do not includes
+    * fields declared on parent classes. It is usedul to calculate multiple
+    * table inheritance structures.
+    */
+   public function get_declared_fields()
+   {
+     $parent_class = $this->get_parent();
+     $parent = $this->__manager->getDefinition($parent_class);
+
+     $mine = $this->get_all_fields();
+     $parents = $parent->get_all_fields();
+
+     return array_diff_key($mine, $parents);
+   }
+
+   /**
+    * Configured from PhersistentDefManager.
+    */
+   public function set_manager($man)
+   {
+     $this->__manager = $man;
    }
 
    /*
@@ -304,48 +420,76 @@ class Phersistent {
 }
 
 
-class PhersistentDefManager {
 
-   // Always contains base class
-   private $classDefinitions; // = array('Phersistent'=>new Phersistent());
+class PhersistentMySQL {
 
-   public function __construct()
-   {
-     $this->classDefinitions = array('Phersistent'=>new Phersistent());
+  static public function save_instance($phi)
+  {
 
-     // all declared phersistent classes before creating the manager
-     foreach (get_declared_classes() as $aClassName)
-     {
-        if ($this->classDefinitions['Phersistent']->isValidDef($aClassName))
-           $this->add($aClassName);
-     }
-   }
+  }
 
-   public function add($def)
-   {
-      $defins = new $def();
-      if (!$defins instanceof Phersistent)
-      {
-         throw new Exception($def ." is not a valid Phersistent definition");
-      }
+  static function get_table_name($phi)
+  {
+    // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
+    // TODO: consider table name override declared on class
 
-      // TODO: avoid adding the same def twice
-      $this->classDefinitions[$def] = $defins;
+    // get_class = \model\Class
+    // global should only be Class
 
-      // declares the definitions as globals so can be used to create instances without using the manager
-      $GLOBALS[$def] = $defins;
-   }
+    // declares the definitions as globals so can be used to create instances without using the manager
+    $parts = explode('\\', get_class($phi));
 
-   public function getDefinitions()
-   {
-     return $this->classDefinitions;
-   }
+    return strtr(end($parts),
+                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
+                 "abcdefghijklmnopqrstuvwxyz_");
+  }
 
-   public function create($def, $attrs = array())
-   {
-      // TODO: check $def exists
-      return $this->classDefinitions[$def]->create($attrs);
-   }
+  /**
+   * Maps each phersistent data type to a MySQL data type.
+   */
+  static function get_db_type($phersistent_type)
+  {
+    // TODO: consider constraints like max_length for texts
+    switch ($phersistent_type)
+    {
+      case Phersistent::INT:
+        return 'INT';
+      break;
+      case Phersistent::LONG:
+        return 'BIGINT';
+      break;
+      case Phersistent::FLOAT:
+        return 'FLOAT';
+      break;
+      case Phersistent::DOUBLE:
+        return 'DOUBLE';
+      break;
+      case Phersistent::BOOLEAN:
+        return 'BOOLEAN'; // synonym of TINYINT(1)
+      break;
+      case Phersistent::DATE:
+        return 'DATE';
+      break;
+      case Phersistent::TIME:
+        return 'TIME';
+      break;
+      case Phersistent::DATETIME:
+        return 'DATETIME';
+      break;
+      case Phersistent::DURATION:
+        return 'INT'; // durations will be stored in seconds and converted back to the duration expression
+        // check https://stackoverflow.com/questions/13301142/php-how-to-convert-string-duration-to-iso-8601-duration-format-ie-30-minute
+        // check https://gist.github.com/w0rldart/9e10aedd1ee55fc4bc74
+
+      break;
+      case Phersistent::TEXT:
+        return 'TEXT';
+      break;
+      default:
+        throw new \Exception('Data type '. $phersistent_type .' not supported');
+    }
+  }
 }
+
 
 ?>

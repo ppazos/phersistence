@@ -64,7 +64,7 @@ echo "\n";
 
 
 echo "Class Definition BaseUser Fields\n";
-
+// This is possible because of PhersistentDefManager->__construct->add()->$GLOBALS[$def] = $defins;
 print_r($BaseUser);
 print_r($SpecificUser);
 print_r($Role);

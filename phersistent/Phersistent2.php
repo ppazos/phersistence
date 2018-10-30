@@ -1,8 +1,9 @@
 <?php
 
 // Phersistent test with declarations as functions like Yupp.
+namespace phersistent;
 
-include_once "PhCollection.php";
+//include_once "PhCollection.php";
 
 class PhInstance {
 
