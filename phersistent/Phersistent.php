@@ -13,12 +13,12 @@ class PhInstance {
       $this->{$hasManyName}->add( $ins );
    }
 
-   private function get($attr)
+   public function get($attr)
    {
       return $this->{$attr};
    }
 
-   private function set($attr, $value)
+   public function set($attr, $value)
    {
      $this->{$attr} = $value;
    }
@@ -31,7 +31,7 @@ class PhInstance {
          $attr = lcfirst( substr($method, 5) ); // xyx
          if (!property_exists($this, $attr))
          {
-            throw new Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
          }
          $this->addTo($attr, $args[0]);
          return;
@@ -43,7 +43,7 @@ class PhInstance {
          $attr = lcfirst( substr($method, 3) ); // xyz
          if (!property_exists($this, $attr))
          {
-            throw new Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
+            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
          }
 
          return $this->get( $attr );
@@ -59,7 +59,7 @@ class PhInstance {
          $attr = lcfirst(substr($method, 3)); // xxx
          if (!property_exists($this, $attr))
          {
-            throw new Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
+            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
          }
 
          // TODO
@@ -87,6 +87,11 @@ class PhInstance {
    public function getClass()
    {
       return get_class($this->phclass);
+   }
+
+   public function getParentClass()
+   {
+     return $this->phclass->get_parent();
    }
 
    /**
@@ -373,6 +378,11 @@ class Phersistent {
      return get_parent_class($this);
    }
 
+   public function get_parent_phersistent()
+   {
+     return $this->__manager->getDefinition($this->get_parent());
+   }
+
    /**
     * Returns all declared fields, on own class and inherited from parent.
     */
@@ -398,6 +408,23 @@ class Phersistent {
      return array_diff_key($mine, $parents);
    }
 
+   public function is_has_one($field)
+   {
+     return array_key_exists($field, $this->__one);
+   }
+
+   public function is_has_many($field)
+   {
+     return array_key_exists($field, $this->__many);
+   }
+
+   public function is_simple_field($field)
+   {
+     $fields = $this->get_all_fields();
+     return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field);
+   }
+
+
    /**
     * Configured from PhersistentDefManager.
     */
@@ -419,7 +446,10 @@ class Phersistent {
    */
 }
 
+class PhTable {
 
+
+}
 
 class PhersistentMySQL {
 
@@ -428,18 +458,81 @@ class PhersistentMySQL {
 
   }
 
-  static function get_table_name($phi)
+  /**
+   * For now inheritance ORM is all STI.
+   */
+  static public function phi_to_data($phi)
+  {
+    // TODO: the returned item should be an array of tables
+    // will contain the amy table, the associated via has one
+    // and the join tables referencing the main and the assoc table
+    // saving order will be always main + associated, saving associated first
+    // to copy keys to owners, then join tables, always checking for loops.
+    $table = array();
+
+    if ($phi == null) return $table;
+
+    $fields = $phi->getDefinition()->get_all_fields();
+    foreach ($fields as $field => $type)
+    {
+      if ($phi->getDefinition()->is_simple_field($field)) // field
+      {
+        $table[$field] = $phi->get($field);
+      }
+      else if ($phi->getDefinition()->is_has_one($field)) // has one
+      {
+        // FK field
+        $has_one_field = $field . '_id';
+
+        // if has one is not saved, the id will be null
+        // internally PhInstance will set the xxx_id field
+        $table[$has_one_field] = $phi->get($has_one_field);
+
+        // creates related table with the has_one value
+        // the associated element can be null
+        $table[$field] = self::phi_to_data($phi->get($field));
+      }
+      else // has many
+      {
+        // TBD: should create the join table
+      }
+    }
+
+    // columns injected on instances
+    $table['id'] = $phi->getId();
+    $table['deleted'] = $phi->getDeleted();
+    $table['class'] = $phi->getClass();
+
+    return $table;
+  }
+
+  static function get_table_name(PhInstance $phi)
   {
     // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
     // TODO: consider table name override declared on class
 
-    // get_class = \model\Class
-    // global should only be Class
+    // ***************************************************
+    // For now inheritance ORM is all STI.
+    // So need to check for parent = Phersistent, and that class will be the table name
+    $ph = $phi->getDefinition();
 
-    // declares the definitions as globals so can be used to create instances without using the manager
-    $parts = explode('\\', get_class($phi));
+    // go up in the inheritance until finding Phersistent
+    while ($ph->get_parent() != 'phersistent\Phersistent')
+    {
+      $ph = $ph->get_parent_phersistent();
+    }
 
-    return strtr(end($parts),
+    $class_name = get_class($ph);
+
+    return self::class_to_table_name($class_name);
+  }
+
+  private static function class_to_table_name($class_name)
+  {
+    // removes class namespace
+    $parts = explode('\\', $class_name);
+
+    return strtr($parts[count($parts)-1],
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
                  "abcdefghijklmnopqrstuvwxyz_");
   }
@@ -490,6 +583,5 @@ class PhersistentMySQL {
     }
   }
 }
-
 
 ?>

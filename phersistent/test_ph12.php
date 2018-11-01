@@ -51,7 +51,7 @@ class F extends \phersistent\Phersistent {
 
 
 // setup
-$man = new \phersistent\PhersistentDefManager();
+$man = new \phersistent\PhersistentDefManager('model');
 
 /*
 echo "Class Definitions\n";
@@ -65,8 +65,9 @@ echo "\n";
 echo $C->get_parent() . PHP_EOL; // B OK!
 echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
 
-print_r($C->get_all_fields());
-print_r($C->get_declared_fields());
+//print_r($C->get_all_fields());
+//print_r($C->get_declared_fields());
+
 /*
 $cins = $C->create(array(
   'c_field_1' => 123,
@@ -88,6 +89,14 @@ assert($cins->getC_field_1() == 123);
 assert($cins->getC_field_2() == 'pepe');
 assert($cins->getC_ho_f()->getF_field_2() == 'hola');
 
-print_r($cins);
+//print_r($cins);
+
+print_r(\phersistent\PhersistentMySQL::phi_to_data($cins));
+
+/*
+echo \phersistent\PhersistentMySQL::get_table_name($cins) .PHP_EOL;
+echo \phersistent\PhersistentMySQL::get_table_name($A->create()) .PHP_EOL;
+echo \phersistent\PhersistentMySQL::get_table_name($B->create()) .PHP_EOL;
+*/
 
 ?>

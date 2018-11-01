@@ -17,13 +17,22 @@ $man = new \phersistent\PhersistentDefManager('model');
 
 //print_r($GLOBALS);
 
-echo \phersistent\PhersistentMySQL::get_table_name($Payor) . PHP_EOL;
+echo \phersistent\PhersistentMySQL::get_table_name($Payor->create()) . PHP_EOL;
+
+print_r($Payor->create()->getDefinition(true));
+print_r($Employer->create()->getDefinition(true));
+print_r($Payor->get_all_fields());
+print_r($Employer->get_all_fields());
+echo $Employer->is_simple_field('ein') .PHP_EOL;
+
+echo $Employer->get_parent();
 /*
 echo $C->get_parent() . PHP_EOL; // B OK!
 echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
 
 print_r($C->get_all_fields());
 print_r($C->get_declared_fields());
+
 
 $cins = $C->create(array(
   'c_field_1' => 123,
@@ -37,5 +46,7 @@ assert($cins->getC_field_1() == 123);
 assert($cins->getC_field_2() == 'pepe');
 assert($cins->getC_ho_f()->getF_field_2() == 'hola');
 */
+
+
 
 ?>
