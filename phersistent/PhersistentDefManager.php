@@ -4,12 +4,17 @@ namespace phersistent;
 
 class PhersistentDefManager {
 
+  // Database driver wrapper e.g. PhersistentMySQL
+  private $__ph_db;
+
   // Always contains base class
   private $classDefinitions; // = array('Phersistent'=>new Phersistent());
 
-  public function __construct($modelns)
+  public function __construct($modelns, $phersistent_db)
   {
     global $_BASE;
+
+    $this->__ph_db = $phersistent_db;
 
     // this checks the model folder and triggers the autoload by creating dummy
     // instances of those classes
@@ -75,6 +80,16 @@ class PhersistentDefManager {
   {
     // TODO: check $def exists
     return $this->classDefinitions[$def]->create($attrs);
+  }
+
+  public function getInstance($class_name, $id)
+  {
+    return $this->__ph_db->get($class_name, $id);
+  }
+
+  public function listInstances($class_name, $max, $offset)
+  {
+    return $this->__ph_db->list($class_name, $max, $offset);
   }
 }
 

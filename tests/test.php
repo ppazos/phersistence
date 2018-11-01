@@ -11,10 +11,10 @@ spl_autoload_register(function ($class) {
 
 \logger\Logger::log(memory_get_usage());
 
-$d = new drivers\MySQL();
+$d = new \drivers\MySQL();
 \logger\Logger::log('Start CLI');
 
-$d->connect('localhost', 'root', 'toor');
+$d->connect('localhost', 'user', 'user1234');
 $d->select_db('amplify');
 
 
@@ -23,6 +23,7 @@ assert($d->table_exists('payor'), 'Payor doesnt exists');
 assert($d->index_exists('payor', 'PRIMARY'), 'Primary key doesnt exists on payor');
 assert($d->index_exists('employer', 'fk_payor'), 'FK fk_payor doesnt exists on employer');
 
+/*
 $idx = $d->get_indexes('payor');
 while ($row = $idx->fetch_assoc())
 {
@@ -41,8 +42,15 @@ $ts = $d->get_tables();
 foreach ($ts as $t) echo $t . PHP_EOL;
 
 assert($d->column_exists('payor', 'ein'), 'Table payor does not contain column ein');
+*/
 
-//$d->execute('INSERT INTO payor(company, ein) VALUES ("Insurance A", "01-1234567")');
+$r = $d->execute('INSERT INTO payor(company, ein) VALUES ("Insurance A", "01-1234567")');
+if($r === 1)
+{
+  echo $d->last_insert_id() .PHP_EOL;
+}
+
+
 $r = $d->query('SELECT * FROM payor');
 
 //print_r($r);

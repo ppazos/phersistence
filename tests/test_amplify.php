@@ -12,11 +12,88 @@ spl_autoload_register(function ($class) {
 });
 
 // setup
-$man = new \phersistent\PhersistentDefManager('model');
+// TODO: use the PhersistentMySQL as factory for MySQL driver
+$d = new \drivers\MySQL();
+$d->connect('localhost', 'user', 'user1234');
+$d->select_db('amplify');
+$ph_db = new \phersistent\PhersistentMySQL($d);
+$man = new \phersistent\PhersistentDefManager('model', $ph_db);
 //print_r( $man->getDefinitions() );
 
-//print_r($GLOBALS);
+$e = $Employer->create(array(
+  'company' => 'CaboLabs',
+  'ein'     => '12-345678',
+  'address' => array(
+    'line1'   => 'Juan Paullier 995 apt 703',
+    'zipcode' => '11200',
+    'state'   => 'MN'
+  ),
+  'contact' => array(
+    'firstname' => 'Pablo',
+    'lastname'  => 'Pazos',
+    'phone_number' => '00598 99 043 145'
+  ),
+  'payor' => array(
+    'company' => 'BPA',
+    'ein'     => '14-1232962'
+  )
+));
 
+//print_r($e->getDefinition());
+
+$e2 = $Employer->create(array(
+  'company' => 'CaboLabs2',
+  'ein'     => '12-3435629',
+  'contact' => array(
+    'firstname' => 'Pablo',
+    'lastname'  => 'Pazos',
+    'phone_number' => '00598 99 043 145'
+  ),
+  'payor' => array(
+    'company' => 'BPA2',
+    'ein'     => '14-1226762'
+  )
+));
+$e2->setProperties(array(
+  'address' => array(
+    'line1'   => 'Juan Paullier 995 apt 703 2',
+    'zipcode' => '11200',
+    'state'   => 'MN'
+  )
+));
+
+//$ph_db ->save_instance($e2);
+
+//print_r($e2);
+
+print_r($Employer->listAll());
+
+/*
+$edb = $Employer->get(1);
+print_r($edb);
+$a = $edb->getAddress(); // ;azy load
+print_r($a);
+print_r($edb);
+*/
+
+
+
+//print_r($ph_db->phi_to_data($e));
+
+//$ph_db ->save_instance($e);
+
+/*
+$t = $ph_db->get_row('employer', 1);
+print_r($t);
+
+$e = $ph_db->get('\model\Employer', 1);
+print_r($e);
+*/
+
+//\phersistent\PhersistentMySQL::data_to_phi(\phersistent\PhersistentMySQL::phi_to_data($e));
+
+
+/*
 echo \phersistent\PhersistentMySQL::get_table_name($Payor->create()) . PHP_EOL;
 
 print_r($Payor->create()->getDefinition(true));
@@ -26,26 +103,9 @@ print_r($Employer->get_all_fields());
 echo $Employer->is_simple_field('ein') .PHP_EOL;
 
 echo $Employer->get_parent();
-/*
-echo $C->get_parent() . PHP_EOL; // B OK!
-echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
-
-print_r($C->get_all_fields());
-print_r($C->get_declared_fields());
-
-
-$cins = $C->create(array(
-  'c_field_1' => 123,
-  'c_ho_f' => $F->create(array(
-    'f_field_2'=>'hola'
-  ))
-));
-$cins->setC_field_2('pepe');
-
-assert($cins->getC_field_1() == 123);
-assert($cins->getC_field_2() == 'pepe');
-assert($cins->getC_ho_f()->getF_field_2() == 'hola');
 */
+
+
 
 
 

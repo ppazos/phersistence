@@ -8,23 +8,75 @@ use \StdClass;
 
 class PhInstance {
 
-   private function addTo($hasManyName, PhInstance $ins)
-   {
-      $this->{$hasManyName}->add( $ins );
-   }
+  const NOT_LOADED_ASSOC = -1;
 
-   public function get($attr)
-   {
-      return $this->{$attr};
-   }
+  private function addTo($hasManyName, PhInstance $ins)
+  {
+    $this->{$hasManyName}->add( $ins );
+  }
 
-   public function set($attr, $value)
-   {
-     $this->{$attr} = $value;
-   }
+  public function get($attr)
+  {
+    // is has one, and is null but the FK is not ull, lazy load!
+    if ($this->phclass->is_has_one($attr) && $this->{$attr} == null && $this->{$attr.'_id'} != null)
+    {
+      $has_one_class = $this->phclass->{$attr}; //get_has_one($attr)->class;
+      $parts = explode('\\', $has_one_class);
+      $class = $parts[count($parts)-1];
+      $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
+    }
+    return $this->{$attr};
+  }
 
-   public function __call($method, $args)
-   {
+  public function set($attr, $value)
+  {
+    // TODO: type check against definition
+    $this->{$attr} = $value;
+  }
+
+  public function setProperties($props = array())
+  {
+    // loops over the declared fields and get the values from props.
+    // any other values not declared are ignored from props.
+
+    $fields = $this->getDefinition()->get_all_fields();
+
+    // fields doesnt have the FK fields, need to check for those
+    // to set the property from props when FKs come.
+
+    foreach ($fields as $attr => $type)
+    {
+      // Default value, need to detect if null is set explicitly
+      $value = self::NOT_LOADED_ASSOC;
+      if (array_key_exists($attr, $props)) $value = $props[$attr]; // can be null
+
+      // the user wants to create an object from the array of values
+      if ($this->phclass->is_has_one($attr) && is_array($value))
+      {
+        // creates an instance of the class declared in the HO attr with the value array
+        $parts = explode('\\', $type);
+        $class = $parts[count($parts)-1];
+        $value = $GLOBALS[$class]->create($value);
+      }
+
+      // check FK fields to set
+      if ($this->phclass->is_has_one($attr) && array_key_exists($attr.'_id', $props))
+      {
+        $setMethod = 'set'.$attr.'_id';
+        $this->$setMethod($props[$attr.'_id']);
+      }
+
+      // sets the value and verifies it's validity (type, etc)
+      if ($value !== self::NOT_LOADED_ASSOC)
+      {
+        $setMethod = 'set'.$attr;
+        $this->$setMethod($value);
+      }
+    }
+  }
+
+  public function __call($method, $args)
+  {
       // addToXYX
       if ( substr($method,0,5) == "addTo" )
       {
@@ -75,7 +127,7 @@ class PhInstance {
       // TODO: remove from
 
       // method not found
-   }
+  }
 
 
    public function isInstanceOf($phersistent)
@@ -172,7 +224,6 @@ class PhInstance {
     // 3. DAL will load the driver and do the ORM
     // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
   }
-
 }
 
 class Phersistent {
@@ -197,6 +248,10 @@ class Phersistent {
   private $__one = array();
   private $__manager;
 
+  /**
+   * PhersistentDefManager creates instances of the Phersistent to expose as
+   * global class variables to simplify creating PhInstances from Phersistent.
+   */
   public function __construct()
   {
     // set hasOne from declared associations
@@ -205,9 +260,6 @@ class Phersistent {
 
     //$fields = get_class_vars($this);
     $fields = get_object_vars($this); //get_class_vars(get_class($this));
-
-    //print_r(get_object_vars($this));
-    //print_r($fields);
 
     foreach ($fields as $attr => $type)
     {
@@ -338,6 +390,8 @@ class Phersistent {
          if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
          if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
          if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
+
+         // TODO: initialize properties for has many if values are passed
       }
 
       // Inject one
@@ -361,17 +415,18 @@ class Phersistent {
 
    public function get($id)
    {
+     return $this->__manager->getInstance(get_class($this), $id);
    }
 
-   public function listAll()
+   public function listAll($max = 10, $offset = 0)
    {
+     return $this->__manager->listInstances(get_class($this), $max, $offset);
    }
 
    public function isValidDef($otherClassName)
    {
       return is_subclass_of($otherClassName, '\phersistent\Phersistent');
    }
-
 
    public function get_parent()
    {
@@ -424,6 +479,15 @@ class Phersistent {
      return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field);
    }
 
+   public function get_has_one($field)
+   {
+     return $this->__one[$field];
+   }
+   public function get_has_many($field)
+   {
+     return $this->__many[$field];
+   }
+
 
    /**
     * Configured from PhersistentDefManager.
@@ -451,137 +515,6 @@ class PhTable {
 
 }
 
-class PhersistentMySQL {
 
-  static public function save_instance($phi)
-  {
-
-  }
-
-  /**
-   * For now inheritance ORM is all STI.
-   */
-  static public function phi_to_data($phi)
-  {
-    // TODO: the returned item should be an array of tables
-    // will contain the amy table, the associated via has one
-    // and the join tables referencing the main and the assoc table
-    // saving order will be always main + associated, saving associated first
-    // to copy keys to owners, then join tables, always checking for loops.
-    $table = array();
-
-    if ($phi == null) return $table;
-
-    $fields = $phi->getDefinition()->get_all_fields();
-    foreach ($fields as $field => $type)
-    {
-      if ($phi->getDefinition()->is_simple_field($field)) // field
-      {
-        $table[$field] = $phi->get($field);
-      }
-      else if ($phi->getDefinition()->is_has_one($field)) // has one
-      {
-        // FK field
-        $has_one_field = $field . '_id';
-
-        // if has one is not saved, the id will be null
-        // internally PhInstance will set the xxx_id field
-        $table[$has_one_field] = $phi->get($has_one_field);
-
-        // creates related table with the has_one value
-        // the associated element can be null
-        $table[$field] = self::phi_to_data($phi->get($field));
-      }
-      else // has many
-      {
-        // TBD: should create the join table
-      }
-    }
-
-    // columns injected on instances
-    $table['id'] = $phi->getId();
-    $table['deleted'] = $phi->getDeleted();
-    $table['class'] = $phi->getClass();
-
-    return $table;
-  }
-
-  static function get_table_name(PhInstance $phi)
-  {
-    // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
-    // TODO: consider table name override declared on class
-
-    // ***************************************************
-    // For now inheritance ORM is all STI.
-    // So need to check for parent = Phersistent, and that class will be the table name
-    $ph = $phi->getDefinition();
-
-    // go up in the inheritance until finding Phersistent
-    while ($ph->get_parent() != 'phersistent\Phersistent')
-    {
-      $ph = $ph->get_parent_phersistent();
-    }
-
-    $class_name = get_class($ph);
-
-    return self::class_to_table_name($class_name);
-  }
-
-  private static function class_to_table_name($class_name)
-  {
-    // removes class namespace
-    $parts = explode('\\', $class_name);
-
-    return strtr($parts[count($parts)-1],
-                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-                 "abcdefghijklmnopqrstuvwxyz_");
-  }
-
-  /**
-   * Maps each phersistent data type to a MySQL data type.
-   */
-  static function get_db_type($phersistent_type)
-  {
-    // TODO: consider constraints like max_length for texts
-    switch ($phersistent_type)
-    {
-      case Phersistent::INT:
-        return 'INT';
-      break;
-      case Phersistent::LONG:
-        return 'BIGINT';
-      break;
-      case Phersistent::FLOAT:
-        return 'FLOAT';
-      break;
-      case Phersistent::DOUBLE:
-        return 'DOUBLE';
-      break;
-      case Phersistent::BOOLEAN:
-        return 'BOOLEAN'; // synonym of TINYINT(1)
-      break;
-      case Phersistent::DATE:
-        return 'DATE';
-      break;
-      case Phersistent::TIME:
-        return 'TIME';
-      break;
-      case Phersistent::DATETIME:
-        return 'DATETIME';
-      break;
-      case Phersistent::DURATION:
-        return 'INT'; // durations will be stored in seconds and converted back to the duration expression
-        // check https://stackoverflow.com/questions/13301142/php-how-to-convert-string-duration-to-iso-8601-duration-format-ie-30-minute
-        // check https://gist.github.com/w0rldart/9e10aedd1ee55fc4bc74
-
-      break;
-      case Phersistent::TEXT:
-        return 'TEXT';
-      break;
-      default:
-        throw new \Exception('Data type '. $phersistent_type .' not supported');
-    }
-  }
-}
 
 ?>

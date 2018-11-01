@@ -7,7 +7,7 @@ class MySQL {
   private $connection = NULL;
   private $using_dbname;
   private $last_query;
-  private $last_result;
+  //private $last_result;
   private $query_count;
   private $transaction_on = false;
 
@@ -85,11 +85,19 @@ class MySQL {
 
     $this->last_query = $q;
 
-    if (!mysqli_query($this->connection, $q))
+    if (!$r = mysqli_query($this->connection, $q))
       throw new \Exception('Query error: ' . mysqli_error($this->connection));
 
     $this->query_count++;
-    return true; // TODO: return affected rows
+    return mysqli_affected_rows($this->connection);
+  }
+
+  /**
+   * Returns the last insert id on the current connection.
+   */
+  function last_insert_id()
+  {
+    return mysqli_insert_id($this->connection);
   }
 
   /**
@@ -107,13 +115,13 @@ class MySQL {
     $this->last_query = $q;
 
     if (!$result = mysqli_query($this->connection, $q))
-
-    if (!$result = mysql_query($query, $this->connection))
       throw new \Exception('Query error: ' . mysqli_error($this->connection));
 
     $this->query_count++;
 
-    $this->last_result = $result;
+    // if we save the last result and close the result, then print this, will give a warning
+    // if we need the result stored, we might need to cpy it via fetch
+    //$this->last_result = $result;
 
     return $result;
   }
