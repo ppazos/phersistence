@@ -10,7 +10,11 @@ class Logger {
   */
   static function log($message)
   {
-    echo date("Y-M-d H:i:sP") .' '. $message . PHP_EOL;
+    if (php_sapi_name() === 'cli')
+      echo date("Y-M-d H:i:sP") .' '. $message . PHP_EOL;
+    else
+      echo '<!-- '. date("Y-M-d H:i:sP") .' '. $message .' -->'. PHP_EOL;
   }
 }
+
 ?>
