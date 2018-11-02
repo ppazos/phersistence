@@ -93,7 +93,8 @@ class PhersistentMySQL {
     $instances = array();
     foreach($records as $table)
     {
-      $phi = $GLOBALS[$class]->create($table['columns']);
+      $phi = $GLOBALS[$class]->create();
+      $phi->setProperties($table['columns']);
       $instances[] = $phi;
     }
     return $instances;
