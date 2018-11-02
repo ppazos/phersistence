@@ -6,9 +6,12 @@ class PhersistentMySQL {
 
   private $driver;
 
-  public function __construct($driver)
+  public function __construct($dbhost, $dbuser, $dbpass, $dbname)
   {
-    $this->driver = $driver;
+    $d = new \drivers\MySQL();
+    $d->connect($dbhost, $dbuser, $dbpass);
+    $d->select_db($dbname);
+    $this->driver = $d;
   }
 
   public function save_instance($phi)

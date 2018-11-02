@@ -9,7 +9,7 @@ $command = $argv[1];
 switch ($command)
 {
   case "test":
-    test();
+    require_once('tests/test.php');
   break;
   case "schema":
     require_once('tests/schema.php');
@@ -25,11 +25,6 @@ switch ($command)
   break;
   default:
     echo "No command";
-}
-
-function test()
-{
-  require_once('tests/test.php');
 }
 
 ?>

@@ -12,11 +12,7 @@ spl_autoload_register(function ($class) {
 });
 
 // setup
-// TODO: use the PhersistentMySQL as factory for MySQL driver
-$d = new \drivers\MySQL();
-$d->connect('localhost', 'user', 'user1234');
-$d->select_db('amplify');
-$ph_db = new \phersistent\PhersistentMySQL($d);
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user1234', 'amplify');
 $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 //print_r( $man->getDefinitions() );
 
