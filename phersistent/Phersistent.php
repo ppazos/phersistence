@@ -129,91 +129,90 @@ class PhInstance {
       // method not found
   }
 
+  public function isInstanceOf($phersistent)
+  {
+    //echo get_class($this->phclass).' '. $phersistent;
+    return (is_a($this->phclass, $phersistent));
+  }
 
-   public function isInstanceOf($phersistent)
-   {
-      //echo get_class($this->phclass).' '. $phersistent;
-      return (is_a($this->phclass, $phersistent));
-   }
+  public function getClass()
+  {
+    return get_class($this->phclass);
+  }
 
-   public function getClass()
-   {
-      return get_class($this->phclass);
-   }
+  public function getParentClass()
+  {
+    return $this->phclass->get_parent();
+  }
 
-   public function getParentClass()
-   {
-     return $this->phclass->get_parent();
-   }
+  /**
+   * Returns the class declaration. With $full = false, returns the mergede declaration,
+   * with $full = true, returns the inheritance declaration with own fields for each class.
+   */
+  public function getDefinition($full = false)
+  {
+    if (!$full)
+      return $this->phclass;
 
-   /**
-    * Returns the class declaration. With $full = false, returns the mergede declaration,
-    * with $full = true, returns the inheritance declaration with own fields for each class.
-    */
-   public function getDefinition($full = false)
-   {
-      if (!$full)
-        return $this->phclass;
+    // TODO: missing hasMany, the issue is hasMany is a call to a function, not a declaration yet.
 
-      // TODO: missing hasMany, the issue is hasMany is a call to a function, not a declaration yet.
+    $definition = array();
+    $c = $this->getClass();
+    $def = &$definition;
+    while ($c != null)
+    {
+       $def['__class'] = $c;
 
-      $definition = array();
-      $c = $this->getClass();
-      $def = &$definition;
-      while ($c != null)
-      {
-         $def['__class'] = $c;
+       // TODO; para saber que campos fueron declarados en cada
+       //       superclase, es necesario tener la instancia de esa
+       //       superclase. Las instancias de superclase no estan
+       //       asociadas al objeto instancia. Pero las instancias
+       //       de definiciones de clases, deberian estar en un
+       //       contenedor global de definiciones. Esto es para
+       //       guardar estructuras de herencia en tablas separadas.
+       //
+       // Las subclases tienen todos los atributos, las superclases
+       // tienen menos. Para saber los atributos que se declaran en
+       // la clase es necesario restarles los atributos de su padre.
+       //print_r( get_object_vars( $classDefinitions[$c] ) );
 
-         // TODO; para saber que campos fueron declarados en cada
-         //       superclase, es necesario tener la instancia de esa
-         //       superclase. Las instancias de superclase no estan
-         //       asociadas al objeto instancia. Pero las instancias
-         //       de definiciones de clases, deberian estar en un
-         //       contenedor global de definiciones. Esto es para
-         //       guardar estructuras de herencia en tablas separadas.
-         //
-         // Las subclases tienen todos los atributos, las superclases
-         // tienen menos. Para saber los atributos que se declaran en
-         // la clase es necesario restarles los atributos de su padre.
-         //print_r( get_object_vars( $classDefinitions[$c] ) );
+       $thisAttrs = get_class_vars($c); // $classDefinitions[$c]
 
-         $thisAttrs = get_class_vars($c); // $classDefinitions[$c]
+       $c = get_parent_class($c);
 
-         $c = get_parent_class($c);
+       if ($c != null)
+          $parentAttrs = get_class_vars($c);
+       else
+          $parentAttrs = array();
 
-         if ($c != null)
-            $parentAttrs = get_class_vars($c);
-         else
-            $parentAttrs = array();
+       $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
 
-         $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
+       foreach ($declaredAttrs as $attr=>$type)
+       {
+          $def[$attr] = $type;
 
-         foreach ($declaredAttrs as $attr=>$type)
-         {
-            $def[$attr] = $type;
+          if (is_subclass_of($type, '\phersistent\Phersistent'))
+          {
+             echo "$attr is has one\n";
+          }
+          if (is_array($type))
+          {
+             if (is_subclass_of($type[0], '\phersistent\Phersistent'))
+             {
+                echo "$attr is has one with relname $type[1]\n";
+             }
+          }
+       }
 
-            if (is_subclass_of($type, '\phersistent\Phersistent'))
-            {
-               echo "$attr is has one\n";
-            }
-            if (is_array($type))
-            {
-               if (is_subclass_of($type[0], '\phersistent\Phersistent'))
-               {
-                  echo "$attr is has one with relname $type[1]\n";
-               }
-            }
-         }
+       if ($c != null)
+       {
+          $def['__parent'] = array();
+          $def = &$def['__parent'];
+       }
+    }
 
-         if ($c != null)
-         {
-            $def['__parent'] = array();
-            $def = &$def['__parent'];
-         }
-      }
-
-      return $definition;
-   }
+    return $definition;
+  }
 
   // DB interaction functions
   public function save()
@@ -223,6 +222,7 @@ class PhInstance {
     // 2. provide elements to DAL
     // 3. DAL will load the driver and do the ORM
     // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
+    return $this->phclass->save($this);
   }
 }
 
@@ -423,6 +423,11 @@ class Phersistent {
      return $this->__manager->listInstances(get_class($this), $max, $offset);
    }
 
+   public function save($phi)
+   {
+     return $this->__manager->saveInstance($phi);
+   }
+
    public function isValidDef($otherClassName)
    {
       return is_subclass_of($otherClassName, '\phersistent\Phersistent');
@@ -509,12 +514,5 @@ class Phersistent {
    }
    */
 }
-
-class PhTable {
-
-
-}
-
-
 
 ?>

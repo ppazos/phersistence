@@ -18,7 +18,7 @@ $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 
 $e = $Employer->create(array(
   'company' => 'CaboLabs',
-  'ein'     => '12-345678',
+  'ein'     => '12-322278',
   'address' => array(
     'line1'   => 'Juan Paullier 995 apt 703',
     'zipcode' => '11200',
@@ -31,7 +31,7 @@ $e = $Employer->create(array(
   ),
   'payor' => array(
     'company' => 'BPA',
-    'ein'     => '14-1232962'
+    'ein'     => '14-122672'
   )
 ));
 
@@ -58,6 +58,8 @@ $e2->setProperties(array(
   )
 ));
 
+
+//print_r($e->save());
 //$ph_db ->save_instance($e2);
 
 //print_r($e2);

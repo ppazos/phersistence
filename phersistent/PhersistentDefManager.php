@@ -87,6 +87,11 @@ class PhersistentDefManager {
     return $this->__ph_db->get($class_name, $id);
   }
 
+  public function saveInstance($phi)
+  {
+    return $this->__ph_db->save_instance($phi);
+  }
+
   public function listInstances($class_name, $max, $offset)
   {
     return $this->__ph_db->list($class_name, $max, $offset);
