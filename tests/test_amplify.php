@@ -64,15 +64,18 @@ $e2->setProperties(array(
 
 //print_r($e2);
 
-print_r($Employer->listAll());
+//print_r($Employer->listAll());
 
-/*
-$edb = $Employer->get(1);
+
+$edb = $Employer->get(8);
 print_r($edb);
-$a = $edb->getAddress(); // ;azy load
-print_r($a);
-print_r($edb);
-*/
+if ($edb)
+{
+  $a = $edb->getAddress(); // ;azy load
+  print_r($a);
+  print_r($edb);
+}
+
 
 
 

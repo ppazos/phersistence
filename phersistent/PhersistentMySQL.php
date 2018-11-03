@@ -68,13 +68,21 @@ class PhersistentMySQL {
     $phi = $GLOBALS[$class]->create();
 
     $table_name = $this->get_table_name($phi);
-    $table = $this->get_row($table_name, $id);
 
-    $phi->setProperties($table['columns']);
+    try
+    {
+      $table = $this->get_row($table_name, $id);
 
-    $phi->setId($table['columns']['id']);
-    $phi->setClass($table['columns']['class']);
-    $phi->setDeleted($table['columns']['deleted']);
+      $phi->setProperties($table['columns']);
+
+      $phi->setId($table['columns']['id']);
+      $phi->setClass($table['columns']['class']);
+      $phi->setDeleted($table['columns']['deleted']);
+    }
+    catch (\Exception $e)
+    {
+      return null; // row doesnt exists, null phi is returned
+    }
 
     return $phi;
   }
@@ -129,6 +137,10 @@ class PhersistentMySQL {
       $row = $r->fetch_assoc();
       $table['columns'] = $row;
       $r->close();
+    }
+    else
+    {
+      throw new \Exception('Record with id '. $id .' on table '. $table_name .' does not exist');
     }
 
     //print_r($table);
