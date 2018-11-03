@@ -276,7 +276,7 @@ class Phersistent {
       //echo $attr .PHP_EOL;
 
       // avoid Phersistent fields
-      if ($attr == '__one' || $attr == '__many') continue;
+      if ($attr == '__one' || $attr == '__many' || $attr == '__functions') continue;
 
       if (is_subclass_of($type, '\phersistent\Phersistent'))
       {
@@ -471,7 +471,7 @@ class Phersistent {
    public function get_all_fields()
    {
      $raw_fields = get_object_vars($this);
-     return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>''));
+     return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>''));
    }
 
    /**
