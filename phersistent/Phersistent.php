@@ -419,6 +419,7 @@ class Phersistent {
       $ins->phclass = $this;
       $ins->id = null;       // Default value
       $ins->deleted = false; // Default value
+      $ins->class = $ins->getClass();
 
 
       // custom class functions injected to instances

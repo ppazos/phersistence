@@ -68,6 +68,10 @@ class PhersistentMySQL {
 
     $phi->setProperties($table['columns']);
 
+    $phi->setId($table['columns']['id']);
+    $phi->setClass($table['columns']['class']);
+    $phi->setDeleted($table['columns']['deleted']);
+
     return $phi;
   }
 
@@ -95,6 +99,11 @@ class PhersistentMySQL {
     {
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
+
+      $phi->setId($table['columns']['id']);
+      $phi->setClass($table['columns']['class']);
+      $phi->setDeleted($table['columns']['deleted']);
+
       $instances[] = $phi;
     }
     return $instances;
