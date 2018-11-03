@@ -10,6 +10,9 @@ class PhInstance {
 
   const NOT_LOADED_ASSOC = -1;
 
+  // injected functions from class definition
+  public $__functions = array();
+
   private function addTo($hasManyName, PhInstance $ins)
   {
     $this->{$hasManyName}->add( $ins );
@@ -77,6 +80,12 @@ class PhInstance {
 
   public function __call($method, $args)
   {
+    if (array_key_exists($method, $this->__functions))
+    {
+      // custom injected methods from declaration need the instance to be passed
+      return $this->__functions[$method]($this, $args);
+    }
+
       // addToXYX
       if ( substr($method,0,5) == "addTo" )
       {
@@ -247,6 +256,7 @@ class Phersistent {
   private $__many = array();
   private $__one = array();
   private $__manager;
+  protected $__functions = array();
 
   /**
    * PhersistentDefManager creates instances of the Phersistent to expose as
@@ -409,6 +419,11 @@ class Phersistent {
       $ins->phclass = $this;
       $ins->id = null;       // Default value
       $ins->deleted = false; // Default value
+
+
+      // custom class functions injected to instances
+      $ins->__functions = $this->__functions;
+
 
       return $ins;
    }
