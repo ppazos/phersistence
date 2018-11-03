@@ -87,55 +87,55 @@ class PhInstance {
     }
 
       // addToXYX
-      if ( substr($method,0,5) == "addTo" )
-      {
-         $attr = lcfirst( substr($method, 5) ); // xyx
-         if (!property_exists($this, $attr))
-         {
-            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
-         }
-         $this->addTo($attr, $args[0]);
-         return;
-      }
+    if ( substr($method,0,5) == "addTo" )
+    {
+       $attr = lcfirst( substr($method, 5) ); // xyx
+       if (!property_exists($this, $attr))
+       {
+          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+       }
+       $this->addTo($attr, $args[0]);
+       return;
+    }
 
-      // getXYZ
-      if ( substr($method,0,3) == "get" )
-      {
-         $attr = lcfirst( substr($method, 3) ); // xyz
-         if (!property_exists($this, $attr))
-         {
-            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
-         }
+    // getXYZ
+    if ( substr($method,0,3) == "get" )
+    {
+       $attr = lcfirst( substr($method, 3) ); // xyz
+       if (!property_exists($this, $attr))
+       {
+          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
+       }
 
-         return $this->get( $attr );
-      }
+       return $this->get( $attr );
+    }
 
-      // setXXX
-      // The value should be converted to the right type e.g. string dates -> DateTime
-      if ( substr($method,0,3) == "set" )
-      {
-         //echo $method . PHP_EOL;
-         //print_r($args);
+    // setXXX
+    // The value should be converted to the right type e.g. string dates -> DateTime
+    if ( substr($method,0,3) == "set" )
+    {
+       //echo $method . PHP_EOL;
+       //print_r($args);
 
-         $attr = lcfirst(substr($method, 3)); // xxx
-         if (!property_exists($this, $attr))
-         {
-            throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
-         }
+       $attr = lcfirst(substr($method, 3)); // xxx
+       if (!property_exists($this, $attr))
+       {
+          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
+       }
 
-         // TODO
-         // 1. check if the class contains a definition of the attribute
-         // 2. check if the value has the same type as the declared
-         // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
-         // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
+       // TODO
+       // 1. check if the class contains a definition of the attribute
+       // 2. check if the value has the same type as the declared
+       // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
+       // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
 
-         $this->set($attr, $args[0]);
-         return;
-      }
+       $this->set($attr, $args[0]);
+       return;
+    }
 
-      // TODO: remove from
+    // TODO: remove from
 
-      // method not found
+    // method not found
   }
 
   public function isInstanceOf($phersistent)
@@ -372,6 +372,12 @@ class Phersistent {
          if (array_key_exists($attr, $this->__one))
          {
            $ins->{$attr.'_id'} = NULL;
+
+           // if FK attribute comes, set it
+           if (array_key_exists($attr.'_id', $attrs))
+           {
+             $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
+           }
          }
          $ins->{$attr} = NULL; // injects the attribute
 
