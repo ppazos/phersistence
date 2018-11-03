@@ -10,9 +10,6 @@ class PhInstance {
 
   const NOT_LOADED_ASSOC = -1;
 
-  // injected functions from class definition
-  public $__functions = array();
-
   private function addTo($hasManyName, PhInstance $ins)
   {
     $this->{$hasManyName}->add( $ins );
@@ -80,10 +77,9 @@ class PhInstance {
 
   public function __call($method, $args)
   {
-    if (array_key_exists($method, $this->__functions))
+    if ($this->phclass->functionExists($method))
     {
-      // custom injected methods from declaration need the instance to be passed
-      return $this->__functions[$method]($this, $args);
+      return $this->phclass->functionCall($method, $this, $args);
     }
 
       // addToXYX
@@ -292,6 +288,21 @@ class Phersistent {
     }
   }
 
+  public function functionExists($func)
+  {
+    return array_key_exists($func, $this->__functions);
+  }
+
+  public function functionCall($func, $ins, $args)
+  {
+    if (!$this->functionExists($func))
+    {
+      throw new \Exception('Function '. $func .' doesnt exists');
+    }
+    return $this->__functions[$func]($ins, $args);
+  }
+
+
   /**
     * $name UML relationship target name
     * $class target class
@@ -326,6 +337,12 @@ class Phersistent {
       //echo 'create '. $this->clax ."\n";
 
       $ins = new PhInstance();
+
+      // inject properties
+      $ins->phclass = $this;
+      $ins->id = null;       // Default value
+      $ins->deleted = false; // Default value
+      $ins->class = $ins->getClass();
 
       // Inject attributes declared on concrete subclass on new instance
       // This reads the own and inherited attributes of the custom Phersistent class
@@ -417,20 +434,6 @@ class Phersistent {
          $ins->{$attr} = NULL;
       }
       */
-
-
-      // phclass merges all the inherited attr declarations from parent classes
-      // it doesn't allow to reconstruct the separate definitions for multiple
-      // table inheritance mapping
-      $ins->phclass = $this;
-      $ins->id = null;       // Default value
-      $ins->deleted = false; // Default value
-      $ins->class = $ins->getClass();
-
-
-      // custom class functions injected to instances
-      $ins->__functions = $this->__functions;
-
 
       return $ins;
    }

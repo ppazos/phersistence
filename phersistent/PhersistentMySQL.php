@@ -37,8 +37,12 @@ class PhersistentMySQL {
       // $col is equals to the name of the field declared in the phi
       foreach ($table['foreigns'] as $col => $ft)
       {
-        $id = $this->save_instance_recursive($ft);
-        $table['columns'][$col .'_id'] = $id; // FK set
+        // if the has one already exists, do not insert
+        if (!isset($table['columns'][$col .'_id']))
+        {
+          $id = $this->save_instance_recursive($ft);
+          $table['columns'][$col .'_id'] = $id; // FK set
+        }
       }
     }
 
