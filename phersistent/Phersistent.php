@@ -304,144 +304,149 @@ class Phersistent {
 
 
   /**
-    * $name UML relationship target name
-    * $class target class
-    * $relName UML relationship name
+   * $name UML relationship target name
+   * $class target class
+   * $relName UML relationship name
+   */
+  private function hasOne($name, $class, $relName = null)
+  {
+    $this->__one[$name] = new StdClass();
+    $this->__one[$name]->class = $class; // A subclass of Phersistent
+    $this->__one[$name]->relName = $relName;
+  }
+
+  /**
+   * $name UML relationship target name
+   * $class target class
+   * $collectionType collection, list, set, orderedSet
+   * $relName UML relationship name
+   */
+  protected function hasMany($name, $class, $collectionType = 'collection', $relName = null)
+  {
+    $this->__many[$name] = new StdClass();
+    $this->__many[$name]->class = $class; // A subclass of Phersistent
+    $this->__many[$name]->collectionType = $collectionType;
+    $this->__many[$name]->relName = $relName;
+  }
+
+  /*
+   * New instance of this class.
+   */
+  public function create($attrs = array())
+  {
+    //echo 'create '. $this->clax ."\n";
+
+    $ins = new PhInstance();
+
+    // inject properties
+    $ins->phclass = $this;
+    $ins->id = null;       // Default value
+    $ins->deleted = false; // Default value
+    $ins->class = $ins->getClass();
+
+    // Inject attributes declared on concrete subclass on new instance
+    // This reads the own and inherited attributes of the custom Phersistent class
+    //foreach ($this as $attr=>$type)
+    $fields = $this->get_all_fields();
+    foreach ($fields as $attr => $type)
+    {
+       // dont inject internal hasMany and hasOne definitions
+       //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
+
+       //echo "create $attr = $type\n";
+       /*
+       if (array_key_exists($attr, $this->__one))
+       {
+         echo $attr .' es HO '. PHP_EOL;
+       }
+       */
+
+       // has many is injected below
+       if (array_key_exists($attr, $this->__many)) continue;
+
+       // Set values
+       // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
+       $value = null; // Default value
+       if (isset($attrs[$attr])) $value = $attrs[$attr];
+
+       // Injects the attribute and sets the value
+
+       /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
+          is not null on the database and this link is lazy loaded, so the ROM
+          should set this, not this constructor.
+       if (array_key_exists($attr, $this->__one))
+       {
+         $ins->{$attr} = self::NOT_LOADED_ASSOC;
+       }
+       else
+       {
+          $ins->{$attr} = NULL; // injects the attribute
+       }
+       */
+
+       // injects the FK attribute,
+       // TODO: this attribute should be set when the associated object is saved
+       if (array_key_exists($attr, $this->__one))
+       {
+         $ins->{$attr.'_id'} = NULL;
+
+         // if FK attribute comes, set it
+         if (array_key_exists($attr.'_id', $attrs))
+         {
+           $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
+         }
+       }
+       $ins->{$attr} = NULL; // injects the attribute
+
+
+       // if value comes in properties, set that value
+       if (array_key_exists($attr, $attrs))
+       {
+         $setMethod = 'set'.$attr;
+
+         // the user wants to create an object from the array of values
+         if (array_key_exists($attr, $this->__one) && is_array($value))
+         {
+           // creates an instance of the class declared in the HO attr with the value array
+           $value = $this->__manager->create($this->{$attr}, $value);
+         }
+
+         $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
+       }
+    }
+
+    // Inject many
+    foreach ($this->__many as $attr=>$rel)
+    {
+       //print_r($rel);
+       // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
+       if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
+       if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
+       if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
+
+       // TODO: initialize properties for has many if values are passed
+    }
+
+    // Inject one
+    /* has one is injected as a normal attribute
+    foreach ($this->__one as $attr=>$rel)
+    {
+       $ins->{$attr} = NULL;
+    }
     */
-   private function hasOne($name, $class, $relName = null)
-   {
-      $this->__one[$name] = new StdClass();
-      $this->__one[$name]->class = $class; // A subclass of Phersistent
-      $this->__one[$name]->relName = $relName;
-   }
 
-   /**
-    * $name UML relationship target name
-    * $class target class
-    * $collectionType collection, list, set, orderedSet
-    * $relName UML relationship name
-    */
-   protected function hasMany($name, $class, $collectionType = 'collection', $relName = null)
-   {
-      $this->__many[$name] = new StdClass();
-      $this->__many[$name]->class = $class; // A subclass of Phersistent
-      $this->__many[$name]->collectionType = $collectionType;
-      $this->__many[$name]->relName = $relName;
-   }
+    return $ins;
+  }
 
-   /*
-    * New instance of this class.
-    */
-   public function create($attrs = array())
-   {
-      //echo 'create '. $this->clax ."\n";
+  public function get($id)
+  {
+    return $this->__manager->getInstance(get_class($this), $id);
+  }
 
-      $ins = new PhInstance();
-
-      // inject properties
-      $ins->phclass = $this;
-      $ins->id = null;       // Default value
-      $ins->deleted = false; // Default value
-      $ins->class = $ins->getClass();
-
-      // Inject attributes declared on concrete subclass on new instance
-      // This reads the own and inherited attributes of the custom Phersistent class
-      //foreach ($this as $attr=>$type)
-      $fields = $this->get_all_fields();
-      foreach ($fields as $attr => $type)
-      {
-         // dont inject internal hasMany and hasOne definitions
-         //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
-
-         //echo "create $attr = $type\n";
-         /*
-         if (array_key_exists($attr, $this->__one))
-         {
-           echo $attr .' es HO '. PHP_EOL;
-         }
-         */
-
-         // has many is injected below
-         if (array_key_exists($attr, $this->__many)) continue;
-
-         // Set values
-         // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
-         $value = null; // Default value
-         if (isset($attrs[$attr])) $value = $attrs[$attr];
-
-         // Injects the attribute and sets the value
-
-         /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
-            is not null on the database and this link is lazy loaded, so the ROM
-            should set this, not this constructor.
-         if (array_key_exists($attr, $this->__one))
-         {
-           $ins->{$attr} = self::NOT_LOADED_ASSOC;
-         }
-         else
-         {
-            $ins->{$attr} = NULL; // injects the attribute
-         }
-         */
-
-         // injects the FK attribute,
-         // TODO: this attribute should be set when the associated object is saved
-         if (array_key_exists($attr, $this->__one))
-         {
-           $ins->{$attr.'_id'} = NULL;
-
-           // if FK attribute comes, set it
-           if (array_key_exists($attr.'_id', $attrs))
-           {
-             $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
-           }
-         }
-         $ins->{$attr} = NULL; // injects the attribute
-
-
-         // if value comes in properties, set that value
-         if (array_key_exists($attr, $attrs))
-         {
-           $setMethod = 'set'.$attr;
-
-           // the user wants to create an object from the array of values
-           if (array_key_exists($attr, $this->__one) && is_array($value))
-           {
-             // creates an instance of the class declared in the HO attr with the value array
-             $value = $this->__manager->create($this->{$attr}, $value);
-           }
-
-           $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
-         }
-      }
-
-      // Inject many
-      foreach ($this->__many as $attr=>$rel)
-      {
-         //print_r($rel);
-         // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
-         if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
-         if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
-         if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
-
-         // TODO: initialize properties for has many if values are passed
-      }
-
-      // Inject one
-      /* has one is injected as a normal attribute
-      foreach ($this->__one as $attr=>$rel)
-      {
-         $ins->{$attr} = NULL;
-      }
-      */
-
-      return $ins;
-   }
-
-   public function get($id)
-   {
-     return $this->__manager->getInstance(get_class($this), $id);
-   }
+  public function count()
+  {
+    return $this->__manager->count(get_class($this));
+  }
 
    public function listAll($max = 10, $offset = 0)
    {

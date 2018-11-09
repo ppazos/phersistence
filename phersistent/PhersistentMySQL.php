@@ -87,6 +87,21 @@ class PhersistentMySQL {
     return $phi;
   }
 
+  public function count($class_name)
+  {
+    $parts = explode('\\', $class_name);
+    $class = $parts[count($parts)-1];
+    $phi = $GLOBALS[$class]->create();
+
+    $table_name = $this->get_table_name($phi);
+
+    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name);
+    $row = $r->fetch_assoc();
+    $r->close();
+
+    return $row['count'];
+  }
+
   public function list_instances($class_name, $max, $offset)
   {
     $parts = explode('\\', $class_name);

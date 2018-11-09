@@ -67,7 +67,7 @@ if (!$d->table_exists('member'))
   $d->create_table('member'); // adds the id column
   $d->add_column('member', 'class', 'varchar(255)', false);
   $d->add_column('member', 'deleted', 'boolean', false);
-  $d->add_column('member', 'member_id', 'varchar(255)', false); // member number
+  $d->add_column('member', 'number', 'varchar(255)', false); // member number
   $d->add_column('member', 'person_id', 'int', false); // member details
   $d->add_column('member', 'employer_id', 'int', false);
   $d->add_fk('member', 'person_id', 'fk_member_person', 'person', 'id');

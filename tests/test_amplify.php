@@ -64,7 +64,9 @@ $e2->setProperties(array(
 
 //print_r($e2);
 
-print_r($Employer->listAll());
+echo 'Hay '. $Employer->count() .' employers'. PHP_EOL;
+
+//print_r($Employer->listAll());
 
 
 $edb = $Employer->get(8);
