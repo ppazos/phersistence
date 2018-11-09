@@ -12,7 +12,7 @@ spl_autoload_register(function ($class) {
 });
 
 // setup
-$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user1234', 'amplify');
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'amplify');
 $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 //print_r( $man->getDefinitions() );
 
@@ -64,7 +64,7 @@ $e2->setProperties(array(
 
 //print_r($e2);
 
-//print_r($Employer->listAll());
+print_r($Employer->listAll());
 
 
 $edb = $Employer->get(8);

@@ -61,7 +61,7 @@ class PhersistentMySQL {
    * @param string $class_name class name with namespace
    * @param int @id id of the instance in the database
    */
-  public function get($class_name, $id)
+  public function get_instance($class_name, $id)
   {
     $parts = explode('\\', $class_name);
     $class = $parts[count($parts)-1];
@@ -87,7 +87,7 @@ class PhersistentMySQL {
     return $phi;
   }
 
-  public function list($class_name, $max, $offset)
+  public function list_instances($class_name, $max, $offset)
   {
     $parts = explode('\\', $class_name);
     $class = $parts[count($parts)-1];
