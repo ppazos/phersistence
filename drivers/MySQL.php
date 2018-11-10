@@ -11,6 +11,23 @@ class MySQL {
   private $query_count;
   private $transaction_on = false;
 
+
+  // https://docs.oracle.com/cd/E19078-01/mysql/mysql-refman-5.0/error-handling.html
+  // https://dev.mysql.com/doc/refman/5.5/en/server-error-reference.html
+
+  // insert duplicated value for unique key
+  const ERR_DUP_KEY = 1062;
+
+  // unknown column
+  const ERR_BAD_FIELD = 1054;
+
+  // unknown table
+  const ERR_BAD_TABLE = 1051;
+
+  // incorrect query syntax
+  const ERR_PARSE = 1065;
+  
+
   function __construct()
   {
     // exception on construct breaks autoloader
@@ -86,7 +103,7 @@ class MySQL {
     $this->last_query = $q;
 
     if (!$r = mysqli_query($this->connection, $q))
-      throw new \Exception('Query error: ' . mysqli_error($this->connection));
+      throw new \Exception('Query error: ' . mysqli_error($this->connection), mysqli_errno($this->connection));
 
     $this->query_count++;
     return mysqli_affected_rows($this->connection);
@@ -115,7 +132,7 @@ class MySQL {
     $this->last_query = $q;
 
     if (!$result = mysqli_query($this->connection, $q))
-      throw new \Exception('Query error: ' . mysqli_error($this->connection));
+      throw new \Exception('Query error: ' . mysqli_error($this->connection), mysqli_errno($this->connection));
 
     $this->query_count++;
 

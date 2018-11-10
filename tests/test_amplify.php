@@ -59,7 +59,23 @@ $e2->setProperties(array(
 ));
 
 
-//print_r($e->save());
+try
+{
+  print_r($e->save());
+}
+catch (Exception $e)
+{
+  echo 'code: '. $e->getCode() . PHP_EOL;
+
+  if ($e->getCode() == \drivers\MySQL::ERR_DUP_KEY)
+  {
+    echo 'duplicated value!'. PHP_EOL;
+  }
+
+  //print_r($e);
+}
+
+
 //$ph_db ->save_instance($e2);
 
 //print_r($e2);
