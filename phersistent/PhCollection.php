@@ -2,15 +2,26 @@
 
 namespace phersistent;
 
-class PhCollection implements Iterator { // implements Traversable {
+class PhCollection implements \Iterator { // implements Traversable {
 
-   private $position = 0;
-   private $items = array();
+  private $position = 0;
+  private $items = array();
 
-   public function add($instance)
-   {
-      $this->items[] = $instance;
-   }
+  public function add($instance)
+  {
+    $this->items[] = $instance;
+  }
+
+  public function remove($instance)
+  {
+    foreach ($this->items as $i=>$ins)
+    {
+      if ($ins->getId() == $instance->getId())
+      {
+        array_splice($this->items, $i, 1);
+      }
+    }
+  }
 
    public function all()
    {

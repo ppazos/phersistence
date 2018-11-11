@@ -2,8 +2,8 @@
 
 spl_autoload_register(function ($class) {
   global $_BASE;
-  echo 'spl_autoload_register '. $class . PHP_EOL;
-  echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
+  //echo 'spl_autoload_register '. $class . PHP_EOL;
+  //echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
 
   if (file_exists($_BASE.str_replace('\\', '/', $class).'.php'))
     require_once($_BASE.str_replace('\\', '/', $class).'.php');
@@ -35,12 +35,14 @@ class D extends \phersistent\Phersistent {
 
   public $d_field_1 = self::INT;
   public $d_field_2 = self::TEXT;
+  public $hm_e = array(\phersistent\PhCollection::class, E::class);
 }
 
 class E extends \phersistent\Phersistent {
 
   public $e_field_1 = self::INT;
   public $e_field_2 = self::TEXT;
+  public $hm_f = array(PhCollection::class, F::class);
 }
 
 class F extends \phersistent\Phersistent {
@@ -51,7 +53,8 @@ class F extends \phersistent\Phersistent {
 
 
 // setup
-$man = new \phersistent\PhersistentDefManager('model');
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
+$man = new \phersistent\PhersistentDefManager('model', $ph_db);
 
 /*
 echo "Class Definitions\n";
@@ -64,6 +67,16 @@ echo "\n";
 
 echo $C->get_parent() . PHP_EOL; // B OK!
 echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
+
+//print_r($D);
+$d = $D->create();
+$e = $E->create();
+$e->setId(12356);
+print_r($d);
+$d->addToHm_e($e);
+print_r($d);
+$d->removeFromHm_e($e);
+print_r($d);
 
 //print_r($C->get_all_fields());
 //print_r($C->get_declared_fields());
@@ -91,7 +104,7 @@ assert($cins->getC_ho_f()->getF_field_2() == 'hola');
 
 //print_r($cins);
 
-print_r(\phersistent\PhersistentMySQL::phi_to_data($cins));
+print_r($ph_db->phi_to_data($cins));
 
 /*
 echo \phersistent\PhersistentMySQL::get_table_name($cins) .PHP_EOL;
