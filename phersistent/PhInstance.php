@@ -20,12 +20,22 @@ class PhInstance {
     }
 
     // collection not loaded? => load to execute the removeFrom
+    /* FIXME: need a lazy load lookup on a different object than the
+    hasmany to avoid setting values of different types to the same
+    field, also the collection will be intialized even if the items
+    are not loaded.
     if ($this->{$hasManyName} == self::NOT_LOADED_ASSOC)
     {
       // TBD
     }
+    */
 
     $this->{$hasManyName}->remove($ins);
+  }
+
+  private function size($hasManyName)
+  {
+    return $this->{$hasManyName}->size();
   }
 
   public function get($attr)
@@ -145,13 +155,24 @@ class PhInstance {
     // removeFromXXX
     if ( substr($method,0,10) == "removeFrom" )
     {
-       $attr = lcfirst( substr($method, 10) );
-       if (!property_exists($this, $attr))
-       {
-          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
-       }
-       $this->removeFrom($attr, $args[0]);
-       return;
+      $attr = lcfirst( substr($method, 10) );
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+      }
+      $this->removeFrom($attr, $args[0]);
+      return;
+    }
+
+    // sizeXXX
+    if ( substr($method,0,4) == "size" )
+    {
+      $attr = lcfirst( substr($method, 4) );
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+      }
+      return $this->size($attr);
     }
 
     // method not found
@@ -251,6 +272,43 @@ class PhInstance {
     // 3. DAL will load the driver and do the ORM
     // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
     return $this->phclass->save($this);
+  }
+
+  /**
+   * return the current values for all has one attributes, used on save.
+   */
+  public function getAllHasOne()
+  {
+    $hasone = array();
+    foreach ($this->phclass->getHasOneDeclarations() as $attr=>$rel)
+    {
+      $hasone[$attr] = $this->get($attr);
+    }
+    return $hasone;
+  }
+
+  /**
+   * return the current values for all has many attributes, used on save.
+   */
+  public function getAllHasMany()
+  {
+    $hasmany = array();
+    foreach ($this->phclass->getHasManyDeclarations() as $attr=>$rel)
+    {
+      $hasmany[$attr] = $this->get($attr); // value is a collection
+    }
+    return $hasmany;
+  }
+
+  /**
+   * Used on save of has many cascade for one to many where the backlink is set
+   * on the many side.
+   */
+  public function setBacklinkId($class, $field, $toclass, $backlinkName, $id)
+  {
+    // TODO: use the class and field to check if there is a declaration of
+    // a has many on the class to the toclass.
+    $this->{$backlinkName} = $id;
   }
 }
 

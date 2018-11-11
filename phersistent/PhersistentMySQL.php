@@ -19,18 +19,47 @@ class PhersistentMySQL {
     // TODO: transactional since it does cascade save of has one.
     // TODO: will try to do the loop detection on phi_to_data.
     //$loop = time()."_". rand()."_". rand();
-    $table = $this->phi_to_data($phi);
-    return $this->save_instance_recursive($table);
+    //$table = $this->phi_to_data($phi);
+    //print_r($table);
+    $id = $this->save_instance_recursive($phi);
+
+    return $id;
   }
 
-  private function save_instance_recursive($table)
+  private function save_instance_recursive($phi)
   {
     // can be an empty array derived from a null has one
     // this wont save anything so wont return an id
-    if (count($table) == 0) return null;
+    //if (count($table) == 0) return null;
 
     // TODO: check if id is null, if not should except since this is save not update
 
+    $hones = $phi->getAllHasOne();
+    foreach ($hones as $attr=>$value)
+    {
+      if ($value == null)
+      {
+        $phi->set($attr.'_id', null); // FK should be emptied
+      }
+      else
+      {
+        if ($value->getId() == null) // insert
+        {
+          $idho = $this->save_instance_recursive($value);
+          $value->setId($idho);                   // id set on associated instance
+          $phi->set($attr .'_id', $idho);
+          //$table['columns'][$attr .'_id'] = $idho; // FK set on owner
+        }
+        else
+        {
+          // TBD: update if dirty, avoid if not dirty
+        }
+      }
+    }
+
+    $table = $this->phi_to_data($phi);
+
+    /*
     // save foreigns first to get their fk ids and set them to the table before save
     if (count($table['foreigns']) > 0)
     {
@@ -41,16 +70,54 @@ class PhersistentMySQL {
         if (!isset($table['columns'][$col .'_id']))
         {
           $id = $this->save_instance_recursive($ft);
+          $ft->setId($id);
           $table['columns'][$col .'_id'] = $id; // FK set
         }
       }
     }
+    */
 
     // insert with column values
     $r = $this->driver->execute($this->table_to_insert($table));
     if($r === 1)
     {
-      return $this->driver->last_insert_id();
+      $id = $this->driver->last_insert_id();
+
+      $hmanies = $phi->getAllHasMany();
+      foreach ($hmanies as $attr=>$collection)
+      {
+        foreach ($collection as $item)
+        {
+          $backlink = $this->backlink_name($phi->getClass(), $attr);
+          $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
+          $hmid = $this->save_instance_recursive($item);
+          $item->setId($hmid);
+        }
+      }
+
+      /*
+      // now that I have the id, save the hasmany in one to many relationships,
+      // injecting the id in the backlink.
+      if (count($table['many_back']) > 0)
+      {
+        foreach ($table['many_back'] as $backlink_name => $manyhmtable)
+        {
+          foreach ($manyhmtable as $i=>$hmtable)
+          {
+            $hmtable['columns'][$backlink_name] = $id;
+            $hmid = $this->save_instance_recursive($hmtable);
+
+            //$ft->setId($hmid);
+          }
+        }
+      }
+      */
+
+      // TODO: save many to many in join table, might need to detect the owner side
+
+      $phi->setId($id);
+
+      return $id;
     }
 
     return null;
@@ -235,13 +302,36 @@ class PhersistentMySQL {
     $table['table_name'] = $this->get_table_name($phi);
     $table['columns'] = array(); // simple column values
     $table['foreigns'] = array(); // associated objects referenced by FKs
+    $table['many_back'] = array();
+    $table['many_join'] = array();
 
     $fields = $phi->getDefinition()->get_all_fields();
     foreach ($fields as $field => $type)
     {
       if ($phi->getDefinition()->is_has_many($field)) // has many
       {
-        // TBD: should create the join table
+        // one to many uses back links from the many side
+        if ($phi->getDefinition()->is_one_to_many($field))
+        {
+          $backlink_name = $this->backlink_name($phi->getClass(), $field);
+
+          $table['many_back'][$backlink_name] = array();
+
+          foreach ($phi->get($field) as $i=>$hmphi)
+          {
+            $table['many_back'][$backlink_name][] = $this->phi_to_data($hmphi);
+
+            // inject backlink name on columns
+            // will be empty until we save the current phi and get an id
+            $table['many_back'][$backlink_name][$i]['columns'][$backlink_name] = null;
+          }
+
+          // TODO: to set the backlink value, this instance should be saved first
+        }
+        else // many to many uses join table
+        {
+          // TBD
+        }
       }
       else if ($phi->getDefinition()->is_has_one($field)) // has one
       {
@@ -328,6 +418,17 @@ class PhersistentMySQL {
     return strtr($parts[count($parts)-1],
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
                  "abcdefghijklmnopqrstuvwxyz_");
+  }
+
+  /**
+   * name of the column for the backlink FK for one to many relationships.
+   */
+  private function backlink_name($class, $field)
+  {
+    // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
+    // then $backlink_name = current_class_assoc_id
+    // and that column should exist on the OTHER_CLASS table
+    return strtolower($class .'_'. $field .'_back');
   }
 
   /**

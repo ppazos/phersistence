@@ -7,16 +7,16 @@ use \StdClass;
 class Phersistent {
 
   // Basic attribute types
-  const INT      = 'int';
-  const LONG     = 'long';
-  const FLOAT    = 'float';
-  const DOUBLE   = 'double';
+  const INT    = 'int';
+  const LONG    = 'long';
+  const FLOAT   = 'float';
+  const DOUBLE  = 'double';
   const BOOLEAN  = 'boolean';
-  const DATE     = 'date';
-  const TIME     = 'time';
+  const DATE    = 'date';
+  const TIME    = 'time';
   const DATETIME = 'datetime';
   const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
-  const TEXT     = 'text';
+  const TEXT    = 'text';
 
   // This code is used for has_one to mark the link as not loaded when lazy loading
   // and to differentiate from the NULL value that is valid for has one.
@@ -28,9 +28,9 @@ class Phersistent {
   protected $__functions = array();
 
   /**
-   * PhersistentDefManager creates instances of the Phersistent to expose as
-   * global class variables to simplify creating PhInstances from Phersistent.
-   */
+  * PhersistentDefManager creates instances of the Phersistent to expose as
+  * global class variables to simplify creating PhInstances from Phersistent.
+  */
   public function __construct()
   {
     // set hasOne from declared associations
@@ -73,10 +73,9 @@ class Phersistent {
         }
         else if ($class == 'PhCollection')
         {
-          echo get_class($this) .' hasMany '. $attr .' <'. $type[1] .'>'. PHP_EOL;
+          //echo get_class($this) .' hasMany '. $attr .' <'. $type[1] .'>'. PHP_EOL;
           $this->hasMany($attr, $type[1]);
         }
-
       }
     }
   }
@@ -95,12 +94,21 @@ class Phersistent {
     return $this->__functions[$func]($ins, $args);
   }
 
+  public function getHasOneDeclarations()
+  {
+    return $this->__one;
+  }
+
+  public function getHasManyDeclarations()
+  {
+    return $this->__many;
+  }
 
   /**
-   * $name UML relationship target name
-   * $class target class
-   * $relName UML relationship name
-   */
+  * $name UML relationship target name
+  * $class target class
+  * $relName UML relationship name
+  */
   private function hasOne($name, $class, $relName = null)
   {
     $this->__one[$name] = new StdClass();
@@ -109,11 +117,11 @@ class Phersistent {
   }
 
   /**
-   * $name UML relationship target name
-   * $class target class
-   * $collectionType collection, list, set, orderedSet
-   * $relName UML relationship name
-   */
+  * $name UML relationship target name
+  * $class target class
+  * $collectionType collection, list, set, orderedSet
+  * $relName UML relationship name
+  */
   protected function hasMany($name, $class, $collectionType = 'collection', $relName = null)
   {
     $this->__many[$name] = new StdClass();
@@ -123,8 +131,8 @@ class Phersistent {
   }
 
   /*
-   * New instance of this class.
-   */
+  * New instance of this class.
+  */
   public function create($attrs = array())
   {
     //echo 'create '. $this->clax ."\n";
@@ -133,7 +141,7 @@ class Phersistent {
 
     // inject properties
     $ins->phclass = $this;
-    $ins->id = null;       // Default value
+    $ins->id = null;     // Default value
     $ins->deleted = false; // Default value
     $ins->class = $ins->getClass();
 
@@ -143,88 +151,88 @@ class Phersistent {
     $fields = $this->get_all_fields();
     foreach ($fields as $attr => $type)
     {
-       // dont inject internal hasMany and hasOne definitions
-       //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
+      // dont inject internal hasMany and hasOne definitions
+      //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
 
-       //echo "create $attr = $type\n";
-       /*
-       if (array_key_exists($attr, $this->__one))
+      //echo "create $attr = $type\n";
+      /*
+      if (array_key_exists($attr, $this->__one))
+      {
+       echo $attr .' es HO '. PHP_EOL;
+      }
+      */
+
+      // has many is injected below
+      if (array_key_exists($attr, $this->__many)) continue;
+
+      // Set values
+      // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
+      $value = null; // Default value
+      if (isset($attrs[$attr])) $value = $attrs[$attr];
+
+      // Injects the attribute and sets the value
+
+      /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
+        is not null on the database and this link is lazy loaded, so the ROM
+        should set this, not this constructor.
+      if (array_key_exists($attr, $this->__one))
+      {
+       $ins->{$attr} = self::NOT_LOADED_ASSOC;
+      }
+      else
+      {
+        $ins->{$attr} = NULL; // injects the attribute
+      }
+      */
+
+      // injects the FK attribute,
+      // TODO: this attribute should be set when the associated object is saved
+      if (array_key_exists($attr, $this->__one))
+      {
+       $ins->{$attr.'_id'} = NULL;
+
+       // if FK attribute comes, set it
+       if (array_key_exists($attr.'_id', $attrs))
        {
-         echo $attr .' es HO '. PHP_EOL;
+         $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
        }
-       */
-
-       // has many is injected below
-       if (array_key_exists($attr, $this->__many)) continue;
-
-       // Set values
-       // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
-       $value = null; // Default value
-       if (isset($attrs[$attr])) $value = $attrs[$attr];
-
-       // Injects the attribute and sets the value
-
-       /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
-          is not null on the database and this link is lazy loaded, so the ROM
-          should set this, not this constructor.
-       if (array_key_exists($attr, $this->__one))
-       {
-         $ins->{$attr} = self::NOT_LOADED_ASSOC;
-       }
-       else
-       {
-          $ins->{$attr} = NULL; // injects the attribute
-       }
-       */
-
-       // injects the FK attribute,
-       // TODO: this attribute should be set when the associated object is saved
-       if (array_key_exists($attr, $this->__one))
-       {
-         $ins->{$attr.'_id'} = NULL;
-
-         // if FK attribute comes, set it
-         if (array_key_exists($attr.'_id', $attrs))
-         {
-           $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
-         }
-       }
-       $ins->{$attr} = NULL; // injects the attribute
+      }
+      $ins->{$attr} = NULL; // injects the attribute
 
 
-       // if value comes in properties, set that value
-       if (array_key_exists($attr, $attrs))
-       {
-         $setMethod = 'set'.$attr;
+      // if value comes in properties, set that value
+      if (array_key_exists($attr, $attrs))
+      {
+        $setMethod = 'set'.$attr;
 
-         // the user wants to create an object from the array of values
-         if (array_key_exists($attr, $this->__one) && is_array($value))
-         {
-           // creates an instance of the class declared in the HO attr with the value array
-           $value = $this->__manager->create($this->{$attr}, $value);
-         }
+        // the user wants to create an object from the array of values
+        if (array_key_exists($attr, $this->__one) && is_array($value))
+        {
+          // creates an instance of the class declared in the HO attr with the value array
+          $value = $this->__manager->create($this->{$attr}, $value);
+        }
 
-         $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
-       }
+        $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
+      }
     }
 
     // Inject many
     foreach ($this->__many as $attr=>$rel)
     {
-       //print_r($rel);
-       // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
-       if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
-       if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
-       if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
+      //print_r($rel);
+      // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
+      if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
+      if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
+      if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
 
-       // TODO: initialize properties for has many if values are passed
+      // TODO: initialize properties for has many if values are passed
     }
 
     // Inject one
     /* has one is injected as a normal attribute
     foreach ($this->__one as $attr=>$rel)
     {
-       $ins->{$attr} = NULL;
+      $ins->{$attr} = NULL;
     }
     */
 
@@ -241,101 +249,143 @@ class Phersistent {
     return $this->__manager->count(get_class($this));
   }
 
-   public function listAll($max = 10, $offset = 0)
-   {
-     return $this->__manager->listInstances(get_class($this), $max, $offset);
-   }
+  public function listAll($max = 10, $offset = 0)
+  {
+    return $this->__manager->listInstances(get_class($this), $max, $offset);
+  }
 
-   public function save($phi)
-   {
-     return $this->__manager->saveInstance($phi);
-   }
+  public function save($phi)
+  {
+    return $this->__manager->saveInstance($phi);
+  }
 
-   public function isValidDef($otherClassName)
-   {
-      return is_subclass_of($otherClassName, '\phersistent\Phersistent');
-   }
+  public function isValidDef($otherClassName)
+  {
+    return is_subclass_of($otherClassName, '\phersistent\Phersistent');
+  }
 
-   public function get_parent()
-   {
-     return get_parent_class($this);
-   }
+  public function get_parent()
+  {
+    return get_parent_class($this);
+  }
 
-   public function get_parent_phersistent()
-   {
-     return $this->__manager->getDefinition($this->get_parent());
-   }
+  public function get_parent_phersistent()
+  {
+    return $this->__manager->getDefinition($this->get_parent());
+  }
 
-   /**
-    * Returns all declared fields, on own class and inherited from parent.
-    */
-   public function get_all_fields()
-   {
-     $raw_fields = get_object_vars($this);
-     return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>''));
-   }
-
-   /**
-    * Retuns only declared fields on the specific class and do not includes
-    * fields declared on parent classes. It is usedul to calculate multiple
-    * table inheritance structures.
-    */
-   public function get_declared_fields()
-   {
-     $parent_class = $this->get_parent();
-     $parent = $this->__manager->getDefinition($parent_class);
-
-     $mine = $this->get_all_fields();
-     $parents = $parent->get_all_fields();
-
-     return array_diff_key($mine, $parents);
-   }
-
-   public function is_has_one($field)
-   {
-     return array_key_exists($field, $this->__one);
-   }
-
-   public function is_has_many($field)
-   {
-     return array_key_exists($field, $this->__many);
-   }
-
-   public function is_simple_field($field)
-   {
-     $fields = $this->get_all_fields();
-     return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field);
-   }
-
-   public function get_has_one($field)
-   {
-     return $this->__one[$field];
-   }
-   public function get_has_many($field)
-   {
-     return $this->__many[$field];
-   }
-
-
-   /**
-    * Configured from PhersistentDefManager.
-    */
-   public function set_manager($man)
-   {
-     $this->__manager = $man;
-   }
-
-   /*
-   public function __call($method, $args)
-   {
-      echo "call $method\n";
-      if ( $this->{$method} instanceof Closure ) {
-         return call_user_func_array($this->{$method},$args);
-      } else {
-         return parent::__call($method, $args);
-      }
-   }
+  /**
+   * Returns all declared fields, on own class and inherited from parent.
    */
+  public function get_all_fields()
+  {
+    $raw_fields = get_object_vars($this);
+    return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>''));
+  }
+
+  /**
+   * Retuns only declared fields on the specific class and do not includes
+   * fields declared on parent classes. It is usedul to calculate multiple
+   * table inheritance structures.
+   */
+  public function get_declared_fields()
+  {
+    $parent_class = $this->get_parent();
+    $parent = $this->__manager->getDefinition($parent_class);
+
+    $mine = $this->get_all_fields();
+    $parents = $parent->get_all_fields();
+
+    return array_diff_key($mine, $parents);
+  }
+
+  public function is_has_one($field)
+  {
+    return array_key_exists($field, $this->__one);
+  }
+
+  public function is_has_many($field)
+  {
+    return array_key_exists($field, $this->__many);
+  }
+
+  public function is_simple_field($field)
+  {
+    $fields = $this->get_all_fields();
+    return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field);
+  }
+
+  public function get_has_one($field)
+  {
+    if (!$this->is_has_one($field))
+    {
+      throw new \Exception('Has one '. $field .' doesnt exists');
+    }
+    return $this->__one[$field];
+  }
+  public function get_has_many($field)
+  {
+    if (!$this->is_has_many($field))
+    {
+      throw new \Exception('Has many '. $field .' doesnt exists');
+    }
+    return $this->__many[$field];
+  }
+
+  public function has_many_exists($class)
+  {
+    foreach ($this->__many as $name => $rel)
+    {
+      if ($rel->class == $class) return true;
+    }
+    return false;
+  }
+
+  public function is_one_to_many($hmattr)
+  {
+    $hmrel = $this->get_has_many($hmattr);
+
+    $assoc_ph = $this->__manager->getDefinition($hmrel->class);
+
+    // if assoc has many class, has many of self, is many to many
+    if ($assoc_ph->has_many_exists(get_class($this)))
+    {
+      return false;
+    }
+
+    // if assoc has many, has one of self or doesn't have any other explicit
+    // association with self, then this is one to many from self
+    // no need to check the cases since the only exception is the many to many
+    // checked above
+
+    return true;
+  }
+
+  public function is_many_to_many($hmattr)
+  {
+    return !$this->is_one_to_many($hmattr);
+  }
+
+
+  /**
+   * Configured from PhersistentDefManager.
+   */
+  public function set_manager($man)
+  {
+    $this->__manager = $man;
+  }
+
+  /*
+  public function __call($method, $args)
+  {
+    echo "call $method\n";
+    if ( $this->{$method} instanceof Closure ) {
+      return call_user_func_array($this->{$method},$args);
+    } else {
+      return parent::__call($method, $args);
+    }
+  }
+  */
 }
 
 ?>
