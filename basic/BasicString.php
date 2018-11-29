@@ -21,11 +21,20 @@ class BasicString {
 
   static function removePrefix($str, $prefix)
   {
-    if (substr($str, 0, strlen($prefix)) == $prefix)
+    if (substr($str, 0, strlen($prefix)) == $prefix) // if it is prefix
     {
       $str = substr($str, strlen($prefix));
     }
 
+    return $str;
+  }
+
+  static function removeSuffix($str, $suffix)
+  {
+    if (self::endsWith($str, $suffix))
+    {
+      return substr($str, 0, strlen($str)-strlen($suffix));
+    }
     return $str;
   }
 }

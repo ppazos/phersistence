@@ -170,7 +170,7 @@ assert($d->sizeHm_e() == 3);
 $a->setA_ho_d($d);
 $a->save();
 
-print_r($a);
+//print_r($a);
 
 $d->removeFromHm_e($e);
 assert($d->sizeHm_e() == 2);

@@ -6,6 +6,11 @@ use \StdClass;
 
 class Phersistent {
 
+  // injected attrs
+  public $id = self::INT;
+  public $deleted = self::BOOLEAN;
+  public $class = self::TEXT;
+
   // Basic attribute types
   const INT    = 'int';
   const LONG    = 'long';
@@ -141,9 +146,12 @@ class Phersistent {
 
     // inject properties
     $ins->phclass = $this;
+
+    /*
     $ins->id = null;     // Default value
     $ins->deleted = false; // Default value
     $ins->class = $ins->getClass();
+    */
 
     // Inject attributes declared on concrete subclass on new instance
     // This reads the own and inherited attributes of the custom Phersistent class
@@ -235,6 +243,10 @@ class Phersistent {
       $ins->{$attr} = NULL;
     }
     */
+
+    // Default values
+    $ins->deleted = false;
+    $ins->class = $ins->getClass();
 
     return $ins;
   }
@@ -370,13 +382,39 @@ class Phersistent {
   // type checks
   public function is_boolean($attr)
   {
-    if (!property_exists($this, $attr)) throw new \Exception('Attribute "'. $attr .'" is not declared on class '. get_class($this));
+    if (!property_exists($this, $attr))
+    {
+      // check if attr is an injected FK, if it is injected, is not declared on the PH!
+      // xxx_id ends with id and xxx is a has_one
+      if (\basic\BasicString::endsWith($attr, '_id') && $this->is_has_one(\basic\BasicString::removeSuffix($attr, '_id')))
+      {
+        return false; // FK attr is INT
+      }
+      else
+      {
+        throw new \Exception('Attribute "'. $attr .'" is not declared on class '. get_class($this));
+      }
+    }
+
     return $this->{$attr} == self::BOOLEAN;
   }
 
   public function is_number($attr)
   {
-    if (!property_exists($this, $attr)) throw new \Exception('Attribute '. $attr .' is not declared on class '. get_class($this));
+    if (!property_exists($this, $attr))
+    {
+      // check if attr is an injected FK, if it is injected, is not declared on the PH!
+      // xxx_id ends with id and xxx is a has_one
+      if (\basic\BasicString::endsWith($attr, '_id') && $this->is_has_one(\basic\BasicString::removeSuffix($attr, '_id')))
+      {
+        return true; // FK attr is INT
+      }
+      else
+      {
+        throw new \Exception('Attribute '. $attr .' is not declared on class '. get_class($this));
+      }
+    }
+
     return in_array($this->{$attr}, array(self::INT, self::LONG, self::FLOAT, self::DOUBLE));
   }
 
