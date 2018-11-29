@@ -88,6 +88,10 @@ if (!$d->table_exists('provider'))
   $d->create_table('provider'); // adds the id column
   $d->add_column('provider', 'class', 'varchar(255)', false);
   $d->add_column('provider', 'deleted', 'boolean', false);
+
+  $d->add_column('provider', 'is_amplify_provider', 'boolean', false);
+  $d->add_column('provider', 'is_rendering_provider', 'boolean', false);
+
   $d->add_column('provider', 'name', 'varchar(255)', false);
   $d->add_column('provider', 'contact_id', 'int', false);
   $d->add_column('provider', 'address_id', 'int', false);

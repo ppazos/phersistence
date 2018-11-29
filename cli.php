@@ -4,6 +4,18 @@ $_BASE = __DIR__ .'/';
 
 //print_r($argv);
 
+$a = '2342456456456314723';
+var_dump(PHP_INT_MAX);
+var_dump((int)$a);
+$a = $a + 0;
+var_dump($a);
+
+if (count($argv) < 2)
+{
+  echo 'No command'. PHP_EOL;
+  exit;
+}
+
 $command = $argv[1];
 
 switch ($command)

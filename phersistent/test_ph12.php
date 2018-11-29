@@ -181,6 +181,19 @@ assert( $D->is_one_to_many('hm_e') );
 assert( !$E->is_one_to_many('hm_f') );
 assert( $E->is_many_to_many('hm_f') );
 
+
+assert( !$A->is_boolean('a_field_1') );
+assert( $A->is_number('a_field_1') );
+try
+{
+  $A->is_boolean('sdfsdsdfs'); // attr doesnt exists
+  assert(false); // never reaches this point
+}
+catch (Exception $e)
+{
+  echo $e->getMessage() . PHP_EOL;
+}
+
 //print_r($C->get_all_fields());
 //print_r($C->get_declared_fields());
 

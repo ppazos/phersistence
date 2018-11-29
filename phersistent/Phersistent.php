@@ -367,6 +367,20 @@ class Phersistent {
   }
 
 
+  // type checks
+  public function is_boolean($attr)
+  {
+    if (!property_exists($this, $attr)) throw new \Exception('Attribute "'. $attr .'" is not declared on class '. get_class($this));
+    return $this->{$attr} == self::BOOLEAN;
+  }
+
+  public function is_number($attr)
+  {
+    if (!property_exists($this, $attr)) throw new \Exception('Attribute '. $attr .' is not declared on class '. get_class($this));
+    return in_array($this->{$attr}, array(self::INT, self::LONG, self::FLOAT, self::DOUBLE));
+  }
+
+
   /**
    * Configured from PhersistentDefManager.
    */

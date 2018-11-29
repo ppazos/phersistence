@@ -54,6 +54,16 @@ class PhInstance {
   public function set($attr, $value)
   {
     // TODO: type check against definition
+
+    if ($this->phclass->is_boolean($attr) && !is_bool($value))
+    {
+      $value = boolval($value);
+    }
+    else if ($this->phclass->is_number($attr) && is_string($value))
+    {
+      // TODO: check for PHP_INT_MAX since the value can be truncated
+      $value = $value + 0; // converts the value to a number
+    }
     $this->{$attr} = $value;
   }
 
