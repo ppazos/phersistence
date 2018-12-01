@@ -145,6 +145,9 @@ echo "\n";
 // idem ^
 //print_r(get_object_vars($C));
 
+//print_r($E);
+
+
 echo $C->get_parent() . PHP_EOL; // B OK!
 echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
 
@@ -172,6 +175,15 @@ $a->save();
 
 //print_r($a);
 
+// should try to update
+//$a->setA_field_1(123);
+$e->setE_field_1(666); // updates the e in a->d->es
+$d->addToHm_e($E->create(array('e_field_1'=>333))); // mix of updats with this save
+$a->save();
+
+//print_r($a);
+
+/*
 $d->removeFromHm_e($e);
 assert($d->sizeHm_e() == 2);
 
@@ -193,6 +205,7 @@ catch (Exception $e)
 {
   echo $e->getMessage() . PHP_EOL;
 }
+*/
 
 //print_r($C->get_all_fields());
 //print_r($C->get_declared_fields());

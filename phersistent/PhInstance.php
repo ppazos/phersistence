@@ -40,7 +40,7 @@ class PhInstance {
 
   public function get($attr)
   {
-    // is has one, and is null but the FK is not ull, lazy load!
+    // is has one, and is null but the FK is not null, lazy load!
     if ($this->phclass->is_has_one($attr) && $this->{$attr} == null && $this->{$attr.'_id'} != null)
     {
       $has_one_class = $this->phclass->{$attr}; //get_has_one($attr)->class;
@@ -48,6 +48,14 @@ class PhInstance {
       $class = $parts[count($parts)-1];
       $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
     }
+
+    if (!property_exists($this, $attr))
+    {
+      echo $this->getClass() . PHP_EOL;
+      //debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+      //print_r($this);
+    }
+
     return $this->{$attr};
   }
 
@@ -316,6 +324,7 @@ class PhInstance {
    */
   public function setBacklinkId($class, $field, $toclass, $backlinkName, $id)
   {
+    //echo 'setBacklinkId on '. $toclass .' '. $backlinkName . PHP_EOL;
     // TODO: use the class and field to check if there is a declaration of
     // a has many on the class to the toclass.
     $this->{$backlinkName} = $id;

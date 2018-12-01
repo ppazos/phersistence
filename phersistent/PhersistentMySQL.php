@@ -21,42 +21,54 @@ class PhersistentMySQL {
     //$loop = time()."_". rand()."_". rand();
     //$table = $this->phi_to_data($phi);
     //print_r($table);
-    $id = $this->save_instance_recursive($phi);
+    if ($phi->getId() == null)
+    {
+      $id = $this->save_instance_recursive($phi);
+    }
+    else
+    {
+      $id = $this->update_instance_recursive($phi);
+    }
 
     return $id;
   }
 
   private function save_instance_recursive($phi)
   {
+    $id = null;
+
     // can be an empty array derived from a null has one
     // this wont save anything so wont return an id
     //if (count($table) == 0) return null;
 
-    // TODO: check if id is null, if not should except since this is save not update
-
+    // 1. save/update has ones first to save the FK in the current object
     $hones = $phi->getAllHasOne();
     foreach ($hones as $attr=>$value)
     {
+      // if the object is null, then the FK should be set to null
+      // TODO: it would be better to do it on the Phi->set()
       if ($value == null)
       {
         $phi->set($attr.'_id', null); // FK should be emptied
       }
       else
       {
+        // the has one might be already saved, if not => save, else => update
         if ($value->getId() == null) // insert
         {
           $idho = $this->save_instance_recursive($value);
-          $value->setId($idho);                   // id set on associated instance
-          $phi->set($attr .'_id', $idho);
-          //$table['columns'][$attr .'_id'] = $idho; // FK set on owner
+          $value->setId($idho);           // id set on associated instance
+          $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
         {
-          // TBD: update if dirty, avoid if not dirty
+          $idho = $this->update_instance_recursive($value);
+          $phi->set($attr .'_id', $idho); // FK set on owner
         }
       }
     }
 
+    // 2. save the current object
     $table = $this->phi_to_data($phi);
 
     /*
@@ -78,20 +90,36 @@ class PhersistentMySQL {
     */
 
     // insert with column values
-    $r = $this->driver->execute($this->table_to_insert($table));
+    $insert_query = $this->table_to_insert($table);
+    $r = $this->driver->execute($insert_query);
+
     if($r === 1)
     {
       $id = $this->driver->last_insert_id();
 
+      // 3. save the has manies one_to_many, to store the backlink to the current phi->id
+      // FIXME: missing check for one_to_many and many_to_many
       $hmanies = $phi->getAllHasMany();
       foreach ($hmanies as $attr=>$collection)
       {
         foreach ($collection as $item)
         {
           $backlink = $this->backlink_name($phi->getClass(), $attr);
+
+          //echo 'backlink name: '. $backlink . PHP_EOL;
+
           $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
-          $hmid = $this->save_instance_recursive($item);
-          $item->setId($hmid);
+
+          // save or update has many item
+          if ($item->getId() == null)
+          {
+            $hmid = $this->save_instance_recursive($item);
+            $item->setId($hmid);
+          }
+          else
+          {
+            $this->update_instance_recursive($item);
+          }
         }
       }
 
@@ -113,15 +141,82 @@ class PhersistentMySQL {
       }
       */
 
+      // 4.
       // TODO: save many to many in join table, might need to detect the owner side
 
       $phi->setId($id);
-
-      return $id;
     }
 
-    return null;
+    return $id;
   }
+
+  private function update_instance_recursive($phi)
+  {
+    $id = $phi->getId();
+
+    // 1. save/update has ones first to save the FK in the current object
+    $hones = $phi->getAllHasOne();
+    foreach ($hones as $attr=>$value)
+    {
+      // if the object is null, then the FK should be set to null
+      // TODO: it would be better to do it on the Phi->set()
+      if ($value == null)
+      {
+        $phi->set($attr.'_id', null); // FK should be emptied
+      }
+      else
+      {
+        // the has one might be already saved, if not => save, else => update
+        if ($value->getId() == null) // insert
+        {
+          $idho = $this->save_instance_recursive($value);
+          $value->setId($idho);           // id set on associated instance
+          $phi->set($attr .'_id', $idho); // FK set on owner
+        }
+        else
+        {
+          $idho = $this->update_instance_recursive($value);
+          $phi->set($attr .'_id', $idho); // FK set on owner
+        }
+      }
+    }
+
+    $table = $this->phi_to_data($phi);
+    $update_query = $this->table_to_update($table);
+    $r = $this->driver->execute($update_query);
+
+    // $r will be 0 if all the values are the same as the one s in the database
+
+    //if($r === 1)
+    //{
+      $hmanies = $phi->getAllHasMany();
+      foreach ($hmanies as $attr=>$collection)
+      {
+        foreach ($collection as $item)
+        {
+          $backlink = $this->backlink_name($phi->getClass(), $attr);
+
+          //echo 'backlink name: '. $backlink . PHP_EOL;
+
+          $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
+
+          // save or update has many item
+          if ($item->getId() == null)
+          {
+            $hmid = $this->save_instance_recursive($item);
+            $item->setId($hmid);
+          }
+          else
+          {
+            $this->update_instance_recursive($item);
+          }
+        }
+      }
+    //}
+
+    return $id;
+  }
+
 
   /**
    * Retrieves the phersistent instance from the database.
@@ -258,6 +353,8 @@ class PhersistentMySQL {
       // FIXME: need to check the type of value and add or not quotes depending
       // on the type, e.g. numeric wont have quotes
 
+
+      // TODO: refactor to function value to db
       if (is_bool($val))
       {
         $values_string .= ($val ? 'true' : 'false');
@@ -282,6 +379,38 @@ class PhersistentMySQL {
     return $q;
   }
 
+  private function table_to_update($table)
+  {
+    $set = '';
+    foreach ($table['columns'] as $col => $val)
+    {
+      // class and id wont be updated
+      if ($col == 'class') continue;
+      if ($col == 'id') continue;
+
+      // TODO: refactor to function value to db
+      if (is_bool($val))
+      {
+        $val = ($val ? 'true' : 'false');
+      }
+      else if (!is_string($val) && is_numeric($val)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+      {
+        $val = $val;
+      }
+      else
+      {
+        $val = '"'. $val .'"';
+      }
+
+      $set .= $col .'='. $val .', ';
+    }
+
+    $set = substr($set, 0, -2);
+
+    $q = 'UPDATE '. $table['table_name'] .' SET '. $set .' WHERE id='. $table['columns']['id'];
+
+    return $q;
+  }
 
   /**
    * ORM
@@ -306,6 +435,7 @@ class PhersistentMySQL {
     $table['many_join'] = array();
 
     $fields = $phi->getDefinition()->get_all_fields();
+
     foreach ($fields as $field => $type)
     {
       if ($phi->getDefinition()->is_has_many($field)) // has many
@@ -323,14 +453,14 @@ class PhersistentMySQL {
 
             // inject backlink name on columns
             // will be empty until we save the current phi and get an id
-            $table['many_back'][$backlink_name][$i]['columns'][$backlink_name] = null;
+            // when saving the one side, it sets the backlink id to the many side,
+            // so the hmphi should have the id of the container object
+            $table['many_back'][$backlink_name][$i]['columns'][$backlink_name] = $phi->getId();
           }
-
-          // TODO: to set the backlink value, this instance should be saved first
         }
         else // many to many uses join table
         {
-          // TBD
+          // TBD: manage join table
         }
       }
       else if ($phi->getDefinition()->is_has_one($field)) // has one
@@ -353,9 +483,13 @@ class PhersistentMySQL {
     }
 
     // columns injected on instances
+    /*
     $table['columns']['id'] = $phi->getId();
     $table['columns']['deleted'] = $phi->getDeleted();
     $table['columns']['class'] = $phi->getClass();
+    */
+
+    //print_r($table);
 
     return $table;
   }
@@ -423,7 +557,7 @@ class PhersistentMySQL {
   /**
    * name of the column for the backlink FK for one to many relationships.
    */
-  private function backlink_name($class, $field)
+  public function backlink_name($class, $field)
   {
     // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
     // then $backlink_name = current_class_assoc_id
