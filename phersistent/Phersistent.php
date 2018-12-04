@@ -266,6 +266,11 @@ class Phersistent {
     return $this->__manager->listInstances(get_class($this), $max, $offset);
   }
 
+  public function list_has_many($owner, $hm_attr, $hm_class)
+  {
+    return $this->__manager->listHasManyInstances($owner, $hm_attr, $hm_class);
+  }
+
   public function save($phi)
   {
     return $this->__manager->saveInstance($phi);
@@ -355,6 +360,11 @@ class Phersistent {
 
   public function is_one_to_many($hmattr)
   {
+    if (!$this->is_has_many($hmattr))
+    {
+      return false; // it is not even a has many
+    }
+
     $hmrel = $this->get_has_many($hmattr);
 
     $assoc_ph = $this->__manager->getDefinition($hmrel->class);

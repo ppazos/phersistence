@@ -43,10 +43,20 @@ class PhInstance {
     // is has one, and is null but the FK is not null, lazy load!
     if ($this->phclass->is_has_one($attr) && $this->{$attr} == null && $this->{$attr.'_id'} != null)
     {
-      $has_one_class = $this->phclass->{$attr}; //get_has_one($attr)->class;
+      $has_one_class = $this->phclass->{$attr}; //same as $this->phclass->get_has_one($attr)->class;
       $parts = explode('\\', $has_one_class);
       $class = $parts[count($parts)-1];
       $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
+    }
+    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr}->size() == 0 && $this->getId() != null) // can lazy load only if current instance has id
+    {
+      //$hm_class = $this->phclass->get_has_many($attr)->class;
+      //$parts = explode('\\', $has_one_class);
+      //$class = $parts[count($parts)-1];
+      // lazy load has many for one to many
+      $hm_class = $this->phclass->get_has_many($attr)->class;
+      $instances = $this->phclass->list_has_many($this, $attr, $hm_class);
+      $this->{$attr}->add_all($instances);
     }
 
     if (!property_exists($this, $attr))

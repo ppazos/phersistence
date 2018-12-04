@@ -266,14 +266,56 @@ class PhersistentMySQL {
 
   public function list_instances($class_name, $max, $offset)
   {
-    $parts = explode('\\', $class_name);
-    $class = $parts[count($parts)-1];
+    //$parts = explode('\\', $class_name);
+    //$class = $parts[count($parts)-1];
+    $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
 
     $table_name = $this->get_table_name($phi);
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' LIMIT '. $offset .', '. $max);
+    while ($row = $r->fetch_assoc())
+    {
+      // FIXME: table is really row or record
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $instances = array();
+    foreach($records as $table)
+    {
+      $phi = $GLOBALS[$class]->create();
+      $phi->setProperties($table['columns']);
+
+      $phi->setId($table['columns']['id']);
+      $phi->setClass($table['columns']['class']);
+      $phi->setDeleted($table['columns']['deleted']);
+
+      $instances[] = $phi;
+    }
+    return $instances;
+  }
+
+  /**
+   * Get one_to_many instances. A has_many B as "bs"
+   * $owner_id is A.id, $class_name is B, $backlink_name is a_bs_back
+   * This loads all the B in A.bs with backlink_name = owner_id
+   * Who calls this function will assign the results in the correspondent collection A.bs
+   */
+  public function list_hasmany_instances($owner_id, $class_name, $backlink_name)
+  {
+    // Starts equals to list_instances, que query is the difference
+    // Maybe both functions can be refactored
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+
+    $table_name = $this->get_table_name($phi);
+
+    $records = array();
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE '. $backlink_name .'='. $owner_id);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
@@ -438,6 +480,8 @@ class PhersistentMySQL {
 
     foreach ($fields as $field => $type)
     {
+      if ($field == 'table') continue; // table is a reserved attr name to specify custom table names
+
       if ($phi->getDefinition()->is_has_many($field)) // has many
       {
         // one to many uses back links from the many side
@@ -501,24 +545,8 @@ class PhersistentMySQL {
    */
   public function data_to_phi($table)
   {
-    //echo $table['columns']['class'] . PHP_EOL;
-
-    $parts = explode('\\', $table['columns']['class']);
-    $class = $parts[count($parts)-1];
-
-    //print_r($GLOBALS[$class]);
-    //print_r($table['columns']);
-
+    $class = $this->full_class_name_to_simple_name($table['columns']['class']);
     $phi = $GLOBALS[$class]->create($table['columns']);
-
-    //global ${$class};
-    //$phi = ${$class}->create();
-    /*
-    foreach ($table['columns'] as $col => $value)
-    {
-
-    }
-    */
 
     return $phi;
   }
@@ -528,10 +556,18 @@ class PhersistentMySQL {
     // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
     // TODO: consider table name override declared on class
 
+
+
     // ***************************************************
     // For now inheritance ORM is all STI.
     // So need to check for parent = Phersistent, and that class will be the table name
     $ph = $phi->getDefinition();
+
+    // table name declared in the class
+    if (property_exists($ph, 'table'))
+    {
+      return $ph->table;
+    }
 
     // go up in the inheritance until finding Phersistent
     while ($ph->get_parent() != 'phersistent\Phersistent')
@@ -562,7 +598,8 @@ class PhersistentMySQL {
     // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
     // then $backlink_name = current_class_assoc_id
     // and that column should exist on the OTHER_CLASS table
-    return strtolower($class .'_'. $field .'_back');
+    $simple_class = $this->full_class_name_to_simple_name($class);
+    return strtolower($simple_class .'_'. $field .'_back');
   }
 
   /**
@@ -609,6 +646,17 @@ class PhersistentMySQL {
       default:
         throw new \Exception('Data type '. $phersistent_type .' not supported');
     }
+  }
+
+
+  /**
+   * $fullclass might include namespaces like \a\b\Class, this returns Class
+   */
+  private function full_class_name_to_simple_name($fullclass)
+  {
+    $parts = explode('\\', $fullclass);
+    $class = $parts[count($parts)-1];
+    return $class;
   }
 }
 

@@ -181,6 +181,14 @@ $e->setE_field_1(666); // updates the e in a->d->es
 $d->addToHm_e($E->create(array('e_field_1'=>333))); // mix of updats with this save
 $a->save();
 
+//print_r($A);
+
+// test get hasmany lazy
+$dloaded = $D->get(1);
+assert($dloaded->getHm_e()->size() == 4); // returns PhCollection
+assert($dloaded->getHm_e()[0]->isInstanceOf(get_class($E)));
+//print_r($dloaded);
+
 //print_r($a);
 
 /*

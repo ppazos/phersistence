@@ -87,7 +87,7 @@ class PhersistentDefManager {
         }
         else
         {
-          // Mayn to many might need the backlinks to be declared in the join table class
+          // Many to many might need the backlinks to be declared in the join table class
           //echo get_class($defins) .'.'. $attr. ' many to many '. PHP_EOL;
         }
       }
@@ -152,6 +152,13 @@ class PhersistentDefManager {
   public function listInstances($class_name, $max, $offset)
   {
     return $this->__ph_db->list_instances($class_name, $max, $offset);
+  }
+
+  public function listHasManyInstances($owner, $hm_attr, $hm_class)
+  {
+    $backlink_name = $this->__ph_db->backlink_name($owner->getClass(), $hm_attr);
+
+    return $this->__ph_db->list_hasmany_instances($owner->getId(), $hm_class, $backlink_name);
   }
 }
 
