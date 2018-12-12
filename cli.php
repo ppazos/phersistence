@@ -29,10 +29,10 @@ switch ($command)
     require_once('tests/schema.php');
   break;
   case "test_ph11":
-    require_once('phersistent/test_ph11.php');
+    require_once('tests/test_ph11.php');
   break;
   case "test_ph12":
-    require_once('phersistent/test_ph12.php');
+    require_once('tests/test_ph12.php');
   break;
   case "test_amplify":
     require_once('tests/test_amplify.php');
