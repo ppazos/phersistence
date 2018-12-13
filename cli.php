@@ -25,6 +25,9 @@ switch ($command)
   case "test":
     require_once('tests/test.php');
   break;
+  case "validations":
+    require_once('tests/test_validations.php');
+  break;
   case "schema":
     require_once('tests/schema.php');
   break;

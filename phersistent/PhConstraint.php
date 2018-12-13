@@ -44,7 +44,7 @@ class ValidationError {
 
   public function getMessage()
   {
-    // TODO
+    return "On ". $this->class ."->". $this->attr .", ". $this->constraint->getErrorMessage($this->value);
   }
 }
 
@@ -147,36 +147,47 @@ class MaxConstraint extends PhConstraint {
   {
     return "" . $this->max;
   }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." should be lower or equal than ". $this->max;
+  }
 }
 
 class MinConstraint extends PhConstraint {
 
-   protected $min;
+  protected $min;
 
-   public function __construct( $min )
-   {
-      $this->min = $min;
-   }
-   public function validate($class, $attr, $value)
-   {
-      if (!is_numeric($value)) return false; //throw new Exception("La restriccion Min no se aplica al valor: " . $value);
+  public function __construct( $min )
+  {
+    $this->min = $min;
+  }
 
-      if ((float)$value >= $this->min) return true;
-      else
-      {
-        return new ValidationError($class, $attr, $value, $this);
-      }
-   }
+  public function validate($class, $attr, $value)
+  {
+    if (!is_numeric($value)) return false; //throw new Exception("La restriccion Min no se aplica al valor: " . $value);
 
-   public function getValue()
-   {
-      return $this->min;
-   }
+    if ((float)$value >= $this->min) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
+  }
 
-   public function __toString()
-   {
-      return "" . $this->min;
-   }
+  public function getValue()
+  {
+    return $this->min;
+  }
+
+  public function __toString()
+  {
+    return "" . $this->min;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." should be higher or equal than ". $this->min;
+  }
 }
 
 class Between extends PhConstraint {
@@ -390,7 +401,7 @@ class InList extends PhConstraint {
   {
     $this->array = $array;
   }
-  
+
   public function validate($class, $attr, $value)
   {
     if (in_array($value, $this->array)) return true;
