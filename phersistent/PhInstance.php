@@ -339,6 +339,30 @@ class PhInstance {
     // a has many on the class to the toclass.
     $this->{$backlinkName} = $id;
   }
+
+  // FIXME: get constraints from the parent, since we also process attrs inherited
+  // TODO: if a constraint of the same type for the same attr is defined on parent
+  //       and child class, the constraint on the child overrides the parent constraint
+  public function validate()
+  {
+    $errors = array();
+    $simple_fields = $this->phclass->get_all_fields();
+    foreach ($simple_fields as $attr=>$type)
+    {
+      $cs = $this->phclass->get_constraints($attr);
+      foreach ($cs as $c)
+      {
+        if (($e = $c->validate($this->getClass(), $attr, $this->get($attr))) !== true)
+        {
+          if (!isset($errors[$attr])) $errors[$attr] = array();
+          $errors[$attr][] = $e;
+        }
+      }
+    }
+
+    if (count($errors) == 0) return true;
+    return $errors;
+  }
 }
 
 ?>

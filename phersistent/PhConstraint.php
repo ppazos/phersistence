@@ -81,6 +81,11 @@ class MaxLengthConstraint extends PhConstraint {
   {
     return "" . $this->max;
   }
+
+  public function getErrorMessage($value)
+  {
+    return "the length of the assigned value '". $value ." (". strlen($value) .") should lower or equal than ". $this->max;
+  }
 }
 
 class MinLengthConstraint extends PhConstraint {
@@ -115,6 +120,11 @@ class MinLengthConstraint extends PhConstraint {
   public function getValue()
   {
     return $this->min;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the length of the assigned value '". $value ."' (". strlen($value) .") should greater or equal than ". $this->min;
   }
 }
 
@@ -186,7 +196,7 @@ class MinConstraint extends PhConstraint {
 
   public function getErrorMessage($value)
   {
-    return "the assigned value ". $value ." should be higher or equal than ". $this->min;
+    return "the assigned value ". $value ." should be greater or equal than ". $this->min;
   }
 }
 
@@ -203,7 +213,11 @@ class Between extends PhConstraint {
 
   public function validate($class, $attr, $value)
   {
-    if ($this->min->validate($value) && $this->max->validate($value)) return true;
+    if ($this->min->validate($class, $attr, $value) === true &&
+        $this->max->validate($class, $attr, $value) === true)
+    {
+      return true;
+    }
     else
     {
       return new ValidationError($class, $attr, $value, $this);
@@ -217,30 +231,47 @@ class Between extends PhConstraint {
 
   public function getMin() { return $this->min->getValue(); }
   public function getMax() { return $this->max->getValue(); }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." should be in ". $this->min ."..". $this->max;
+  }
 }
 
 class EmailConstraint extends Matches {
 
-  const email_pattern = '/^[a-z]+[a-z0-9\.|\-|_]*@([a-z]+[a-z0-9\.|\-|_]*){1,4}\.[a-z]{2,4}$/';
+  // https://regex101.com/r/9kAwoY/1
+  const email_pattern = '/^[a-z]+[a-z0-9_\.\-\+]*@((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.))+([a-z0-9])((?:[a-z0-9-]*[a-z0-9])?)$/';
 
   public function __construct()
   {
     parent::__construct(self::email_pattern);
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value '". $value ."' is not a valid email address";
   }
 }
 
 class DateConstraint extends Matches {
 
-  const date_pattern = '/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/';
+  // On Class->attr, the assigned value 'abcdxx' has not a valid datetime format YYYY-MM-DD hh:mm:ss
+  const date_pattern = '/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])$/';
 
   public function __construct()
   {
-    parent::__construct(self::email_pattern);
+    parent::__construct(self::date_pattern);
   }
 
   public function __toString()
   {
     return 'YYYY-MM-DD';
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value '". $value ."' has not a valid date format YYYY-MM-DD";
   }
 }
 
@@ -250,12 +281,17 @@ class DateTimeConstraint extends Matches {
 
   public function __construct()
   {
-    parent::__construct(self::email_pattern);
+    parent::__construct(self::datetime_pattern);
   }
 
   public function __toString()
   {
     return 'YYYY-MM-DD hh:mm:ss';
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value '". $value ."' has not a valid datetime format YYYY-MM-DD hh:mm:ss";
   }
 }
 

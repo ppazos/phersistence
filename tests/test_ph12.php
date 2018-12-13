@@ -94,6 +94,16 @@ class A extends \phersistent\Phersistent {
   public $a_field_1 = self::INT;
   public $a_field_2 = self::TEXT;
   public $a_ho_d = D::class;
+
+  function constraints()
+  {
+    return array(
+      'a_field_1' => array(
+        \phersistent\PhConstraint::max(10)
+      )
+    );
+  }
+
 }
 
 class B extends A {
@@ -146,6 +156,26 @@ echo "\n";
 //print_r(get_object_vars($C));
 
 //print_r($E);
+
+$aa = $A->create(array('a_field_1'=>0));
+$es = $aa->validate();
+
+assert($es === true);
+
+$aa->setA_field_1(10);
+$es = $aa->validate();
+
+assert($es === true);
+
+$aa->setA_field_1(11);
+$es = $aa->validate();
+
+assert($es !== true);
+assert(is_array($es));
+echo $es['a_field_1'][0]->getMessage() . PHP_EOL;
+
+
+exit;
 
 
 echo $C->get_parent() . PHP_EOL; // B OK!

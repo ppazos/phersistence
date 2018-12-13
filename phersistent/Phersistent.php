@@ -30,6 +30,7 @@ class Phersistent {
   private $__many = array();
   private $__one = array();
   private $__manager;
+  protected $__constraints;
   protected $__functions = array();
 
   /**
@@ -50,7 +51,7 @@ class Phersistent {
       //echo $attr .PHP_EOL;
 
       // avoid Phersistent fields
-      if ($attr == '__one' || $attr == '__many' || $attr == '__functions') continue;
+      if ($attr == '__one' || $attr == '__many' || $attr == '__functions' || $attr == '__constraints') continue;
 
       if (is_subclass_of($type, '\phersistent\Phersistent'))
       {
@@ -83,6 +84,16 @@ class Phersistent {
         }
       }
     }
+
+    // TODO: merge constraints from parent classes and override parent with children constraints
+    $this->__constraints = $this->constraints();
+  }
+
+  // This will be overriden by class declarations and return constraints for fields
+  // owned or inherited.
+  public function constraints()
+  {
+    return array();
   }
 
   public function functionExists($func)
@@ -297,7 +308,7 @@ class Phersistent {
   public function get_all_fields()
   {
     $raw_fields = get_object_vars($this);
-    return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>''));
+    return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>'', '__constraints'=>''));
   }
 
   /**
@@ -435,6 +446,17 @@ class Phersistent {
   public function set_manager($man)
   {
     $this->__manager = $man;
+  }
+
+
+  public function get_constraints($attr)
+  {
+    if (array_key_exists($attr, $this->__constraints))
+    {
+      return $this->__constraints[$attr];
+    }
+
+    return array();
   }
 
   /*
