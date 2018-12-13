@@ -57,11 +57,18 @@ class MaxLengthConstraint extends PhConstraint {
     $this->max = $max;
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
-    if ($value === NULL) return true; // Si es null no supera el valor maximo.
+    // null values comply with this constraint
+    if ($value === NULL) return true;
+
     if (!is_string($value)) throw new Exception("La restriccion MaxLength no se aplica al valor: " . $value);
-    return (strlen($value) <= $this->max);
+
+    if (strlen($value) <= $this->max) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   // Necesito el valor para poder generar el esquema.
@@ -85,11 +92,19 @@ class MinLengthConstraint extends PhConstraint {
     $this->min = $min;
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
-    if ($value === NULL ) return false; // FIXME: si es null, y min es 0, no deberia tirar true?
+    // null values never comply with this constraint at least the min is 0
+    // strlen(null) == 0 in PHP
+    if ($value === NULL && $this->min > 0) return false;
+
     if (!is_string($value)) throw new Exception("La restriccion MinLength no se aplica al valor: " . $value);
-    return (strlen($value) >= $this->min);
+
+    if (strlen($value) >= $this->min) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   public function __toString()
@@ -112,10 +127,15 @@ class MaxConstraint extends PhConstraint {
     $this->max = $max;
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
     if (!is_numeric($value)) return false; // throw new Exception("La restriccion Max no se aplica al valor: " . $value);
-    return ((float)$value <= $this->max);
+
+    if ((float)$value <= $this->max) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   public function getValue()
@@ -137,15 +157,15 @@ class MinConstraint extends PhConstraint {
    {
       $this->min = $min;
    }
-   public function validate( $value )
+   public function validate($class, $attr, $value)
    {
       if (!is_numeric($value)) return false; //throw new Exception("La restriccion Min no se aplica al valor: " . $value);
 
-      // Se que es numeric entonces los transformo a la clase mas generica de numner que es double para poder comparar.
-
-      // FIXME: PROBLEMAS SI EL DATO QUE VIENE ES UN STRING QUE REPRESENTA UN NUEMRO!!
-      //if (!is_int($value)) throw new Exception("La restriccion Min no se aplica al valor: " . $value);
-      return ((float)$value >= $this->min);
+      if ((float)$value >= $this->min) return true;
+      else
+      {
+        return new ValidationError($class, $attr, $value, $this);
+      }
    }
 
    public function getValue()
@@ -170,9 +190,13 @@ class Between extends PhConstraint {
     $this->max = new MaxConstraint($max);
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
-    return ($this->min->validate($value) && $this->max->validate($value));
+    if ($this->min->validate($value) && $this->max->validate($value)) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   public function __toString()
@@ -190,7 +214,7 @@ class EmailConstraint extends Matches {
 
   public function __construct()
   {
-    parent::__construct( self::email_pattern );
+    parent::__construct(self::email_pattern);
   }
 }
 
@@ -200,7 +224,7 @@ class DateConstraint extends Matches {
 
   public function __construct()
   {
-    parent::__construct( self::email_pattern );
+    parent::__construct(self::email_pattern);
   }
 
   public function __toString()
@@ -215,7 +239,7 @@ class DateTimeConstraint extends Matches {
 
   public function __construct()
   {
-    parent::__construct( self::email_pattern );
+    parent::__construct(self::email_pattern);
   }
 
   public function __toString()
@@ -282,12 +306,17 @@ class Matches extends PhConstraint {
     $this->regexp = $regexp;
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
     if ($value == NULL) return false; // Si es NULL ni siquiera le puedo aplicar la restriccion porque es para strings
 
     if (!is_string($value)) throw new Exception("La restriccion ". get_class($this) ." no se aplica al valor: " . $value);
-    return preg_match ( $this->regexp, $value );
+
+    if (preg_match($this->regexp, $value)) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   public function getValue()
@@ -316,10 +345,13 @@ class Nullable extends PhConstraint {
     return $this->nullable;
   }
 
-  public function validate( $value )
+  public function validate($class, $attr, $value)
   {
-    if ( !$this->nullable ) return ($value != NULL);
-    return true;
+    if ($this->nullable || $value != NULL) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 }
 
@@ -331,12 +363,22 @@ class BlankConstraint extends PhConstraint {
   {
     $this->blank = $blank;
   }
-  public function validate( $value )
+
+  public function validate($class, $attr, $value)
   {
     if ($value === NULL) return true; // blank o no blank no dice nada de si es null o no null, ese chekeo se debe hacer en otro lado.
+
     if (!is_string($value)) throw new Exception("BlankConstraint.validate: el tipo de ($value) debe ser string");
-    if ($this->blank) return true; // Si lleog aca es que es string y no es null, asi que cualquier string debe cumplir, hasta el vacio.
-    return ( strcmp($value, "") != 0 ); // Not blank, cumplen todos menos el vacio....
+
+    // The string is not null, if blank => any string passes
+    if ($this->blank) return true;
+
+    // Not blank, all but the empty string
+    if (strcmp($value, "") != 0) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 }
 
@@ -348,9 +390,14 @@ class InList extends PhConstraint {
   {
     $this->array = $array;
   }
-  public function validate( $value )
+  
+  public function validate($class, $attr, $value)
   {
-    return in_array($value, $this->array);
+    if (in_array($value, $this->array)) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
   }
 
   public function getList()
