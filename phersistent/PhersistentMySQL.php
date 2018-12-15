@@ -266,8 +266,6 @@ class PhersistentMySQL {
 
   public function list_instances($class_name, $max, $offset)
   {
-    //$parts = explode('\\', $class_name);
-    //$class = $parts[count($parts)-1];
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
 
@@ -339,6 +337,54 @@ class PhersistentMySQL {
     }
     return $instances;
   }
+
+  /**
+   * Query on one table, this works for inheritance because for now we have only
+   * single table inheritance. For MTI we need to split the conditions over multiple
+   * tables and join using the id.
+   */
+  public function find_by($class_name, $where, $max, $offset)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+
+    $table_name = $this->get_table_name($phi);
+
+    $alias = $table_name[0];
+    $query_where = "";
+    foreach ($where as $cond)
+    {
+      $query_where .= $alias .".". $cond[0] /* col */ ." ". $cond[1] /* operator */ ." ". $cond[2] /* ref value */;
+      $query_where .= " AND ";
+    }
+    $query_where = substr($query_where, 0, -5); // REMOVES THE LAST AND
+
+    $records = array();
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' LIMIT '. $offset .', '. $max);
+    while ($row = $r->fetch_assoc())
+    {
+      // FIXME: table is really row or record
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $instances = array();
+    foreach($records as $table)
+    {
+      $phi = $GLOBALS[$class]->create();
+      $phi->setProperties($table['columns']);
+
+      $phi->setId($table['columns']['id']);
+      $phi->setClass($table['columns']['class']);
+      $phi->setDeleted($table['columns']['deleted']);
+
+      $instances[] = $phi;
+    }
+    return $instances;
+  }
+
 
   /**
    * Returns a table structure if the id exists on the table.

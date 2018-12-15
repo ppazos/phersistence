@@ -157,6 +157,8 @@ echo "\n";
 
 //print_r($E);
 
+// VALIDATE TEST
+
 $aa = $A->create(array('a_field_1'=>0));
 $es = $aa->validate();
 
@@ -174,6 +176,17 @@ assert($es !== true);
 assert(is_array($es));
 echo $es['a_field_1'][0]->getMessage() . PHP_EOL;
 
+
+// FIND BY TEST
+
+$es = $E->findBy(array(array('e_field_1', '>=', 333)));
+
+echo count($es) .PHP_EOL;
+
+foreach ($es as $e)
+{
+  assert($e->getE_field_1() >= 333);
+}
 
 exit;
 

@@ -282,6 +282,12 @@ class Phersistent {
     return $this->__manager->listHasManyInstances($owner, $hm_attr, $hm_class);
   }
 
+  public function findBy($where = array(), $max = 10, $offset = 0)
+  {
+    if (count($where) == 0) return $this->listAll($max, $offset);
+    return $this->__manager->findBy(get_class($this), $where, $max, $offset);
+  }
+
   public function save($phi)
   {
     return $this->__manager->saveInstance($phi);

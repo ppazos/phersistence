@@ -160,6 +160,11 @@ class PhersistentDefManager {
 
     return $this->__ph_db->list_hasmany_instances($owner->getId(), $hm_class, $backlink_name);
   }
+
+  public function findBy($class_name, $where, $max, $offset)
+  {
+    return $this->__ph_db->find_by($class_name, $where, $max, $offset);
+  }
 }
 
 ?>
