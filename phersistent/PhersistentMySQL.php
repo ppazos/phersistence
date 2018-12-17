@@ -104,7 +104,7 @@ class PhersistentMySQL {
       {
         foreach ($collection as $item)
         {
-          $backlink = $this->backlink_name($phi->getClass(), $attr);
+          $backlink = $this->backlink_name($phi, $attr);
 
           //echo 'backlink name: '. $backlink . PHP_EOL;
 
@@ -194,7 +194,7 @@ class PhersistentMySQL {
       {
         foreach ($collection as $item)
         {
-          $backlink = $this->backlink_name($phi->getClass(), $attr);
+          $backlink = $this->backlink_name($phi, $attr);
 
           //echo 'backlink name: '. $backlink . PHP_EOL;
 
@@ -477,7 +477,11 @@ class PhersistentMySQL {
       if ($col == 'id') continue;
 
       // TODO: refactor to function value to db
-      if (is_bool($val))
+      if (is_null($val))
+      {
+        $val = 'NULL';
+      }
+      else if (is_bool($val))
       {
         $val = ($val ? 'true' : 'false');
       }
@@ -533,7 +537,7 @@ class PhersistentMySQL {
         // one to many uses back links from the many side
         if ($phi->getDefinition()->is_one_to_many($field))
         {
-          $backlink_name = $this->backlink_name($phi->getClass(), $field);
+          $backlink_name = $this->backlink_name($phi, $field);
 
           $table['many_back'][$backlink_name] = array();
 
@@ -639,13 +643,39 @@ class PhersistentMySQL {
   /**
    * name of the column for the backlink FK for one to many relationships.
    */
-  public function backlink_name($class, $field)
+  public function backlink_name($phi, $field)
   {
-    // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
-    // then $backlink_name = current_class_assoc_id
-    // and that column should exist on the OTHER_CLASS table
-    $simple_class = $this->full_class_name_to_simple_name($class);
-    return strtolower($simple_class .'_'. $field .'_back');
+    $ph = $phi->getDefinition();
+
+    // table name declared in the class
+    if (property_exists($ph, 'table'))
+    {
+      $prefix = $ph->table;
+    }
+    else
+    {
+      // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
+      // then $backlink_name = current_class_assoc_id
+      // and that column should exist on the OTHER_CLASS table
+      $prefix = $this->full_class_name_to_simple_name($phi->getClass());
+    }
+
+    return strtolower($prefix .'_'. $field .'_back');
+  }
+
+  // Similar to previous method but $ph is Phersistent not PhInstance.
+  public function backlink_name_def($ph, $field)
+  {
+    if (property_exists($ph, 'table'))
+    {
+      $prefix = $ph->table;
+    }
+    else
+    {
+      $prefix = $this->full_class_name_to_simple_name(get_class($ph));
+    }
+
+    return strtolower($prefix .'_'. $field .'_back');
   }
 
   /**

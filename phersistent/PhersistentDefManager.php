@@ -78,7 +78,7 @@ class PhersistentDefManager {
 
         if ($defins->is_one_to_many($attr))
         {
-          $backlink_name = $this->__ph_db->backlink_name(get_class($defins), $attr);
+          $backlink_name = $this->__ph_db->backlink_name_def($defins, $attr);
 
           // declare one to many on the many side
           // backlink FK is INT
@@ -156,7 +156,7 @@ class PhersistentDefManager {
 
   public function listHasManyInstances($owner, $hm_attr, $hm_class)
   {
-    $backlink_name = $this->__ph_db->backlink_name($owner->getClass(), $hm_attr);
+    $backlink_name = $this->__ph_db->backlink_name($owner, $hm_attr);
 
     return $this->__ph_db->list_hasmany_instances($owner->getId(), $hm_class, $backlink_name);
   }
