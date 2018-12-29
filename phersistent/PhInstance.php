@@ -101,13 +101,27 @@ class PhInstance {
       $value = self::NOT_LOADED_ASSOC;
       if (array_key_exists($attr, $props)) $value = $props[$attr]; // can be null
 
-      // the user wants to create an object from the array of values
+      // the user wants to create/update an object from the array of values
       if ($this->phclass->is_has_one($attr) && is_array($value))
       {
-        // creates an instance of the class declared in the HO attr with the value array
-        $parts = explode('\\', $type);
-        $class = $parts[count($parts)-1];
-        $value = $GLOBALS[$class]->create($value);
+        $has_one_values = $value;
+
+        $current_value = $this->get($attr);
+
+        // $value is set bellow
+        if ($current_value == null)
+        {
+          // creates an instance of the class declared in the HO attr with the value array
+          $parts = explode('\\', $type);
+          $class = $parts[count($parts)-1];
+          $value = $GLOBALS[$class]->create();
+          $value->setProperties($has_one_values); // could be recursive
+        }
+        else // updates current value
+        {
+          $current_value->setProperties($has_one_values); // could be recursive
+          $value = $current_value;
+        }
       }
 
       // check FK fields to set
@@ -142,7 +156,7 @@ class PhInstance {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
       }
 
-      return $this->get( $attr );
+      return $this->get($attr);
     }
 
     // setXXX
