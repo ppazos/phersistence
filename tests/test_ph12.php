@@ -188,9 +188,6 @@ foreach ($es as $e)
   assert($e->getE_field_1() >= 333);
 }
 
-exit;
-
-
 echo $C->get_parent() . PHP_EOL; // B OK!
 echo $A->get_parent() . PHP_EOL; // \phersistent\Phersistent OK!
 
@@ -217,6 +214,18 @@ $a->setA_ho_d($d);
 $a->save();
 
 //print_r($a);
+
+
+// TEST DELETE
+echo "A count ". $A->count() . PHP_EOL;
+
+$a->delete();
+
+echo "A count ". $A->count() . PHP_EOL;
+// /TEST DELETE
+
+
+exit;
 
 // should try to update
 //$a->setA_field_1(123);

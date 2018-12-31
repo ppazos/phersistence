@@ -186,6 +186,7 @@ class PhersistentMySQL {
     $r = $this->driver->execute($update_query);
 
     // $r will be 0 if all the values are the same as the one s in the database
+    // when that happens, we still need to execute the code below
 
     //if($r === 1)
     //{
@@ -217,6 +218,16 @@ class PhersistentMySQL {
     return $id;
   }
 
+  public function delete_instance($phi)
+  {
+    if ($phi->id == null) throw new Exception("Instance can't be deleted, it is not yet saved to the database");
+    $table_name = $this->get_table_name($phi);
+    $r = $this->driver->query('DELETE FROM '. $table_name .' WHERE id='. $phi->id);
+    if ($r == 0)
+    {
+      throw new Exception("Couldn't delete the instance");
+    }
+  }
 
   /**
    * Retrieves the phersistent instance from the database.

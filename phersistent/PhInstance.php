@@ -316,6 +316,12 @@ class PhInstance {
     return $this->phclass->save($this);
   }
 
+  // TODO: support logical delete
+  public function delete()
+  {
+    $this->phclass->delete($this);
+  }
+
   /**
    * return the current values for all has one attributes, used on save.
    */

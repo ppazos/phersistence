@@ -293,6 +293,11 @@ class Phersistent {
     return $this->__manager->saveInstance($phi);
   }
 
+  public function delete($phi)
+  {
+    $this->__manager->deleteInstance($phi);
+  }
+
   public function isValidDef($otherClassName)
   {
     return is_subclass_of($otherClassName, '\phersistent\Phersistent');
