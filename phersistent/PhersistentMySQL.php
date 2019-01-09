@@ -365,7 +365,21 @@ class PhersistentMySQL {
     $query_where = "";
     foreach ($where as $cond)
     {
-      $query_where .= $alias .".". $cond[0] /* col */ ." ". $cond[1] /* operator */ ." ". $cond[2] /* ref value */;
+      $refvalue = $cond[2];
+      if (is_bool($refvalue))
+      {
+        $refvalue = ($refvalue ? 'true' : 'false');
+      }
+      else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+      {
+        // NOP
+      }
+      else
+      {
+        $refvalue = '"'. $refvalue .'"';
+      }
+
+      $query_where .= $alias .".". $cond[0] /* col */ ." ". $cond[1] /* operator */ ." ". $refvalue /* ref value */;
       $query_where .= " AND ";
     }
     $query_where = substr($query_where, 0, -5); // REMOVES THE LAST AND
