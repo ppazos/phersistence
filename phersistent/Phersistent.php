@@ -12,16 +12,17 @@ class Phersistent {
   public $class = self::TEXT;
 
   // Basic attribute types
-  const INT    = 'int';
-  const LONG    = 'long';
-  const FLOAT   = 'float';
-  const DOUBLE  = 'double';
+  const INT      = 'int';
+  const LONG     = 'long';
+  const FLOAT    = 'float';
+  const DOUBLE   = 'double';
   const BOOLEAN  = 'boolean';
-  const DATE    = 'date';
-  const TIME    = 'time';
+  const DATE     = 'date';
+  const TIME     = 'time';
   const DATETIME = 'datetime';
   const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
-  const TEXT    = 'text';
+  const TEXT     = 'text';
+  const SARRAY   = 'serialized_string_array';
 
   // This code is used for has_one to mark the link as not loaded when lazy loading
   // and to differentiate from the NULL value that is valid for has one.
@@ -208,13 +209,13 @@ class Phersistent {
       // TODO: this attribute should be set when the associated object is saved
       if (array_key_exists($attr, $this->__one))
       {
-       $ins->{$attr.'_id'} = NULL;
+        $ins->{$attr.'_id'} = NULL;
 
-       // if FK attribute comes, set it
-       if (array_key_exists($attr.'_id', $attrs))
-       {
-         $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
-       }
+        // if FK attribute comes, set it
+        if (array_key_exists($attr.'_id', $attrs))
+        {
+          $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
+        }
       }
       $ins->{$attr} = NULL; // injects the attribute
 
@@ -229,6 +230,23 @@ class Phersistent {
         {
           // creates an instance of the class declared in the HO attr with the value array
           $value = $this->__manager->create($this->{$attr}, $value);
+        }
+
+        // for serialized arrays
+        if ($this->is_serialized_array($attr))
+        {
+          // the value comes as a string, then decode
+          if (is_string($value))
+          {
+            $value = json_decode($value);
+          }
+          else if (is_array($value))
+          {
+            // ensure every value in the array is string
+            array_walk($value, function(&$value, &$key) {
+              $value = (string)$value;
+            });
+          }
         }
 
         $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
@@ -351,7 +369,13 @@ class Phersistent {
   public function is_simple_field($field)
   {
     $fields = $this->get_all_fields();
-    return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field);
+    return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field) && $fields[$field] != self::SARRAY;
+  }
+
+  public function is_serialized_array($field)
+  {
+    $fields = $this->get_all_fields();
+    return array_key_exists($field, $fields) && $fields[$field] == self::SARRAY;
   }
 
   public function get_has_one($field)

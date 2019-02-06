@@ -25,6 +25,9 @@ switch ($command)
   case "test":
     require_once('tests/test.php');
   break;
+  case "sarray":
+    require_once('tests/test_serialized_array.php');
+  break;
   case "validations":
     require_once('tests/test_validations.php');
   break;

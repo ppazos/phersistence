@@ -38,6 +38,25 @@ class PhInstance {
     return $this->{$hasManyName}->size();
   }
 
+  /**
+   * add a string to the string array attribute
+   */
+  private function pushTo($sarrayAttr, $value)
+  {
+    if (!is_string($value)) throw new \Exception('Value should be a string');
+    $this->{$sarrayAttr}[] = $value;
+  }
+  private function delFrom($sarrayAttr, $value)
+  {
+    if (!is_string($value)) throw new \Exception('Value should be a string');
+    $this->{$sarrayAttr} = array_diff($this->{$sarrayAttr}, array($value));
+  }
+  private function hasValue($sarrayAttr, $value)
+  {
+    if (!is_string($value)) throw new \Exception('Value should be a string');
+    return in_array($value, $this->{$sarrayAttr});
+  }
+
   public function get($attr)
   {
     // is has one, and is null but the FK is not null, lazy load!
@@ -100,6 +119,26 @@ class PhInstance {
       // Default value, need to detect if null is set explicitly
       $value = self::NOT_LOADED_ASSOC;
       if (array_key_exists($attr, $props)) $value = $props[$attr]; // can be null
+
+      if ($this->phclass->is_serialized_array($attr))
+      {
+        // the value comes as a string, then decode
+        if (is_string($value))
+        {
+          $value = json_decode($value);
+        }
+        else if (is_array($value))
+        {
+          // ensure every value in the array is string
+          array_walk($value, function(&$value, &$key) {
+            $value = (string)$value;
+          });
+        }
+        else
+        {
+          throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed');
+        }
+      }
 
       // the user wants to create/update an object from the array of values
       if ($this->phclass->is_has_one($attr) && is_array($value))
@@ -204,6 +243,36 @@ class PhInstance {
       }
       $this->removeFrom($attr, $args[0]);
       return;
+    }
+
+    if ( substr($method,0,6) == "pushTo" )
+    {
+      $attr = lcfirst( substr($method, 6) );
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
+      }
+      $this->pushTo($attr, $args[0]);
+      return;
+    }
+    if ( substr($method,0,7) == "delFrom" )
+    {
+      $attr = lcfirst( substr($method, 7) );
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
+      }
+      $this->delFrom($attr, $args[0]);
+      return;
+    }
+    if ( substr($method,0,10) == "hasValueIn" )
+    {
+      $attr = lcfirst( substr($method, 10) );
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
+      }
+      return $this->hasValue($attr, $args[0]);
     }
 
     // sizeXXX

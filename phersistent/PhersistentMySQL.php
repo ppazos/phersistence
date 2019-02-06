@@ -71,6 +71,8 @@ class PhersistentMySQL {
     // 2. save the current object
     $table = $this->phi_to_data($phi);
 
+    print_r($table);
+
     /*
     // save foreigns first to get their fk ids and set them to the table before save
     if (count($table['foreigns']) > 0)
@@ -254,6 +256,7 @@ class PhersistentMySQL {
     }
     catch (\Exception $e)
     {
+      //echo $e->getMessage() . PHP_EOL;
       return null; // row doesnt exists, null phi is returned
     }
 
@@ -595,8 +598,13 @@ class PhersistentMySQL {
         // the associated element can be null
         $table['foreigns'][$field] = $this->phi_to_data($phi->get($field));
       }
+      else if ($phi->getDefinition()->is_serialized_array($field))
+      {
+        $table['columns'][$field] = addslashes(json_encode($phi->get($field))); // addslashes escapes the internal strings in the SQL query
+      }
       else // simple field
       {
+        //echo $field .' '. $type .' is simple field '. PHP_EOL;
         $table['columns'][$field] = $phi->get($field);
       }
     }
