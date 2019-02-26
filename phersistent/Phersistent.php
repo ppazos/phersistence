@@ -32,7 +32,7 @@ class Phersistent {
   private $__one = array();
   private $__manager;
   protected $__constraints;
-  protected $__functions = array();
+  protected $__functions; // = array();
 
   /**
   * PhersistentDefManager creates instances of the Phersistent to expose as
@@ -88,11 +88,18 @@ class Phersistent {
 
     // TODO: merge constraints from parent classes and override parent with children constraints
     $this->__constraints = $this->constraints();
+
+    $this->__functions = $this->functions();
   }
 
   // This will be overriden by class declarations and return constraints for fields
   // owned or inherited.
   public function constraints()
+  {
+    return array();
+  }
+
+  public function functions()
   {
     return array();
   }

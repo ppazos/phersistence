@@ -104,6 +104,14 @@ class A extends \phersistent\Phersistent {
     );
   }
 
+  function functions()
+  {
+    return array(
+      'uppercase' => function ($a) {
+        return strtoupper($a->getA_field_2());
+      }
+    );
+  }
 }
 
 class B extends A {
@@ -159,7 +167,13 @@ echo "\n";
 
 // VALIDATE TEST
 
-$aa = $A->create(array('a_field_1'=>0));
+$aa = $A->create(array('a_field_1'=>0, 'a_field_2'=>"Hello world!"));
+
+// test instance function definition
+assert($aa->uppercase() == 'HELLO WORLD!');
+echo $aa->uppercase();
+
+
 $es = $aa->validate();
 
 assert($es === true);
