@@ -170,6 +170,11 @@ class PhersistentDefManager {
   {
     $this->__ph_db->delete_instance($phi);
   }
+
+  public function runRaw($sql)
+  {
+    return $this->__ph_db->runRaw($sql);
+  }
 }
 
 ?>

@@ -71,7 +71,7 @@ class PhersistentMySQL {
     // 2. save the current object
     $table = $this->phi_to_data($phi);
 
-    print_r($table);
+    //print_r($table);
 
     /*
     // save foreigns first to get their fk ids and set them to the table before save
@@ -766,6 +766,19 @@ class PhersistentMySQL {
     $parts = explode('\\', $fullclass);
     $class = $parts[count($parts)-1];
     return $class;
+  }
+
+  public function runRaw($sql)
+  {
+    $r = $this->driver->query($sql); // this checks for errors and throws exceptions
+    $rows = array();
+    while ($row = $r->fetch_assoc())
+    {
+      $rows[] = $row;
+    }
+    $r->close();
+
+    return $rows;
   }
 }
 

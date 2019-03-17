@@ -501,6 +501,11 @@ class Phersistent {
     return array();
   }
 
+  public function runRaw($sql)
+  {
+    return $this->__manager->runRaw($sql);
+  }
+
   /*
   public function __call($method, $args)
   {
