@@ -54,6 +54,8 @@ if (!$d->table_exists('a'))
   $d->add_column('a', 'a_field_2', 'varchar(255)', true);
   $d->add_column('a', 'a_ho_d_id', 'int', true);
 
+  $d->add_column('a', 'dob', 'date', true);
+
   // STI
   $d->add_column('a', 'b_field_1', 'int', true);
   $d->add_column('a', 'b_field_2', 'varchar(255)', true);
@@ -93,6 +95,7 @@ class A extends \phersistent\Phersistent {
 
   public $a_field_1 = self::INT;
   public $a_field_2 = self::TEXT;
+  public $dob = self::DATE;
   public $a_ho_d = D::class;
 
   function constraints()
@@ -169,6 +172,8 @@ echo "\n";
 
 $aa = $A->create(array('a_field_1'=>0, 'a_field_2'=>"Hello world!"));
 
+$aa->save();
+
 // test instance function definition
 assert($aa->uppercase() == 'HELLO WORLD!');
 echo $aa->uppercase();
@@ -190,6 +195,8 @@ assert($es !== true);
 assert(is_array($es));
 echo $es['a_field_1'][0]->getMessage() . PHP_EOL;
 
+
+exit;
 
 // FIND BY TEST
 

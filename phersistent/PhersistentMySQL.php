@@ -71,7 +71,7 @@ class PhersistentMySQL {
     // 2. save the current object
     $table = $this->phi_to_data($phi);
 
-    //print_r($table);
+    var_dump($table);
 
     /*
     // save foreigns first to get their fk ids and set them to the table before save
@@ -471,7 +471,11 @@ class PhersistentMySQL {
 
 
       // TODO: refactor to function value to db
-      if (is_bool($val))
+      if (is_null($val))
+      {
+        $values_string .= 'NULL';
+      }
+      else if (is_bool($val))
       {
         $values_string .= ($val ? 'true' : 'false');
       }
