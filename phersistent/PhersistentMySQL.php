@@ -71,7 +71,7 @@ class PhersistentMySQL {
     // 2. save the current object
     $table = $this->phi_to_data($phi);
 
-    var_dump($table);
+    //var_dump($table);
 
     /*
     // save foreigns first to get their fk ids and set them to the table before save
@@ -379,7 +379,7 @@ class PhersistentMySQL {
       }
       else
       {
-        $refvalue = '"'. $refvalue .'"';
+        $refvalue = '"'. addslashes($refvalue) .'"';
       }
 
       $query_where .= $alias .".". $cond[0] /* col */ ." ". $cond[1] /* operator */ ." ". $refvalue /* ref value */;
@@ -485,7 +485,7 @@ class PhersistentMySQL {
       }
       else
       {
-        $values_string .= '"'. $val .'"';
+        $values_string .= '"'. addslashes($val) .'"';
       }
 
       $values_string .= ', ';
@@ -523,7 +523,7 @@ class PhersistentMySQL {
       }
       else
       {
-        $val = '"'. $val .'"';
+        $val = '"'. addslashes($val) .'"';
       }
 
       $set .= $col .'='. $val .', ';
