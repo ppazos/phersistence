@@ -22,6 +22,9 @@ $command = $argv[1];
 
 switch ($command)
 {
+  case "find_by":
+    require_once('tests/test_find_by.php');
+  break;
   case "test":
     require_once('tests/test.php');
   break;

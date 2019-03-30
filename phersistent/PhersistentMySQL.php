@@ -352,6 +352,97 @@ class PhersistentMySQL {
     return $instances;
   }
 
+  // Recursion example:
+  // 0: [ AND => [ OR => [c1, c2], c3 ] ]
+  // 1: [ OR => [c1, c2], c3 ] // c3 is processed iterativelly with the OR
+  // 2: [c1, c2]
+  //
+  // $subtree could have more than one key at the top level,
+  // in that case, should return an array of expressions generated
+  // from each simple or complex condition, then the recursion parent
+  // will arrange the expressions in ANDs, ORs, NOTs
+  private function find_by_where_recursive($subtree, $table_alias)
+  {
+    //var_dump($subtree);
+    $expressions = array();
+    foreach ($subtree as $k=>$subconds)
+    {
+      if ($k === 'AND' || $k === 'OR')
+      {
+        //echo "COMPLEX COND".PHP_EOL;
+
+        // $subcond should be an array of conditions, which can have the same struct as subtree
+        // binary AND/OR for now
+        $subexprs = $this->find_by_where_recursive($subconds, $table_alias);
+        $expr = '(';
+        foreach ($subexprs as $subexpr)
+        {
+          $expr .= $subexpr .' '. $k .' ';
+        }
+        // remove last AND/OR
+        $expr = substr($expr, 0, -(strlen($k)+2)) .')';
+
+        $expressions[] = $expr;
+      }
+      else if ($k === 'NOT')
+      {
+        // $subcond could be a simple cond: array(attr, op, value)
+        // or an array with one root cond being AND, OR, NOT, so it has the same structure as subtree
+        // in both cases subcond is an array, so need to check for number of items
+        if (count($subconds) == 1) // complex cond, needs recursion
+        {
+          $subexprs = $this->find_by_where_recursive($subconds, $table_alias);
+
+          // result should be one expression
+          $expr = 'NOT '. $subexprs[0]; // already has parenthesis from the AND/OR expr
+
+          $expressions[] = $expr;
+        }
+        else // simple cond, count will be 3
+        {
+          // TODO: same code as below, please refactor!
+          $refvalue = $subconds[2];
+          if (is_bool($refvalue))
+          {
+            $refvalue = ($refvalue ? 'true' : 'false');
+          }
+          else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+          {
+            // NOP
+          }
+          else
+          {
+            $refvalue = '"'. addslashes($refvalue) .'"';
+          }
+
+          // simple cond render: alias.col op refvalue
+          $expressions[] = 'NOT '. $table_alias .".". $subconds[0] ." ". $subconds[1]  ." ". $refvalue;
+        }
+      }
+      else // simple condition
+      {
+        //echo "SIMPLE COND".PHP_EOL;
+        $refvalue = $subconds[2];
+        if (is_bool($refvalue))
+        {
+          $refvalue = ($refvalue ? 'true' : 'false');
+        }
+        else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+        {
+          // NOP
+        }
+        else
+        {
+          $refvalue = '"'. addslashes($refvalue) .'"';
+        }
+
+        // simple cond render: alias.col op refvalue
+        $expressions[] = $table_alias .".". $subconds[0] ." ". $subconds[1]  ." ". $refvalue;
+      }
+    }
+    return $expressions;
+  }
+
   /**
    * Query on one table, this works for inheritance because for now we have only
    * single table inheritance. For MTI we need to split the conditions over multiple
@@ -361,10 +452,9 @@ class PhersistentMySQL {
   {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
-
     $table_name = $this->get_table_name($phi);
-
     $alias = $table_name[0];
+    /*
     $query_where = "";
     foreach ($where as $cond)
     {
@@ -382,10 +472,13 @@ class PhersistentMySQL {
         $refvalue = '"'. addslashes($refvalue) .'"';
       }
 
-      $query_where .= $alias .".". $cond[0] /* col */ ." ". $cond[1] /* operator */ ." ". $refvalue /* ref value */;
-      $query_where .= " AND ";
+      $query_where .= $alias .".". $cond[0] ." ". $cond[1] ." ". $refvalue;
+      $query_where .= " AND "; // FIXME: AND / OR / NOT should come in the where structure!
     }
     $query_where = substr($query_where, 0, -5); // REMOVES THE LAST AND
+    */
+    $expr = $this->find_by_where_recursive($where, $alias);
+    $query_where = $expr[0];
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' LIMIT '. $offset .', '. $max);
