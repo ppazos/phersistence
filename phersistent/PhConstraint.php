@@ -15,7 +15,7 @@ abstract class PhConstraint {
 
   // string constraints
   public static function email() { return new EmailConstraint(); }
-  public static function matches($regexp) { return new Matches($regexp); }
+  public static function matches($regex) { return new Matches($regex); }
   public static function date() { return new DateConstraint(); }
   public static function datetime() { return new DateTimeConstraint(); }
   public static function maxLength( $max ) { return new MaxLengthConstraint($max); }
@@ -25,6 +25,7 @@ abstract class PhConstraint {
   public static function nullable( $nullable ) { return new Nullable($nullable); }
   public static function blank( $blank ) { return new BlankConstraint($blank); }
   public static function inList( $array ) { return new InList($array); }
+  public static function unique() { return new Unique(); }
 }
 
 class ValidationError {
@@ -44,7 +45,7 @@ class ValidationError {
 
   public function getMessage()
   {
-    return "On ". $this->class ."->". $this->attr .", ". $this->constraint->getErrorMessage($this->value);
+    return "On ". $this->class .".". $this->attr .", ". $this->constraint->getErrorMessage($this->value);
   }
 }
 
@@ -346,11 +347,11 @@ Example 2. Examples of invalid patterns
 */
 class Matches extends PhConstraint {
 
-  private $regexp;
+  private $regex;
 
-  public function __construct( $regexp )
+  public function __construct( $regex )
   {
-    $this->regexp = $regexp;
+    $this->regex = $regex;
   }
 
   public function validate($class, $attr, $value)
@@ -359,7 +360,7 @@ class Matches extends PhConstraint {
 
     if (!is_string($value)) throw new Exception("La restriccion ". get_class($this) ." no se aplica al valor: " . $value);
 
-    if (preg_match($this->regexp, $value)) return true;
+    if (preg_match($this->regex, $value)) return true;
     else
     {
       return new ValidationError($class, $attr, $value, $this);
@@ -368,7 +369,12 @@ class Matches extends PhConstraint {
 
   public function getValue()
   {
-    return $this->regexp;
+    return $this->regex;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value '". $value ." doesn't matches the regex ". $this->regex;
   }
 }
 
@@ -400,6 +406,11 @@ class Nullable extends PhConstraint {
       return new ValidationError($class, $attr, $value, $this);
     }
   }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value can't be null";
+  }
 }
 
 class BlankConstraint extends PhConstraint {
@@ -427,6 +438,11 @@ class BlankConstraint extends PhConstraint {
       return new ValidationError($class, $attr, $value, $this);
     }
   }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value can't be empty";
+  }
 }
 
 class InList extends PhConstraint {
@@ -450,6 +466,38 @@ class InList extends PhConstraint {
   public function getList()
   {
     return $this->array;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." is not on the list ". print_r($this->array, true);
+  }
+}
+
+class Unique extends PhConstraint {
+
+  public function __construct()
+  {
+  }
+
+  public function validate($class, $attr, $value)
+  {
+    $parts = explode('\\', $class);
+    $simpleclass = $parts[count($parts)-1];
+    global ${$simpleclass};
+
+    $where = array(
+        array($attr, '=', $value)
+    );
+    $res = ${$simpleclass}->findBy($where, 1, 0); // FIXME: use countBy
+    if (count($res) == 0) return true;
+
+    return new ValidationError($class, $attr, $value, $this);
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value '$value' is not unique";
   }
 }
 

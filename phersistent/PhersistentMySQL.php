@@ -578,7 +578,8 @@ class PhersistentMySQL {
       }
       else
       {
-        $values_string .= '"'. addslashes($val) .'"';
+        if ($val === '') $values_string .= 'NULL'; // empty string is NULL in the DB
+        else $values_string .= '"'. addslashes($val) .'"';
       }
 
       $values_string .= ', ';
@@ -616,6 +617,7 @@ class PhersistentMySQL {
       }
       else
       {
+        if ($val === '') $values_string .= 'NULL'; // empty string is NULL in the DB
         $val = '"'. addslashes($val) .'"';
       }
 
