@@ -16,6 +16,10 @@ class PhersistentMySQL {
 
   public function save_instance($phi)
   {
+    // We don't do an isDirty check on the instance to save, if a programmer
+    // wants to update even if the instance wasn't dirty, is up to them.
+    // They are able to check for the dirty too.
+
     // TODO: transactional since it does cascade save of has one.
     // TODO: will try to do the loop detection on phi_to_data.
     //$loop = time()."_". rand()."_". rand();
@@ -54,7 +58,7 @@ class PhersistentMySQL {
       else
       {
         // the has one might be already saved, if not => save, else => update
-        if ($value->getId() == null) // insert
+        if ($value->getId() == null) // insert, is always dirty if not saved
         {
           $idho = $this->save_instance_recursive($value);
           $value->setId($idho);           // id set on associated instance
@@ -62,7 +66,12 @@ class PhersistentMySQL {
         }
         else
         {
-          $idho = $this->update_instance_recursive($value);
+          $idho = $value->getId();
+          if ($value->getIsDirty()) // update has_one only if it's dirty
+          {
+            $this->update_instance_recursive($value);
+          }
+          //$idho = $this->update_instance_recursive($value);
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
       }
@@ -110,6 +119,9 @@ class PhersistentMySQL {
 
           //echo 'backlink name: '. $backlink . PHP_EOL;
 
+          // even if the item is not dirty, we need to save/update it because the backlink
+          // could be new and we don't know if that was updated or not, so here we don't
+          // have an isDirty check.
           $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
 
           // save or update has many item
@@ -177,7 +189,12 @@ class PhersistentMySQL {
         }
         else
         {
-          $idho = $this->update_instance_recursive($value);
+          $idho = $value->getId();
+          if ($value->getIsDirty()) // update has_one only if it's dirty
+          {
+            $this->update_instance_recursive($value);
+          }
+          //$idho = $this->update_instance_recursive($value);
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
       }
@@ -248,11 +265,16 @@ class PhersistentMySQL {
     {
       $table = $this->get_row($table_name, $id);
 
+      //print_r($table);
+
       $phi->setProperties($table['columns']);
+
+      //print_r($phi);
 
       $phi->setId($table['columns']['id']);
       $phi->setClass($table['columns']['class']);
       $phi->setDeleted($table['columns']['deleted']);
+      $phi->setIsDirty(false);
     }
     catch (\Exception $e)
     {
@@ -305,6 +327,7 @@ class PhersistentMySQL {
       $phi->setId($table['columns']['id']);
       $phi->setClass($table['columns']['class']);
       $phi->setDeleted($table['columns']['deleted']);
+      $phi->setIsDirty(false);
 
       $instances[] = $phi;
     }
@@ -346,6 +369,7 @@ class PhersistentMySQL {
       $phi->setId($table['columns']['id']);
       $phi->setClass($table['columns']['class']);
       $phi->setDeleted($table['columns']['deleted']);
+      $phi->setIsDirty(false);
 
       $instances[] = $phi;
     }
@@ -500,6 +524,7 @@ class PhersistentMySQL {
       $phi->setId($table['columns']['id']);
       $phi->setClass($table['columns']['class']);
       $phi->setDeleted($table['columns']['deleted']);
+      $phi->setIsDirty(false);
 
       $instances[] = $phi;
     }
@@ -617,8 +642,8 @@ class PhersistentMySQL {
       }
       else
       {
-        if ($val === '') $values_string .= 'NULL'; // empty string is NULL in the DB
-        $val = '"'. addslashes($val) .'"';
+        if ($val === '') $val = 'NULL'; // empty string is NULL in the DB
+        else $val = '"'. addslashes($val) .'"';
       }
 
       $set .= $col .'='. $val .', ';
@@ -699,10 +724,15 @@ class PhersistentMySQL {
       }
       else if ($phi->getDefinition()->is_serialized_array($field))
       {
-        $table['columns'][$field] = addslashes(json_encode($phi->get($field))); // addslashes escapes the internal strings in the SQL query
+        // addslashes escapes the internal strings in the SQL query
+        // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
+        $table['columns'][$field] = json_encode($phi->get($field)); //addslashes(json_encode($phi->get($field)));
       }
       else // simple field
       {
+        // test for fields that should not be saved
+        if ($field == 'isDirty') continue;
+
         //echo $field .' '. $type .' is simple field '. PHP_EOL;
         $table['columns'][$field] = $phi->get($field);
       }

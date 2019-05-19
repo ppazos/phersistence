@@ -126,6 +126,36 @@ class PhInstance {
         if (is_string($value))
         {
           $value = json_decode($value);
+
+          if ($value === NULL)
+          {
+            $error = '';
+            switch (json_last_error()) {
+              case JSON_ERROR_NONE:
+                $error = ' - No errors';
+              break;
+              case JSON_ERROR_DEPTH:
+                $error = ' - Maximum stack depth exceeded';
+              break;
+              case JSON_ERROR_STATE_MISMATCH:
+                $error = ' - Underflow or the modes mismatch';
+              break;
+              case JSON_ERROR_CTRL_CHAR:
+                $error = ' - Unexpected control character found';
+              break;
+              case JSON_ERROR_SYNTAX:
+                $error = ' - Syntax error, malformed JSON';
+              break;
+              case JSON_ERROR_UTF8:
+                $error = ' - Malformed UTF-8 characters, possibly incorrectly encoded';
+              break;
+              default:
+                $error = ' - Unknown error';
+              break;
+            }
+
+            throw new \Exception('Error decoding json array '. $error);
+          }
         }
         else if (is_array($value))
         {
@@ -202,35 +232,41 @@ class PhInstance {
     // The value should be converted to the right type e.g. string dates -> DateTime
     if ( substr($method,0,3) == "set" )
     {
-       //echo $method . PHP_EOL;
-       //print_r($args);
+      //echo $method . PHP_EOL;
+      //print_r($args);
 
-       $attr = lcfirst(substr($method, 3)); // xxx
-       if (!property_exists($this, $attr))
-       {
-          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
-       }
+      $attr = lcfirst(substr($method, 3)); // xxx
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
+      }
 
-       // TODO
-       // 1. check if the class contains a definition of the attribute
-       // 2. check if the value has the same type as the declared
-       // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
-       // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
+      // TODO
+      // 1. check if the class contains a definition of the attribute
+      // 2. check if the value has the same type as the declared
+      // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
+      // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
 
-       $this->set($attr, $args[0]);
-       return;
+      $this->isDirty = true;
+
+      // this might set isDirty to false, that is why we set dirty=true before
+      // this line, this order is important!
+      $this->set($attr, $args[0]);
+
+      return;
     }
 
     // addToXYX
     if ( substr($method,0,5) == "addTo" )
     {
-       $attr = lcfirst( substr($method, 5) ); // xyx
-       if (!property_exists($this, $attr))
-       {
-          throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
-       }
-       $this->addTo($attr, $args[0]);
-       return;
+      $attr = lcfirst( substr($method, 5) ); // xyx
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+      }
+      $this->addTo($attr, $args[0]);
+      $this->isDirty = true;
+      return;
     }
 
     // removeFromXXX
@@ -242,6 +278,7 @@ class PhInstance {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
       $this->removeFrom($attr, $args[0]);
+      $this->isDirty = true;
       return;
     }
 
@@ -253,6 +290,7 @@ class PhInstance {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
       }
       $this->pushTo($attr, $args[0]);
+      $this->isDirty = true;
       return;
     }
     if ( substr($method,0,7) == "delFrom" )
@@ -263,6 +301,7 @@ class PhInstance {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
       }
       $this->delFrom($attr, $args[0]);
+      $this->isDirty = true;
       return;
     }
     if ( substr($method,0,10) == "hasValueIn" )
@@ -382,7 +421,9 @@ class PhInstance {
     // 2. provide elements to DAL
     // 3. DAL will load the driver and do the ORM
     // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
-    return $this->phclass->save($this);
+    $res = $this->phclass->save($this);
+    $this->isDirty = false; // clean after save
+    return $res;
   }
 
   // TODO: support logical delete

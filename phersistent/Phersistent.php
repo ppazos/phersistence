@@ -10,6 +10,7 @@ class Phersistent {
   public $id = self::INT;
   public $deleted = self::BOOLEAN;
   public $class = self::TEXT;
+  public $isDirty = self::BOOLEAN; // this one shouldn't be saved
 
   // Basic attribute types
   const INT      = 'int';
@@ -280,9 +281,15 @@ class Phersistent {
     }
     */
 
+    // TODO: check if the declarations of these fields could be in the Phinstance.
     // Default values
     $ins->deleted = false;
     $ins->class = $ins->getClass();
+
+    // for new instances, it should be dirty, for loading from the DB should be
+    // clean, the manager or db should set it as false after creation, and will
+    // be dirty again if any modifier method is called
+    $ins->isDirty = true;
 
     return $ins;
   }

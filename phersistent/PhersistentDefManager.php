@@ -19,18 +19,21 @@ class PhersistentDefManager {
     // this checks the model folder and triggers the autoload by creating dummy
     // instances of those classes
 
-    $dir = dir($_BASE.$modelns);
-    while (false !== ($entry = $dir->read()))
+    if ($modelns !== NULl && $modelns !== '')
     {
-      if ($entry == '.' || $entry == '..') continue;
+      $dir = dir($_BASE.$modelns);
+      while (false !== ($entry = $dir->read()))
+      {
+        if ($entry == '.' || $entry == '..') continue;
 
-      //echo (basename($entry, '.php')) . PHP_EOL;
-      //echo '\\'. $modelns .'\\'. basename($entry, '.php') . PHP_EOL;
+        //echo (basename($entry, '.php')) . PHP_EOL;
+        //echo '\\'. $modelns .'\\'. basename($entry, '.php') . PHP_EOL;
 
-      // triggers auto load of class
-      eval('new \\'. $modelns .'\\'. basename($entry, '.php') .'();');
+        // triggers auto load of class
+        eval('new \\'. $modelns .'\\'. basename($entry, '.php') .'();');
+      }
+      $dir->close();
     }
-    $dir->close();
 
     $this->classDefinitions = array('Phersistent'=>new Phersistent());
 

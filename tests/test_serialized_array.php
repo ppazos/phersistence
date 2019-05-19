@@ -40,7 +40,8 @@ $ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersis
 $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 
 // SARRAY TEST
-/*
+
+
 $ins = $TestSarray->create(array('num'=>123, 'sarray'=>array(123, true, 'hola')));
 $ins->save();
 $sarray = $ins->getSarray();
@@ -48,30 +49,42 @@ $sarray = $ins->getSarray();
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
-*/
 
-$insl = $TestSarray->get(1);
+$ins1 = $TestSarray->get($ins->getId());
+$sarray = $ins1->getSarray();
+
+echo PHP_EOL;
+print_r($sarray);
+var_dump($sarray);
+echo PHP_EOL;
+
+$insl = $TestSarray->get($ins->getId());
 $sarray = $insl->getSarray();
 
 $insl->pushToSarray('newval');
 $insl->save();
+assert ($insl->hasValueInSarray('newval'));
+
 $sarray = $insl->getSarray();
 
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
+
 
 $insl->delFromSarray('newval');
 $insl->save();
+assert (!$insl->hasValueInSarray('newval'));
+
 $sarray = $insl->getSarray();
 
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
 
-if ($insl->hasValueInSarray('123')) echo 'Has 123!'. PHP_EOL;
+assert ($insl->hasValueInSarray('123'));
 
-//$insl->delete();
+$insl->delete();
 
 exit;
 

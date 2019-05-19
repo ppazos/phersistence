@@ -155,7 +155,7 @@ class F extends \phersistent\Phersistent {
 
 // setup
 $ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
-$man = new \phersistent\PhersistentDefManager('model', $ph_db);
+$man = new \phersistent\PhersistentDefManager('', $ph_db);
 
 /*
 echo "Class Definitions\n";
