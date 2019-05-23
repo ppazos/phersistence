@@ -44,7 +44,7 @@ class Employer extends \phersistent\Phersistent {
   {
     return array(
       'name' => array(
-        \phersistent\PhConstraint::max(10)
+        \phersistent\PhConstraint::maxLength(10)
       )
     );
   }
@@ -59,7 +59,7 @@ class Member extends \phersistent\Phersistent {
   {
     return array(
       'name' => array(
-        \phersistent\PhConstraint::max(10)
+        \phersistent\PhConstraint::maxLength(10)
       )
     );
   }
@@ -72,19 +72,30 @@ $man = new \phersistent\PhersistentDefManager(NULL, $ph_db);
 
 // TEST
 
+// increase the size of the name to make the validate fail
 $employer = $Employer->create(array('name'=>'CaboLabs'));
 
 assert($employer->getIsDirty());
 
-$employer->save();
+$val = $employer->validate();
+
+if (!$employer->save())
+{
+  print_r($employer->getErrors());
+}
 
 assert(!$employer->getIsDirty());
 
+// increase the size of the name to make the validate fail
 $member = $Member->create(array('name'=>'Pablo', 'employer'=>$employer));
 
 assert($member->getIsDirty());
 
-$member->save();
+if (!$member->save())
+{
+  print_r($member->getErrors());
+}
+
 
 assert(!$member->getIsDirty());
 
@@ -95,7 +106,10 @@ $employer = $member->getEmployer();
 assert(!$employer->getIsDirty());
 
 $member->setProperties(array('employer_id'=>$employer->getId()));
-$member->save(); // update
+if (!$member->save()) // update
+{
+  print_r($membe->getErrors());
+}
 
 var_dump($member->getEmployer());
 

@@ -6,6 +6,19 @@ class PhInstance {
 
   const NOT_LOADED_ASSOC = -1;
 
+  // Validation errors from last validation of this instance
+  private $errors;
+
+  public function hasErrors()
+  {
+    return (isset($this->errors) && is_array($this->errors) && count($this->errors) > 0);
+  }
+
+  public function getErrors()
+  {
+    return $this->errors;
+  }
+
   private function addTo($hasManyName, PhInstance $ins)
   {
     $this->{$hasManyName}->add( $ins );
@@ -421,9 +434,16 @@ class PhInstance {
     // 2. provide elements to DAL
     // 3. DAL will load the driver and do the ORM
     // 4. if object is saved for the first time, the id should be retrieved from the DB and assigned to the instance
+
+    if (($validation = $this->validate()) !== true)
+    {
+      $this->errors = $validation;
+      return false; // validation = false
+    }
+
     $res = $this->phclass->save($this);
     $this->isDirty = false; // clean after save
-    return $res;
+    return $res; // returns the id of the saved object, > 0
   }
 
   // TODO: support logical delete
@@ -473,9 +493,10 @@ class PhInstance {
   // FIXME: get constraints from the parent, since we also process attrs inherited
   // TODO: if a constraint of the same type for the same attr is defined on parent
   //       and child class, the constraint on the child overrides the parent constraint
-  public function validate()
+  public function validate($cascade = true)
   {
     $errors = array();
+
     $simple_fields = $this->phclass->get_all_fields();
     foreach ($simple_fields as $attr=>$type)
     {
@@ -486,6 +507,34 @@ class PhInstance {
         {
           if (!isset($errors[$attr])) $errors[$attr] = array();
           $errors[$attr][] = $e;
+        }
+      }
+    }
+
+    if ($cascade)
+    {
+      $hos = $this->getAllHasOne();
+
+      foreach ($hos as $attr => $hoi)
+      {
+        $ho_errors = $hoi->validate(true);
+        // merge of HO errors into the instance errors,
+        // that might also contain other cascade errors.
+        if ($ho_errors !== true) $errors[$attr] = $ho_errors;
+      }
+
+      $hms = $this->getAllHasMany();
+      foreach ($hms as $attr => $hmc) // collection
+      {
+        foreach ($hmc as $i => $hmi) // instance
+        {
+          $hm_errors = $hmi->validate();
+          if ($hm_errors !== true)
+          {
+            if (!isset($errors[$attr])) $errors[$attr] = array();
+             // the index is important to know which instance violated the constriants
+            $errors[$attr][$i] = $hm_errors;
+          }
         }
       }
     }

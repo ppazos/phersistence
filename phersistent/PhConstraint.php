@@ -63,7 +63,7 @@ class MaxLengthConstraint extends PhConstraint {
     // null values comply with this constraint
     if ($value === NULL) return true;
 
-    if (!is_string($value)) throw new Exception("La restriccion MaxLength no se aplica al valor: " . $value);
+    if (!is_string($value)) throw new \Exception("La restriccion MaxLength no se aplica al valor: " . $value);
 
     if (strlen($value) <= $this->max) return true;
     else
@@ -102,9 +102,9 @@ class MinLengthConstraint extends PhConstraint {
   {
     // null values never comply with this constraint at least the min is 0
     // strlen(null) == 0 in PHP
-    if ($value === NULL && $this->min > 0) return false;
+    if ($value === NULL && $this->min > 0) return new ValidationError($class, $attr, $value, $this);
 
-    if (!is_string($value)) throw new Exception("La restriccion MinLength no se aplica al valor: " . $value);
+    if (!is_string($value)) throw new \Exception("La restriccion MinLength no se aplica al valor: " . $value);
 
     if (strlen($value) >= $this->min) return true;
     else
@@ -140,7 +140,7 @@ class MaxConstraint extends PhConstraint {
 
   public function validate($class, $attr, $value)
   {
-    if (!is_numeric($value)) return false; // throw new Exception("La restriccion Max no se aplica al valor: " . $value);
+    if (!is_numeric($value)) throw new \Exception("The constraing max does not apply to the value " . $value);
 
     if ((float)$value <= $this->max) return true;
     else
@@ -176,7 +176,7 @@ class MinConstraint extends PhConstraint {
 
   public function validate($class, $attr, $value)
   {
-    if (!is_numeric($value)) return false; //throw new Exception("La restriccion Min no se aplica al valor: " . $value);
+    if (!is_numeric($value)) throw new \Exception("The constraing min does not apply to the value " . $value);
 
     if ((float)$value >= $this->min) return true;
     else
@@ -356,9 +356,9 @@ class Matches extends PhConstraint {
 
   public function validate($class, $attr, $value)
   {
-    if ($value == NULL) return false; // Si es NULL ni siquiera le puedo aplicar la restriccion porque es para strings
+    if ($value == NULL) return new ValidationError($class, $attr, $value, $this);
 
-    if (!is_string($value)) throw new Exception("La restriccion ". get_class($this) ." no se aplica al valor: " . $value);
+    if (!is_string($value)) throw new \Exception("The constraint matches does not apply to the value: " . $value);
 
     if (preg_match($this->regex, $value)) return true;
     else
@@ -426,7 +426,7 @@ class BlankConstraint extends PhConstraint {
   {
     if ($value === NULL) return true; // blank o no blank no dice nada de si es null o no null, ese chekeo se debe hacer en otro lado.
 
-    if (!is_string($value)) throw new Exception("BlankConstraint.validate: el tipo de ($value) debe ser string");
+    if (!is_string($value)) throw new \Exception("The constraint blank does not apply to the value: $value");
 
     // The string is not null, if blank => any string passes
     if ($this->blank) return true;
