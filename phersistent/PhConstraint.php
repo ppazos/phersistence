@@ -4,7 +4,7 @@ namespace phersistent;
 
 abstract class PhConstraint {
 
-  public abstract function validate($class, $attr, $value);
+  public abstract function validate($class, $attr, $value, $object);
 
   // number constraints
   public static function min( $min ) { return new MinConstraint($min); }
@@ -58,7 +58,7 @@ class MaxLengthConstraint extends PhConstraint {
     $this->max = $max;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     // null values comply with this constraint
     if ($value === NULL) return true;
@@ -98,7 +98,7 @@ class MinLengthConstraint extends PhConstraint {
     $this->min = $min;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     // null values never comply with this constraint at least the min is 0
     // strlen(null) == 0 in PHP
@@ -138,7 +138,7 @@ class MaxConstraint extends PhConstraint {
     $this->max = $max;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if (!is_numeric($value)) throw new \Exception("The constraing max does not apply to the value " . $value);
 
@@ -174,7 +174,7 @@ class MinConstraint extends PhConstraint {
     $this->min = $min;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if (!is_numeric($value)) throw new \Exception("The constraing min does not apply to the value " . $value);
 
@@ -212,7 +212,7 @@ class Between extends PhConstraint {
     $this->max = new MaxConstraint($max);
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if ($this->min->validate($class, $attr, $value) === true &&
         $this->max->validate($class, $attr, $value) === true)
@@ -354,7 +354,7 @@ class Matches extends PhConstraint {
     $this->regex = $regex;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if ($value == NULL) return new ValidationError($class, $attr, $value, $this);
 
@@ -398,7 +398,7 @@ class Nullable extends PhConstraint {
     return $this->nullable;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if ($this->nullable || $value != NULL) return true;
     else
@@ -422,7 +422,7 @@ class BlankConstraint extends PhConstraint {
     $this->blank = $blank;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if ($value === NULL) return true; // blank o no blank no dice nada de si es null o no null, ese chekeo se debe hacer en otro lado.
 
@@ -454,7 +454,7 @@ class InList extends PhConstraint {
     $this->array = $array;
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     if (in_array($value, $this->array)) return true;
     else
@@ -480,17 +480,18 @@ class Unique extends PhConstraint {
   {
   }
 
-  public function validate($class, $attr, $value)
+  public function validate($class, $attr, $value, $object)
   {
     $parts = explode('\\', $class);
     $simpleclass = $parts[count($parts)-1];
     global ${$simpleclass};
 
     $where = array(
-        array($attr, '=', $value)
+      array($attr, '=', $value)
     );
-    $res = ${$simpleclass}->findBy($where, 1, 0); // FIXME: use countBy
-    if (count($res) == 0) return true;
+    $res = ${$simpleclass}->findBy($where, 1, 0);
+    if (count($res) == 0) return true; // there is no stored instance with the same value
+    else if ($res[0]->id ==$object->id) return true; // if the stored instance is the same, there is no error
 
     return new ValidationError($class, $attr, $value, $this);
   }

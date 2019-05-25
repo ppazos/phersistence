@@ -503,7 +503,7 @@ class PhInstance {
       $cs = $this->phclass->get_constraints($attr);
       foreach ($cs as $c)
       {
-        if (($e = $c->validate($this->getClass(), $attr, $this->get($attr))) !== true)
+        if (($e = $c->validate($this->getClass(), $attr, $this->get($attr), $this)) !== true)
         {
           if (!isset($errors[$attr])) $errors[$attr] = array();
           $errors[$attr][] = $e;

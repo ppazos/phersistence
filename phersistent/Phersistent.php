@@ -105,6 +105,12 @@ class Phersistent {
     return array();
   }
 
+  // default values for fields
+  public function init()
+  {
+    return array();
+  }
+
   public function functionExists($func)
   {
     return array_key_exists($func, $this->__functions);
@@ -173,6 +179,10 @@ class Phersistent {
     $ins->class = $ins->getClass();
     */
 
+    // For setting default values if defined and no value was given in attrs
+    $default_values = $this->init();
+
+
     // Inject attributes declared on concrete subclass on new instance
     // This reads the own and inherited attributes of the custom Phersistent class
     //foreach ($this as $attr=>$type)
@@ -181,14 +191,12 @@ class Phersistent {
     {
       // dont inject internal hasMany and hasOne definitions
       //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
-
       //echo "create $attr = $type\n";
-      /*
-      if (array_key_exists($attr, $this->__one))
-      {
-       echo $attr .' es HO '. PHP_EOL;
-      }
-      */
+      // if (array_key_exists($attr, $this->__one))
+      // {
+      //  echo $attr .' es HO '. PHP_EOL;
+      // }
+
 
       // has many is injected below
       if (array_key_exists($attr, $this->__many)) continue;
@@ -201,8 +209,8 @@ class Phersistent {
       // Injects the attribute and sets the value
 
       /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
-        is not null on the database and this link is lazy loaded, so the ROM
-        should set this, not this constructor.
+               is not null on the database and this link is lazy loaded, so the ROM
+               should set this, not this constructor.
       if (array_key_exists($attr, $this->__one))
       {
        $ins->{$attr} = self::NOT_LOADED_ASSOC;
@@ -226,6 +234,19 @@ class Phersistent {
         }
       }
       $ins->{$attr} = NULL; // injects the attribute
+
+
+
+      // check for default value
+      if (is_null($value))
+      {
+        if (array_key_exists($attr, $default_values))
+        {
+          $value = $default_values[$attr];
+          $setMethod = 'set'.$attr;
+          $ins->$setMethod($value);
+        }
+      }
 
 
       // if value comes in properties, set that value
