@@ -540,7 +540,7 @@ class PhInstance {
     }
 
     if (count($errors) == 0) return true;
-    return $errors;
+    return new ObjectValidationErrors($errors);
   }
 }
 

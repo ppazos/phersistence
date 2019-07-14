@@ -28,6 +28,22 @@ abstract class PhConstraint {
   public static function unique() { return new Unique(); }
 }
 
+// TODO: make this iterable
+class ObjectValidationErrors {
+
+  private $field_errors;
+
+  public function __construct($field_errors = array())
+  {
+    $this->field_errors = $field_errors;
+  }
+
+  public function getFieldErrors()
+  {
+    return $this->field_errors;
+  }
+}
+
 class ValidationError {
 
   private $class;
@@ -374,7 +390,7 @@ class Matches extends PhConstraint {
 
   public function getErrorMessage($value)
   {
-    return "the assigned value '". $value ." doesn't matches the regex ". $this->regex;
+    return "the assigned value '". $value ."' doesn't matches the regex ". $this->regex;
   }
 }
 
@@ -498,7 +514,7 @@ class Unique extends PhConstraint {
 
   public function getErrorMessage($value)
   {
-    return "the assigned value '$value' is not unique";
+    return "the assigned value '$value' already exists";
   }
 }
 
