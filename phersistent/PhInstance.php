@@ -11,7 +11,8 @@ class PhInstance {
 
   public function hasErrors()
   {
-    return (isset($this->errors) && is_array($this->errors) && count($this->errors) > 0);
+    // errors is set and at least one field has errors
+    return (isset($this->errors) && count($this->errors) > 0);
   }
 
   public function getErrors()
@@ -27,7 +28,7 @@ class PhInstance {
   private function removeFrom($hasManyName, PhInstance $ins)
   {
     // to remove an instance, it should be saved since the id is used to find a match
-    if ($ins->getId() == null)
+    if ($ins->get_id() == null)
     {
       throw new \Exception("Not saved object of type ". $this->getClass() ." can't be removed from '$hasManyName'");
     }
@@ -80,7 +81,7 @@ class PhInstance {
       $class = $parts[count($parts)-1];
       $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
     }
-    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr}->size() == 0 && $this->getId() != null) // can lazy load only if current instance has id
+    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr}->size() == 0 && $this->get_id() != null) // can lazy load only if current instance has id
     {
       //$hm_class = $this->phclass->get_has_many($attr)->class;
       //$parts = explode('\\', $has_one_class);
@@ -209,14 +210,14 @@ class PhInstance {
       // check FK fields to set
       if ($this->phclass->is_has_one($attr) && array_key_exists($attr.'_id', $props))
       {
-        $setMethod = 'set'.$attr.'_id';
+        $setMethod = 'set_'.$attr.'_id';
         $this->$setMethod($props[$attr.'_id']);
       }
 
       // sets the value and verifies it's validity (type, etc)
       if ($value !== self::NOT_LOADED_ASSOC)
       {
-        $setMethod = 'set'.$attr;
+        $setMethod = 'set_'.$attr;
         $this->$setMethod($value);
       }
     }
@@ -229,10 +230,10 @@ class PhInstance {
       return $this->phclass->functionCall($method, $this, $args);
     }
 
-    // getXYZ
-    if ( substr($method,0,3) == "get" )
+    // get_XYZ
+    if (substr($method,0,4) == "get_")
     {
-      $attr = lcfirst( substr($method, 3) ); // xyz
+      $attr = lcfirst( substr($method, 4) ); // xyz
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
@@ -241,14 +242,11 @@ class PhInstance {
       return $this->get($attr);
     }
 
-    // setXXX
+    // set_XXX
     // The value should be converted to the right type e.g. string dates -> DateTime
-    if ( substr($method,0,3) == "set" )
+    if (substr($method,0,4) == "set_")
     {
-      //echo $method . PHP_EOL;
-      //print_r($args);
-
-      $attr = lcfirst(substr($method, 3)); // xxx
+      $attr = lcfirst(substr($method, 4)); // xxx
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a property named '$attr'");
@@ -260,66 +258,68 @@ class PhInstance {
       // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
       // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
 
-      $this->isDirty = true;
+      $this->is_dirty = true;
 
-      // this might set isDirty to false, that is why we set dirty=true before
+      // this might set is_dirty to false, that is why we set dirty=true before
       // this line, this order is important!
       $this->set($attr, $args[0]);
 
       return;
     }
 
-    // addToXYX
-    if ( substr($method,0,5) == "addTo" )
+    // add_to_XYX
+    if (substr($method,0,7) == "add_to_")
     {
-      $attr = lcfirst( substr($method, 5) ); // xyx
+      $attr = lcfirst(substr($method, 7)); // xyx
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
       $this->addTo($attr, $args[0]);
-      $this->isDirty = true;
+      $this->is_dirty = true;
       return;
     }
 
-    // removeFromXXX
-    if ( substr($method,0,10) == "removeFrom" )
+    // remove_from_XXX
+    if (substr($method,0,12) == "remove_from_")
     {
-      $attr = lcfirst( substr($method, 10) );
+      $attr = lcfirst(substr($method, 12));
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
       $this->removeFrom($attr, $args[0]);
-      $this->isDirty = true;
+      $this->is_dirty = true;
       return;
     }
 
-    if ( substr($method,0,6) == "pushTo" )
+    if (substr($method,0,8) == "push_to_")
     {
-      $attr = lcfirst( substr($method, 6) );
+      $attr = lcfirst(substr($method, 8));
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
       }
       $this->pushTo($attr, $args[0]);
-      $this->isDirty = true;
+      $this->is_dirty = true;
       return;
     }
-    if ( substr($method,0,7) == "delFrom" )
+
+    if (substr($method,0,9) == "del_from_")
     {
-      $attr = lcfirst( substr($method, 7) );
+      $attr = lcfirst(substr($method, 9));
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
       }
       $this->delFrom($attr, $args[0]);
-      $this->isDirty = true;
+      $this->is_dirty = true;
       return;
     }
-    if ( substr($method,0,10) == "hasValueIn" )
+
+    if (substr($method,0,13) == "has_value_in_")
     {
-      $attr = lcfirst( substr($method, 10) );
+      $attr = lcfirst(substr($method, 13));
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration named '$attr'");
@@ -327,10 +327,10 @@ class PhInstance {
       return $this->hasValue($attr, $args[0]);
     }
 
-    // sizeXXX
-    if ( substr($method,0,4) == "size" )
+    // size_XXX
+    if (substr($method,0,5) == "size_")
     {
-      $attr = lcfirst( substr($method, 4) );
+      $attr = lcfirst(substr($method, 5));
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
@@ -338,7 +338,7 @@ class PhInstance {
       return $this->size($attr);
     }
 
-    // method not found
+    // TODO: method not found exception
   }
 
   public function isInstanceOf($phersistent)
@@ -442,7 +442,7 @@ class PhInstance {
     }
 
     $res = $this->phclass->save($this);
-    $this->isDirty = false; // clean after save
+    $this->is_dirty = false; // clean after save
     return $res; // returns the id of the saved object, > 0
   }
 
@@ -517,6 +517,9 @@ class PhInstance {
 
       foreach ($hos as $attr => $hoi)
       {
+        // cant call to validate if the hoi is null
+        if ($hoi == null) continue;
+
         $ho_errors = $hoi->validate(true);
         // merge of HO errors into the instance errors,
         // that might also contain other cascade errors.
@@ -528,6 +531,9 @@ class PhInstance {
       {
         foreach ($hmc as $i => $hmi) // instance
         {
+          // cant call to validate if the hmi is null
+          if ($hmi == null) continue;
+
           $hm_errors = $hmi->validate();
           if ($hm_errors !== true)
           {

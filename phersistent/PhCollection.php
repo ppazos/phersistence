@@ -23,7 +23,7 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
   {
     foreach ($this->items as $i=>$ins)
     {
-      if ($ins->getId() == $instance->getId())
+      if ($ins->get_id() == $instance->get_id())
       {
         array_splice($this->items, $i, 1);
       }

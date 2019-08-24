@@ -16,7 +16,7 @@ class PhersistentMySQL {
 
   public function save_instance($phi)
   {
-    // We don't do an isDirty check on the instance to save, if a programmer
+    // We don't do an is_dirty check on the instance to save, if a programmer
     // wants to update even if the instance wasn't dirty, is up to them.
     // They are able to check for the dirty too.
 
@@ -25,7 +25,7 @@ class PhersistentMySQL {
     //$loop = time()."_". rand()."_". rand();
     //$table = $this->phi_to_data($phi);
     //print_r($table);
-    if ($phi->getId() == null)
+    if ($phi->get_id() == null)
     {
       $id = $this->save_instance_recursive($phi);
     }
@@ -58,16 +58,16 @@ class PhersistentMySQL {
       else
       {
         // the has one might be already saved, if not => save, else => update
-        if ($value->getId() == null) // insert, is always dirty if not saved
+        if ($value->get_id() == null) // insert, is always dirty if not saved
         {
           $idho = $this->save_instance_recursive($value);
-          $value->setId($idho);           // id set on associated instance
+          $value->set_id($idho);           // id set on associated instance
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
         {
-          $idho = $value->getId();
-          if ($value->getIsDirty()) // update has_one only if it's dirty
+          $idho = $value->get_id();
+          if ($value->get_is_dirty()) // update has_one only if it's dirty
           {
             $this->update_instance_recursive($value);
           }
@@ -93,7 +93,7 @@ class PhersistentMySQL {
         if (!isset($table['columns'][$col .'_id']))
         {
           $id = $this->save_instance_recursive($ft);
-          $ft->setId($id);
+          $ft->set_id($id);
           $table['columns'][$col .'_id'] = $id; // FK set
         }
       }
@@ -121,14 +121,14 @@ class PhersistentMySQL {
 
           // even if the item is not dirty, we need to save/update it because the backlink
           // could be new and we don't know if that was updated or not, so here we don't
-          // have an isDirty check.
+          // have an is_dirty check.
           $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
 
           // save or update has many item
-          if ($item->getId() == null)
+          if ($item->get_id() == null)
           {
             $hmid = $this->save_instance_recursive($item);
-            $item->setId($hmid);
+            $item->set_id($hmid);
           }
           else
           {
@@ -149,7 +149,7 @@ class PhersistentMySQL {
             $hmtable['columns'][$backlink_name] = $id;
             $hmid = $this->save_instance_recursive($hmtable);
 
-            //$ft->setId($hmid);
+            //$ft->set_id($hmid);
           }
         }
       }
@@ -158,7 +158,7 @@ class PhersistentMySQL {
       // 4.
       // TODO: save many to many in join table, might need to detect the owner side
 
-      $phi->setId($id);
+      $phi->set_id($id);
     }
 
     return $id;
@@ -166,7 +166,7 @@ class PhersistentMySQL {
 
   private function update_instance_recursive($phi)
   {
-    $id = $phi->getId();
+    $id = $phi->get_id();
 
     // 1. save/update has ones first to save the FK in the current object
     $hones = $phi->getAllHasOne();
@@ -181,16 +181,16 @@ class PhersistentMySQL {
       else
       {
         // the has one might be already saved, if not => save, else => update
-        if ($value->getId() == null) // insert
+        if ($value->get_id() == null) // insert
         {
           $idho = $this->save_instance_recursive($value);
-          $value->setId($idho);           // id set on associated instance
+          $value->set_id($idho);           // id set on associated instance
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
         {
-          $idho = $value->getId();
-          if ($value->getIsDirty()) // update has_one only if it's dirty
+          $idho = $value->get_id();
+          if ($value->get_is_dirty()) // update has_one only if it's dirty
           {
             $this->update_instance_recursive($value);
           }
@@ -221,10 +221,10 @@ class PhersistentMySQL {
           $item->setBacklinkId($phi->getClass(), $attr, $item->getClass(), $backlink, $id);
 
           // save or update has many item
-          if ($item->getId() == null)
+          if ($item->get_id() == null)
           {
             $hmid = $this->save_instance_recursive($item);
-            $item->setId($hmid);
+            $item->set_id($hmid);
           }
           else
           {
@@ -271,10 +271,10 @@ class PhersistentMySQL {
 
       //print_r($phi);
 
-      $phi->setId($table['columns']['id']);
-      $phi->setClass($table['columns']['class']);
-      $phi->setDeleted($table['columns']['deleted']);
-      $phi->setIsDirty(false);
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
     }
     catch (\Exception $e)
     {
@@ -324,10 +324,10 @@ class PhersistentMySQL {
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
-      $phi->setId($table['columns']['id']);
-      $phi->setClass($table['columns']['class']);
-      $phi->setDeleted($table['columns']['deleted']);
-      $phi->setIsDirty(false);
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
 
       $instances[] = $phi;
     }
@@ -366,10 +366,10 @@ class PhersistentMySQL {
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
-      $phi->setId($table['columns']['id']);
-      $phi->setClass($table['columns']['class']);
-      $phi->setDeleted($table['columns']['deleted']);
-      $phi->setIsDirty(false);
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
 
       $instances[] = $phi;
     }
@@ -521,10 +521,10 @@ class PhersistentMySQL {
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
-      $phi->setId($table['columns']['id']);
-      $phi->setClass($table['columns']['class']);
-      $phi->setDeleted($table['columns']['deleted']);
-      $phi->setIsDirty(false);
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
 
       $instances[] = $phi;
     }
@@ -701,7 +701,7 @@ class PhersistentMySQL {
             // will be empty until we save the current phi and get an id
             // when saving the one side, it sets the backlink id to the many side,
             // so the hmphi should have the id of the container object
-            $table['many_back'][$backlink_name][$i]['columns'][$backlink_name] = $phi->getId();
+            $table['many_back'][$backlink_name][$i]['columns'][$backlink_name] = $phi->get_id();
           }
         }
         else // many to many uses join table
@@ -731,7 +731,7 @@ class PhersistentMySQL {
       else // simple field
       {
         // test for fields that should not be saved
-        if ($field == 'isDirty') continue;
+        if ($field == 'is_dirty') continue;
 
         //echo $field .' '. $type .' is simple field '. PHP_EOL;
         $table['columns'][$field] = $phi->get($field);
@@ -740,8 +740,8 @@ class PhersistentMySQL {
 
     // columns injected on instances
     /*
-    $table['columns']['id'] = $phi->getId();
-    $table['columns']['deleted'] = $phi->getDeleted();
+    $table['columns']['id'] = $phi->get_id();
+    $table['columns']['deleted'] = $phi->get_deleted();
     $table['columns']['class'] = $phi->getClass();
     */
 
@@ -768,8 +768,6 @@ class PhersistentMySQL {
     // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
     // TODO: consider table name override declared on class
 
-
-
     // ***************************************************
     // For now inheritance ORM is all STI.
     // So need to check for parent = Phersistent, and that class will be the table name
@@ -792,14 +790,15 @@ class PhersistentMySQL {
     return $this->class_to_table_name($class_name);
   }
 
+  // For \a\b\TheClass, returns the_class
+  // Convention: table names are snake case but class names are camel case
   private function class_to_table_name($class_name)
   {
-    // removes class namespace
-    $parts = explode('\\', $class_name);
+    // \a\b\TheClass => TheClass
+    $simple_name = $this->full_class_name_to_simple_name($class_name);
 
-    return strtr($parts[count($parts)-1],
-                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ ",
-                 "abcdefghijklmnopqrstuvwxyz_");
+    // TheClass => the_class
+    return \basic\BasicString::camel_to_snake($simple_name);
   }
 
   /**
@@ -819,7 +818,7 @@ class PhersistentMySQL {
       // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
       // then $backlink_name = current_class_assoc_id
       // and that column should exist on the OTHER_CLASS table
-      $prefix = $this->full_class_name_to_simple_name($phi->getClass());
+      $prefix = $this->class_to_table_name($phi->getClass());
     }
 
     return strtolower($prefix .'_'. $field .'_back');
@@ -834,7 +833,7 @@ class PhersistentMySQL {
     }
     else
     {
-      $prefix = $this->full_class_name_to_simple_name(get_class($ph));
+      $prefix = $this->class_to_table_name(get_class($ph));
     }
 
     return strtolower($prefix .'_'. $field .'_back');

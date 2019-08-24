@@ -10,7 +10,7 @@ class Phersistent {
   public $id = self::INT;
   public $deleted = self::BOOLEAN;
   public $class = self::TEXT;
-  public $isDirty = self::BOOLEAN; // this one shouldn't be saved
+  public $is_dirty = self::BOOLEAN; // this one shouldn't be saved
 
   // Basic attribute types
   const INT      = 'int';
@@ -176,7 +176,7 @@ class Phersistent {
     /*
     $ins->id = null;     // Default value
     $ins->deleted = false; // Default value
-    $ins->class = $ins->getClass();
+    $ins->class = $ins->get_class();
     */
 
     // For setting default values if defined and no value was given in attrs
@@ -243,7 +243,7 @@ class Phersistent {
         if (array_key_exists($attr, $default_values))
         {
           $value = $default_values[$attr];
-          $setMethod = 'set'.$attr;
+          $setMethod = 'set_'.$attr;
           $ins->$setMethod($value);
         }
       }
@@ -252,7 +252,7 @@ class Phersistent {
       // if value comes in properties, set that value
       if (array_key_exists($attr, $attrs))
       {
-        $setMethod = 'set'.$attr;
+        $setMethod = 'set_'.$attr;
 
         // the user wants to create an object from the array of values
         if (array_key_exists($attr, $this->__one) && is_array($value))
@@ -305,12 +305,12 @@ class Phersistent {
     // TODO: check if the declarations of these fields could be in the Phinstance.
     // Default values
     $ins->deleted = false;
-    $ins->class = $ins->getClass();
+    $ins->class = $ins->getClass(); // asks the definition class
 
     // for new instances, it should be dirty, for loading from the DB should be
     // clean, the manager or db should set it as false after creation, and will
     // be dirty again if any modifier method is called
-    $ins->isDirty = true;
+    $ins->is_dirty = true;
 
     return $ins;
   }

@@ -28,10 +28,10 @@ abstract class PhConstraint {
   public static function unique() { return new Unique(); }
 }
 
-// TODO: make this iterable
-class ObjectValidationErrors {
+class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
 
   private $field_errors;
+  private $position = 0;
 
   public function __construct($field_errors = array())
   {
@@ -41,6 +41,66 @@ class ObjectValidationErrors {
   public function getFieldErrors()
   {
     return $this->field_errors;
+  }
+
+  // countable
+  public function count()
+  {
+    return count($this->field_errors);
+  }
+
+  // iterator
+  public function rewind()
+  {
+    $this->position = 0;
+  }
+
+  public function current()
+  {
+    return $this->field_errors[$this->position];
+  }
+
+  public function key()
+  {
+    return $this->position;
+  }
+
+  public function next()
+  {
+    ++$this->position;
+  }
+
+  public function valid()
+  {
+    return isset($this->field_errors[$this->position]);
+  }
+
+  // ArrayAccess
+  public function offsetSet($offset, $value)
+  {
+    if (is_null($offset))
+    {
+      $this->field_errors[] = $value;
+    }
+    else
+    {
+      $this->field_errors[$offset] = $value;
+    }
+  }
+
+  public function offsetExists($offset)
+  {
+    return isset($this->field_errors[$offset]);
+  }
+
+  public function offsetUnset($offset)
+  {
+    unset($this->field_errors[$offset]);
+  }
+
+  public function offsetGet($offset)
+  {
+    return isset($this->field_errors[$offset]) ? $this->field_errors[$offset] : null;
   }
 }
 
