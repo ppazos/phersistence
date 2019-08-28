@@ -497,19 +497,40 @@ class PhInstance {
   {
     $errors = array();
 
+    /* this validation was iterating though all the attrs even if those didnt
+       have a constraint, below is a better solution, iterating though the constraints
+       
     $simple_fields = $this->phclass->get_all_fields();
     foreach ($simple_fields as $attr=>$type)
     {
-      $cs = $this->phclass->get_constraints($attr);
-      foreach ($cs as $c)
-      {
-        if (($e = $c->validate($this->getClass(), $attr, $this->get($attr), $this)) !== true)
-        {
-          if (!isset($errors[$attr])) $errors[$attr] = array();
-          $errors[$attr][] = $e;
-        }
-      }
+      //if (in_array($attr, array('id', 'class', 'deleted'))) continue;
+
+      $validation_res = FieldValidator::validate($this, $attr);
+      // if errors are returned already have the name of the attr on it
+      if ($validation_res !== true) $errors[$attr] = $validation_res;
+
+      // $cs = $this->phclass->get_constraints($attr);
+      // foreach ($cs as $c)
+      // {
+      //   if (($e = $c->validate($this->getClass(), $attr, $this->get($attr), $this)) !== true)
+      //   {
+      //     if (!isset($errors[$attr])) $errors[$attr] = array();
+      //     $errors[$attr][] = $e;
+      //   }
+      // }
     }
+    */
+
+    // validates only based on existing constraints
+    // there is no need to iterate through all the fields
+    $constraints = $this->phclass->get_all_constraints();
+    foreach ($constraints as $attr => $attr_constraints)
+    {
+      $validation_res = FieldValidator::validate($this, $attr, $attr_constraints);
+      // if errors are returned already have the name of the attr on it
+      if ($validation_res !== true) $errors[$attr] = $validation_res;
+    }
+
 
     if ($cascade)
     {

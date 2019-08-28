@@ -28,6 +28,43 @@ abstract class PhConstraint {
   public static function unique() { return new Unique(); }
 }
 
+class FieldValidator {
+
+  public static function validate($phi, $attr, $cs)
+  {
+    $errors = array();
+
+    //$cs = $phi->phclass->get_constraints($attr);
+
+    $attr_is_nullable = false;
+    foreach ($cs as $c)
+    {
+      if ($c instanceof Nullable)
+      {
+        $attr_is_nullable = true;
+        break;
+      }
+    }
+
+    $value = $phi->get($attr);
+
+    // if is nullable and value is null, there is no need of testing the rest of
+    // the constraints
+    if ($attr_is_nullable && $value == null) return true;
+
+    foreach ($cs as $c)
+    {
+      if (($e = $c->validate($phi->getClass(), $attr, $value, $phi)) !== true)
+      {
+        $errors[] = $e;
+      }
+    }
+
+    if (count($errors) == 0) return true;
+    return $errors;
+  }
+}
+
 class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
 
   private $field_errors;
@@ -41,6 +78,12 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   public function getFieldErrors()
   {
     return $this->field_errors;
+  }
+
+  // for merging two or more ObjevtValidationErrors
+  public function addAll($errors = array())
+  {
+    $this->field_errors = array_merge($this->field_errors, $errors);
   }
 
   // countable

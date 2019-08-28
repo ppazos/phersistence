@@ -518,6 +518,10 @@ class Phersistent {
     $this->__manager = $man;
   }
 
+  public function get_all_constraints()
+  {
+    return $this->__constraints;
+  }
 
   public function get_constraints($attr)
   {

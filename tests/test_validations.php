@@ -9,6 +9,9 @@ spl_autoload_register(function ($class) {
     require_once($_BASE.str_replace('\\', '/', $class).'.php');
 });
 
+
+
+/*
 use \phersistent\PhConstraint;
 
 // Test min
@@ -158,6 +161,57 @@ $error = $dtt->validate('Class', 'attr', 'abcdxx');
 
 // On Class->attr, the assigned value 'abcdxx' has not a valid datetime format YYYY-MM-DD hh:mm:ss
 echo $error->getMessage() . PHP_EOL;
+*/
+
+
+use \phersistent\PhConstraint as constraints;
+
+class Person extends \phersistent\Phersistent {
+
+  public $name = self::TEXT;
+
+  function constraints()
+  {
+    return array(
+      'name'  => array(
+        //ein needs to be nullable for providers in organizations
+        //constraints::nullable(true),
+        constraints::minLength(1)
+      )
+    );
+  }
+}
+
+class Provider extends \phersistent\Phersistent {
+
+  //public $name = self::TEXT;
+  public $ein = self::TEXT;
+  public $person = Person::class;
+
+  function constraints()
+  {
+    return array(
+      'ein'  => array(
+        //ein needs to be nullable for providers in organizations
+        constraints::nullable(true),
+        constraints::minLength(9)
+      )
+    );
+  }
+}
+
+
+// setup
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
+$man = new \phersistent\PhersistentDefManager('', $ph_db);
+
+
+$provider = $Provider->create(array(
+  'person' => $Person->create(array(
+    'name' => ''
+  ))
+));
+print_r($provider->validate());
 
 
 ?>
