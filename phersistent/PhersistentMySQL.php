@@ -722,7 +722,7 @@ class PhersistentMySQL {
         // the associated element can be null
         $table['foreigns'][$field] = $this->phi_to_data($phi->get($field));
       }
-      else if ($phi->getDefinition()->is_serialized_array($field))
+      else if ($phi->getDefinition()->is_serialized_array($field) || $phi->getDefinition()->is_serialized_object($field))
       {
         // addslashes escapes the internal strings in the SQL query
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values

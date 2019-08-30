@@ -52,13 +52,14 @@ class PhInstance {
     return $this->{$hasManyName}->size();
   }
 
+  /** JSON Array Field Operations */
   /**
    * add a string to the string array attribute
    */
   private function pushTo($sarrayAttr, $value)
   {
     if (!is_string($value)) throw new \Exception('Value should be a string');
-    $this->{$sarrayAttr}[] = $value;
+    $this->{$sarrayAttr}[] = $value; // if the array is null, this also initializes it
   }
   private function delFrom($sarrayAttr, $value)
   {
@@ -70,6 +71,7 @@ class PhInstance {
     if (!is_string($value)) throw new \Exception('Value should be a string');
     return in_array($value, $this->{$sarrayAttr});
   }
+
 
   public function get($attr)
   {
@@ -92,19 +94,21 @@ class PhInstance {
       $this->{$attr}->add_all($instances);
     }
 
-    if (!property_exists($this, $attr))
-    {
-      echo $this->getClass() . PHP_EOL;
-      //debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-      //print_r($this);
-    }
-
     return $this->{$attr};
   }
 
   public function set($attr, $value)
   {
-    // TODO: type check against definition
+    // TODO: type check against attr definition
+
+    if ($this->phclass->is_serialized_object($attr))
+    {
+      if (!(is_null($value) || is_array($value)))
+      {
+        // ERROR: SOBJECT values should be null or array
+        throw new \Exception('Serialized object field '. $attr .' cant be set to value of type '. gettype($value) .', it should be null or an array');
+      }
+    }
 
     if ($this->phclass->is_boolean($attr) && !is_bool($value))
     {
@@ -183,9 +187,54 @@ class PhInstance {
           throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed');
         }
       }
+      else if ($this->phclass->is_serialized_object($attr))
+      {
+        // the value comes as a string, then decode
+        if (is_string($value))
+        {
+          $value = json_decode($value, true); // decode as assoc array, not object
 
+          if ($value === NULL)
+          {
+            $error = '';
+            switch (json_last_error()) {
+              case JSON_ERROR_NONE:
+                $error = ' - No errors';
+              break;
+              case JSON_ERROR_DEPTH:
+                $error = ' - Maximum stack depth exceeded';
+              break;
+              case JSON_ERROR_STATE_MISMATCH:
+                $error = ' - Underflow or the modes mismatch';
+              break;
+              case JSON_ERROR_CTRL_CHAR:
+                $error = ' - Unexpected control character found';
+              break;
+              case JSON_ERROR_SYNTAX:
+                $error = ' - Syntax error, malformed JSON';
+              break;
+              case JSON_ERROR_UTF8:
+                $error = ' - Malformed UTF-8 characters, possibly incorrectly encoded';
+              break;
+              default:
+                $error = ' - Unknown error';
+              break;
+            }
+
+            throw new \Exception('Error decoding json object '. $error);
+          }
+        }
+        else if (is_array($value))
+        {
+          // do nothing: array values are all valid for serialized objects
+        }
+        else
+        {
+          throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed');
+        }
+      }
       // the user wants to create/update an object from the array of values
-      if ($this->phclass->is_has_one($attr) && is_array($value))
+      else if ($this->phclass->is_has_one($attr) && is_array($value))
       {
         $has_one_values = $value;
 
@@ -206,9 +255,8 @@ class PhInstance {
           $value = $current_value;
         }
       }
-
       // check FK fields to set
-      if ($this->phclass->is_has_one($attr) && array_key_exists($attr.'_id', $props))
+      else if ($this->phclass->is_has_one($attr) && array_key_exists($attr.'_id', $props))
       {
         $setMethod = 'set_'.$attr.'_id';
         $this->$setMethod($props[$attr.'_id']);
@@ -499,7 +547,7 @@ class PhInstance {
 
     /* this validation was iterating though all the attrs even if those didnt
        have a constraint, below is a better solution, iterating though the constraints
-       
+
     $simple_fields = $this->phclass->get_all_fields();
     foreach ($simple_fields as $attr=>$type)
     {

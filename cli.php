@@ -34,6 +34,9 @@ switch ($command)
   case "sarray":
     require_once('tests/test_serialized_array.php');
   break;
+  case "sobject":
+    require_once('tests/test_serialized_object.php');
+  break;
   case "validations":
     require_once('tests/test_validations.php');
   break;

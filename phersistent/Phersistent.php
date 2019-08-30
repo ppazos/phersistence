@@ -23,7 +23,8 @@ class Phersistent {
   const DATETIME = 'datetime';
   const DURATION = 'duration'; // ISO8601 Duration 'P1M', in PHP is DateInterval
   const TEXT     = 'text';
-  const SARRAY   = 'serialized_string_array';
+  const SARRAY   = 'serialized_string_array'; // JSON encoded array of strings
+  const SOBJECT  = 'serialized_object'; // JSON encoded object that is not Phersistent
 
   // This code is used for has_one to mark the link as not loaded when lazy loading
   // and to differentiate from the NULL value that is valid for has one.
@@ -404,13 +405,23 @@ class Phersistent {
   public function is_simple_field($field)
   {
     $fields = $this->get_all_fields();
-    return array_key_exists($field, $fields) && !$this->is_has_one($field) && !$this->is_has_many($field) && $fields[$field] != self::SARRAY;
+    return array_key_exists($field, $fields) &&
+           !$this->is_has_one($field) &&
+           !$this->is_has_many($field) &&
+           $fields[$field] != self::SARRAY &&
+           $fields[$field] != self::SOBJECT;
   }
 
   public function is_serialized_array($field)
   {
     $fields = $this->get_all_fields();
     return array_key_exists($field, $fields) && $fields[$field] == self::SARRAY;
+  }
+
+  public function is_serialized_object($field)
+  {
+    $fields = $this->get_all_fields();
+    return array_key_exists($field, $fields) && $fields[$field] == self::SOBJECT;
   }
 
   public function get_has_one($field)

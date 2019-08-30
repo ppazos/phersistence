@@ -44,47 +44,92 @@ $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 
 $ins = $TestSarray->create(array('num'=>123, 'sarray'=>array(123, true, 'hola')));
 $ins->save();
-$sarray = $ins->getSarray();
+$sarray = $ins->get_sarray();
 
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
 
-$ins1 = $TestSarray->get($ins->getId());
-$sarray = $ins1->getSarray();
+$ins1 = $TestSarray->get($ins->get_id());
+$sarray = $ins1->get_sarray();
 
 echo PHP_EOL;
 print_r($sarray);
 var_dump($sarray);
 echo PHP_EOL;
 
-$insl = $TestSarray->get($ins->getId());
-$sarray = $insl->getSarray();
+$insl = $TestSarray->get($ins->get_id());
+$sarray = $insl->get_sarray();
 
-$insl->pushToSarray('newval');
+$insl->push_to_sarray('newval');
 $insl->save();
-assert ($insl->hasValueInSarray('newval'));
+assert ($insl->has_value_in_sarray('newval'));
 
-$sarray = $insl->getSarray();
+$sarray = $insl->get_sarray();
 
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
 
 
-$insl->delFromSarray('newval');
+$insl->del_from_sarray('newval');
 $insl->save();
-assert (!$insl->hasValueInSarray('newval'));
+assert (!$insl->has_value_in_sarray('newval'));
 
-$sarray = $insl->getSarray();
+$sarray = $insl->get_sarray();
 
 echo PHP_EOL;
 print_r($sarray);
 echo PHP_EOL;
 
-assert ($insl->hasValueInSarray('123'));
+assert ($insl->has_value_in_sarray('123'));
 
 $insl->delete();
+
+
+// CHECK DEFAULT VALUE FOR JSON ARRAY
+$ins = $TestSarray->create();
+//$ins->save();
+$sarray = $ins->get_sarray();
+
+assert ($sarray == null);
+print_r($sarray);
+
+$ins->push_to_sarray('value');
+$sarray = $ins->get_sarray();
+
+assert ($sarray != null);
+print_r($sarray);
+
+$ins->get_pepe();
+
+
+echo '+++-------'. PHP_EOL;
+
+// TEST JSON ENCODE/DECODE OPTIONS
+$arr = array('1','3','5');
+echo json_encode($arr) . PHP_EOL;
+print_r (json_decode(json_encode($arr))); // ARRAY SINGLE
+
+$marr = array('1','3', array('5'));
+echo json_encode($marr) . PHP_EOL;
+print_r (json_decode(json_encode($marr))); // ARRAY MULTIDIM
+
+$msarr = array('1','key'=>'3', array('key'=>'5'));
+echo json_encode($msarr) . PHP_EOL;
+print_r (json_decode(json_encode($msarr))); // OBJECT
+
+$msarr = array('1','key'=>'3', array('key'=>'5'));
+echo json_encode($msarr) . PHP_EOL;
+print_r (json_decode(json_encode($msarr), true)); // ARRAY MULTIDIM ASSOC
+
+
+echo '+++-------'. PHP_EOL;
+
+// PHP initializes the array if its null
+$null_array = null;
+$null_array[] = 'item';
+print_r($null_array);
 
 exit;
 

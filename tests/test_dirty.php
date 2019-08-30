@@ -105,7 +105,7 @@ $employer = $member->getEmployer();
 
 assert(!$employer->getIsDirty());
 
-$member->setProperties(array('employer_id'=>$employer->getId()));
+$member->setProperties(array('employer_id'=>$employer->get_id()));
 if (!$member->save()) // update
 {
   print_r($membe->getErrors());
