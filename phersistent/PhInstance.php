@@ -25,6 +25,11 @@ class PhInstance {
     $this->{$hasManyName}->add( $ins );
   }
 
+  private function cleanFrom($hasManyName)
+  {
+    $this->{$hasManyName}->clean();
+  }
+
   private function removeFrom($hasManyName, PhInstance $ins)
   {
     // to remove an instance, it should be saved since the id is used to find a match
@@ -261,6 +266,20 @@ class PhInstance {
         $setMethod = 'set_'.$attr.'_id';
         $this->$setMethod($props[$attr.'_id']);
       }
+      else if ($this->phclass->is_has_many($attr) && is_array($value))
+      {
+        // if properties want to set has many, the has many is cleaned up
+        // *** all the items are removed ***
+        $cleanMethod = 'clean_'. $attr;
+        $this->{$cleanMethod}();
+
+        $addToHMMethod = 'add_to_'. $attr;
+        $hm = $value;
+        foreach ($hm as $phi)
+        {
+          $this->{$addToHMMethod}($phi); // verifies phi instanceof PhInstance
+        }
+      }
 
       // sets the value and verifies it's validity (type, etc)
       if ($value !== self::NOT_LOADED_ASSOC)
@@ -337,6 +356,19 @@ class PhInstance {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
       $this->removeFrom($attr, $args[0]);
+      $this->is_dirty = true;
+      return;
+    }
+
+    // clean_xxx
+    if (substr($method,0,6) == "clean_")
+    {
+      $attr = lcfirst(substr($method, 6));
+      if (!property_exists($this, $attr))
+      {
+        throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
+      }
+      $this->cleanFrom($attr);
       $this->is_dirty = true;
       return;
     }

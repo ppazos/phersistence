@@ -59,7 +59,7 @@ class PhTestSuite {
          {
            $testCase->run();
          }
-         catch (Exception $e)
+         catch (\Exception $e)
          {
            ob_start();
            debug_print_backtrace(); // Stack de llamadas que resultaron en un test que falla

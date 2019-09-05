@@ -182,14 +182,14 @@ echo "Instance Full Structure\n";
 print_r($instance3);
 
 // TESTS / ASSERTS
-if (!$instance->isInstanceOf('MyPhersistent')) throw new Exception("error isInstanceOf 1");
-if ($instance->isInstanceOf('AnotherPhersistent')) throw new Exception("error isInstanceOf 2 (falso positivo)");
-if ( $instance->getClass() != 'MyPhersistent' ) throw new Exception("error getClass");
-if ( $instance->getAge() != 5 ) throw new Exception("error getXXX");
-if ( $instance3->getComposite()->size() != 2 ) throw new Exception("error getHasMany size");
+if (!$instance->isInstanceOf('MyPhersistent')) throw new \Exception("error isInstanceOf 1");
+if ($instance->isInstanceOf('AnotherPhersistent')) throw new \Exception("error isInstanceOf 2 (falso positivo)");
+if ( $instance->getClass() != 'MyPhersistent' ) throw new \Exception("error getClass");
+if ( $instance->getAge() != 5 ) throw new \Exception("error getXXX");
+if ( $instance3->getComposite()->size() != 2 ) throw new \Exception("error getHasMany size");
 
-if (!$instance3->isInstanceOf('MyPhersistent')) throw new Exception("error isInstanceOf 3");
-if (!$instance3->isInstanceOf('SubclassPhersistent')) throw new Exception("error isInstanceOf 4");
+if (!$instance3->isInstanceOf('MyPhersistent')) throw new \Exception("error isInstanceOf 3");
+if (!$instance3->isInstanceOf('SubclassPhersistent')) throw new \Exception("error isInstanceOf 4");
 
 
 

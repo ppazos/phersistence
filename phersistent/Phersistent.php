@@ -167,8 +167,6 @@ class Phersistent {
   */
   public function create($attrs = array())
   {
-    //echo 'create '. $this->clax ."\n";
-
     $ins = new PhInstance();
 
     // inject properties
@@ -202,12 +200,13 @@ class Phersistent {
       // has many is injected below
       if (array_key_exists($attr, $this->__many)) continue;
 
-      // Set values
-      // TODO: implementar Phinstance en lugar de usar SdtClass, y ponerle set y get que castee a los tipos declarados.
-      $value = null; // Default value
+       // injects the attribute
+      $ins->{$attr} = NULL;
+
+      // process the value
+      $value = NULL;
       if (isset($attrs[$attr])) $value = $attrs[$attr];
 
-      // Injects the attribute and sets the value
 
       /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
                is not null on the database and this link is lazy loaded, so the ROM
@@ -234,9 +233,9 @@ class Phersistent {
           $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
         }
       }
-      $ins->{$attr} = NULL; // injects the attribute
 
-
+      // will be used below to set the value
+      $setMethod = 'set_'.$attr;
 
       // check for default value
       if (is_null($value))
@@ -244,21 +243,15 @@ class Phersistent {
         if (array_key_exists($attr, $default_values))
         {
           $value = $default_values[$attr];
-          $setMethod = 'set_'.$attr;
-          $ins->$setMethod($value);
         }
       }
-
-
-      // if value comes in properties, set that value
-      if (array_key_exists($attr, $attrs))
+      else // if value comes, set that value
       {
-        $setMethod = 'set_'.$attr;
-
-        // the user wants to create an object from the array of values
+        // want to create a HO object from the array of values
         if (array_key_exists($attr, $this->__one) && is_array($value))
         {
           // creates an instance of the class declared in the HO attr with the value array
+          // this->attr is the declared class for the has one attribute
           $value = $this->__manager->create($this->{$attr}, $value);
         }
 
@@ -278,30 +271,33 @@ class Phersistent {
             });
           }
         }
-
-        $ins->$setMethod($value); // sets the value and verifies it's validity (type, etc)
       }
+
+      $ins->$setMethod($value);
     }
 
-    // Inject many
+    // inject has many
     foreach ($this->__many as $attr=>$rel)
     {
-      //print_r($rel);
       // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
       if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
       if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
       if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
 
-      // TODO: initialize properties for has many if values are passed
+      if (isset($attrs[$attr]) && is_array($attrs[$attr]))
+      {
+        // items in the array should already by PhInstances
+        $hm = $attrs[$attr];
+        foreach ($hm as $phi)
+        {
+          $addToHMMethod = 'add_to_'. $attr;
+          //if (!($phi instanceof PhInstance)) throw new \Exception("Object intitialization with has many requires all objects to be instances of Phersistent");
+          //else
+          // add to already checks the value is PhInstance
+          $ins->{$addToHMMethod}($phi);
+        }
+      }
     }
-
-    // Inject one
-    /* has one is injected as a normal attribute
-    foreach ($this->__one as $attr=>$rel)
-    {
-      $ins->{$attr} = NULL;
-    }
-    */
 
     // TODO: check if the declarations of these fields could be in the Phinstance.
     // Default values

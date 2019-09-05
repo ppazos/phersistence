@@ -19,6 +19,12 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
     }
   }
 
+  public function clean()
+  {
+    $this->items = array();
+    $this->rewind();
+  }
+
   public function remove($instance)
   {
     foreach ($this->items as $i=>$ins)

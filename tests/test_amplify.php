@@ -63,7 +63,7 @@ try
 {
   print_r($e->save());
 }
-catch (Exception $e)
+catch (\Exception $e)
 {
   echo 'code: '. $e->getCode() . PHP_EOL;
 

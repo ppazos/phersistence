@@ -168,6 +168,56 @@ echo "\n";
 
 //print_r($E);
 
+
+// Test has many set properties
+$ddd = $D->create(array(
+  'd_field_1' => 12,
+  'd_field_2' => 'Hello!'
+));
+$ddd->setProperties(array(
+  'hm_e' => array(
+    $E->create(array(
+      'e_field_1' => 34,
+      'e_field_2' => 'Bye! 1'
+    )),
+    $E->create(array(
+      'e_field_1' => 53,
+      'e_field_2' => 'Bye! 2'
+    )),
+    $E->create(array(
+      'e_field_1' => 69,
+      'e_field_2' => 'Bye! 3'
+    ))
+  )
+));
+
+print_r($ddd);
+exit;
+
+
+// Tests has many init
+$ddd = $D->create(array(
+  'd_field_1' => 12,
+  'd_field_2' => 'Hello!',
+  'hm_e' => array(
+    $E->create(array(
+      'e_field_1' => 34,
+      'e_field_2' => 'Bye! 1'
+    )),
+    $E->create(array(
+      'e_field_1' => 53,
+      'e_field_2' => 'Bye! 2'
+    )),
+    $E->create(array(
+      'e_field_1' => 69,
+      'e_field_2' => 'Bye! 3'
+    ))
+  )
+));
+
+print_r($ddd);
+exit;
+
 // VALIDATE TEST
 
 $aa = $A->create(array('a_field_1'=>0, 'a_field_2'=>"Hello world!"));
@@ -195,8 +245,6 @@ assert($es !== true);
 assert(is_array($es));
 echo $es['a_field_1'][0]->getMessage() . PHP_EOL;
 
-
-exit;
 
 // FIND BY TEST
 
@@ -246,8 +294,6 @@ echo "A count ". $A->count() . PHP_EOL;
 // /TEST DELETE
 
 
-exit;
-
 // should try to update
 //$a->setA_field_1(123);
 $e->setE_field_1(666); // updates the e in a->d->es
@@ -282,7 +328,7 @@ try
   $A->is_boolean('sdfsdsdfs'); // attr doesnt exists
   assert(false); // never reaches this point
 }
-catch (Exception $e)
+catch (\Exception $e)
 {
   echo $e->getMessage() . PHP_EOL;
 }

@@ -239,12 +239,12 @@ class PhersistentMySQL {
 
   public function delete_instance($phi)
   {
-    if ($phi->id == null) throw new Exception("Instance can't be deleted, it is not yet saved to the database");
+    if ($phi->id == null) throw new \Exception("Instance can't be deleted, it is not yet saved to the database");
     $table_name = $this->get_table_name($phi);
     $r = $this->driver->query('DELETE FROM '. $table_name .' WHERE id='. $phi->id);
     if ($r == 0)
     {
-      throw new Exception("Couldn't delete the instance");
+      throw new \Exception("Couldn't delete the instance");
     }
   }
 

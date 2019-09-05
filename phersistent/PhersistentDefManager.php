@@ -100,9 +100,9 @@ class PhersistentDefManager {
   public function add($def)
   {
     $defins = new $def();
-    if (!$defins instanceof Phersistent)
+    if (!($defins instanceof Phersistent))
     {
-      throw new Exception($def ." is not a valid Phersistent definition");
+      throw new \Exception($def ." is not a valid Phersistent definition");
     }
 
     $defins->set_manager($this);

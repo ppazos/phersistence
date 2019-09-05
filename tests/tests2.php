@@ -159,14 +159,14 @@ print_r($user3);
 
 // TESTS / ASSERTS
 
-if (!$user3->isInstanceOf('BaseUser')) throw new Exception("error isInstanceOf 1");
-if (!$user3->isInstanceOf('SpecificUser')) throw new Exception("error isInstanceOf 2");
+if (!$user3->isInstanceOf('BaseUser')) throw new \Exception("error isInstanceOf 1");
+if (!$user3->isInstanceOf('SpecificUser')) throw new \Exception("error isInstanceOf 2");
 
 // user1 is BaseUser
-if ( $user1->isInstanceOf('SpecificUser')) throw new Exception("error isInstanceOf 2 (falso positivo)");
-if ( $user3->getClass() != 'SpecificUser' ) throw new Exception("error getClass");
-if ( $user3->getAge() != 7 ) throw new Exception("error getXXX");
-if ( $user3->getAssociatedUsers()->size() != 2 ) throw new Exception("error getHasMany size");
+if ( $user1->isInstanceOf('SpecificUser')) throw new \Exception("error isInstanceOf 2 (falso positivo)");
+if ( $user3->getClass() != 'SpecificUser' ) throw new \Exception("error getClass");
+if ( $user3->getAge() != 7 ) throw new \Exception("error getXXX");
+if ( $user3->getAssociatedUsers()->size() != 2 ) throw new \Exception("error getHasMany size");
 
 
 // The PhCollection is iterable
