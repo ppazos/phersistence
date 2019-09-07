@@ -553,6 +553,10 @@ class PhInstance {
     $hasmany = array();
     foreach ($this->phclass->getHasManyDeclarations() as $attr=>$rel)
     {
+      // FIXME: this loads from DB and the validate uses it, so everytime
+      // the validation is called, if the collections were not loaded, this
+      // loads them, adding an overhead on all validates and saves, it should
+      // not validate if the collections are not loaded.
       $hasmany[$attr] = $this->get($attr); // value is a collection
     }
     return $hasmany;
@@ -575,6 +579,7 @@ class PhInstance {
   //       and child class, the constraint on the child overrides the parent constraint
   public function validate($cascade = true)
   {
+    //echo 'INSTANCE validate '. $this->getClass() . PHP_EOL;
     $errors = array();
 
     /* this validation was iterating though all the attrs even if those didnt
@@ -611,7 +616,6 @@ class PhInstance {
       if ($validation_res !== true) $errors[$attr] = $validation_res;
     }
 
-
     if ($cascade)
     {
       $hos = $this->getAllHasOne();
@@ -619,7 +623,9 @@ class PhInstance {
       foreach ($hos as $attr => $hoi)
       {
         // cant call to validate if the hoi is null
+        // and dont validate if the instance is not dirty
         if ($hoi == null) continue;
+        else if (!$hoi->get_is_dirty()) continue;
 
         $ho_errors = $hoi->validate(true);
         // merge of HO errors into the instance errors,
@@ -633,7 +639,9 @@ class PhInstance {
         foreach ($hmc as $i => $hmi) // instance
         {
           // cant call to validate if the hmi is null
+          // and avoid validation if the instance is not dirty
           if ($hmi == null) continue;
+          else if (!$hmi->get_is_dirty()) continue;
 
           $hm_errors = $hmi->validate();
           if ($hm_errors !== true)

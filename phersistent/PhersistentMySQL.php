@@ -25,12 +25,15 @@ class PhersistentMySQL {
     //$loop = time()."_". rand()."_". rand();
     //$table = $this->phi_to_data($phi);
     //print_r($table);
+    //echo 'save_instance '. $phi->getClass() . PHP_EOL;
     if ($phi->get_id() == null)
     {
+      //echo 'save_instance save' . PHP_EOL;
       $id = $this->save_instance_recursive($phi);
     }
     else
     {
+      //echo 'save_instance update' . PHP_EOL;
       $id = $this->update_instance_recursive($phi);
     }
 
@@ -39,6 +42,7 @@ class PhersistentMySQL {
 
   private function save_instance_recursive($phi)
   {
+    //echo 'save_instance_recursive '. $phi->getClass() . PHP_EOL;
     $id = null;
 
     // can be an empty array derived from a null has one
@@ -81,6 +85,7 @@ class PhersistentMySQL {
     $table = $this->phi_to_data($phi);
 
     //var_dump($table);
+    //print_r($table);
 
     /*
     // save foreigns first to get their fk ids and set them to the table before save
