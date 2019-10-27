@@ -14,6 +14,11 @@ class PhersistentMySQL {
     $this->driver = $d;
   }
 
+  public function get_driver()
+  {
+    return $this->driver;
+  }
+
   public function save_instance($phi)
   {
     // We don't do an is_dirty check on the instance to save, if a programmer
@@ -731,7 +736,9 @@ class PhersistentMySQL {
       {
         // addslashes escapes the internal strings in the SQL query
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
-        $table['columns'][$field] = json_encode($phi->get($field)); //addslashes(json_encode($phi->get($field)));
+        $value = $phi->get($field);
+
+        if ($value != null) $table['columns'][$field] = json_encode($value); //addslashes(json_encode($phi->get($field)));
       }
       else // simple field
       {
