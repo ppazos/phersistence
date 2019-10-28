@@ -731,7 +731,9 @@ class PhersistentMySQL {
       {
         // addslashes escapes the internal strings in the SQL query
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
-        $table['columns'][$field] = json_encode($phi->get($field)); //addslashes(json_encode($phi->get($field)));
+        $value = $phi->get($field);
+
+        if ($value != null) $table['columns'][$field] = json_encode($value); //addslashes(json_encode($phi->get($field)));
       }
       else // simple field
       {

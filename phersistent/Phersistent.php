@@ -259,7 +259,7 @@ class Phersistent {
         if ($this->is_serialized_array($attr))
         {
           // the value comes as a string, then decode
-          if (is_string($value))
+          if (is_string($value) && $value !== '')
           {
             $value = json_decode($value);
           }

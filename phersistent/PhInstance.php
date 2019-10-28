@@ -146,7 +146,7 @@ class PhInstance {
       if ($this->phclass->is_serialized_array($attr))
       {
         // the value comes as a string, then decode
-        if (is_string($value))
+        if (is_string($value) && $value !== '')
         {
           $value = json_decode($value);
 
@@ -194,8 +194,11 @@ class PhInstance {
       }
       else if ($this->phclass->is_serialized_object($attr))
       {
+        // nullable values from DB cant be decoded, null will be set in the instance
+        if (is_null($value)) continue;
+
         // the value comes as a string, then decode
-        if (is_string($value))
+        if (is_string($value) && $value !== '')
         {
           $value = json_decode($value, true); // decode as assoc array, not object
 
@@ -235,7 +238,7 @@ class PhInstance {
         }
         else
         {
-          throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed');
+          throw new \Exception('Serialized object field '. $attr .' can only be initialized with a JSON string or an array');
         }
       }
       // the user wants to create/update an object from the array of values
