@@ -14,6 +14,11 @@ class PhersistentMySQL {
     $this->driver = $d;
   }
 
+  public function get_driver()
+  {
+    return $this->driver;
+  }
+
   public function save_instance($phi)
   {
     // We don't do an is_dirty check on the instance to save, if a programmer
