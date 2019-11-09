@@ -41,6 +41,7 @@ class FieldValidator {
     {
       if ($c instanceof Nullable)
       {
+        //echo $attr .' is nullable'. PHP_EOL;
         $attr_is_nullable = true;
         break;
       }
@@ -51,6 +52,24 @@ class FieldValidator {
     // if is nullable and value is null, there is no need of testing the rest of
     // the constraints
     if ($attr_is_nullable && $value == null) return true;
+
+
+    // if attr is blankable and the value is blank, passes the validation
+    // the issue is if the attr is also unique, then the empty string will
+    // fail the unique constraint
+    $attr_is_blankable = false;
+    foreach ($cs as $c)
+    {
+      if ($c instanceof BlankConstraint)
+      {
+        //echo $attr .' is blankable'. PHP_EOL;
+        $attr_is_blankable = true;
+        break;
+      }
+    }
+
+    if ($attr_is_blankable && $value == '') return true;
+
 
     foreach ($cs as $c)
     {
@@ -78,6 +97,35 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   public function getFieldErrors()
   {
     return $this->field_errors;
+  }
+
+  public function getAllErrorMessages()
+  {
+    $errs = array();
+    foreach ($this->field_errors as $field => $validation_errors)
+    {
+      // if field is has one, validation errors is object validation errors
+      if ($validation_errors instanceof ObjectValidationErrors)
+      {
+        $errs = array_merge($errs, $validation_errors->getAllErrorMessages());
+      }
+      else
+      {
+        foreach ($validation_errors as $validation_error)
+        {
+          // errors for has many there is a list of object validaiton errors
+          if ($validation_error instanceof ObjectValidationErrors)
+          {
+            $errs = array_merge($errs, $validation_error->getAllErrorMessages());
+          }
+          else
+          {
+            $errs[] = $validation_error->getMessage();
+          }
+        }
+      }
+    }
+    return $errs;
   }
 
   // for merging two or more ObjevtValidationErrors
