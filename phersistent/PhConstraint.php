@@ -39,7 +39,7 @@ class FieldValidator {
     $attr_is_nullable = false;
     foreach ($cs as $c)
     {
-      if ($c instanceof Nullable)
+      if ($c instanceof Nullable && $c->getValue() === true)
       {
         //echo $attr .' is nullable'. PHP_EOL;
         $attr_is_nullable = true;
@@ -60,7 +60,7 @@ class FieldValidator {
     $attr_is_blankable = false;
     foreach ($cs as $c)
     {
-      if ($c instanceof BlankConstraint)
+      if ($c instanceof BlankConstraint && $c->getValue() === true)
       {
         //echo $attr .' is blankable'. PHP_EOL;
         $attr_is_blankable = true;
@@ -587,6 +587,11 @@ class BlankConstraint extends PhConstraint {
   public function __construct( $blank )
   {
     $this->blank = $blank;
+  }
+
+  public function getValue()
+  {
+    return $this->blank;
   }
 
   public function validate($class, $attr, $value, $object)
