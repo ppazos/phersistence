@@ -145,6 +145,8 @@ class PhInstance {
 
       if ($this->phclass->is_serialized_array($attr))
       {
+        if (!$value) $value = array();
+        
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')
         {
