@@ -169,6 +169,11 @@ class PhersistentDefManager {
     return $this->__ph_db->find_by($class_name, $where, $max, $offset);
   }
 
+  public function countBy($class_name, $where)
+  {
+    return $this->__ph_db->count_by($class_name, $where);
+  }
+
   public function deleteInstance($phi)
   {
     $this->__ph_db->delete_instance($phi);

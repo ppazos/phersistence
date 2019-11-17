@@ -435,12 +435,20 @@ class PhersistentMySQL {
         else // simple cond, count will be 3
         {
           // TODO: same code as below, please refactor!
-          $refvalue = $subconds[2];
+          $refvalue = (isset($subconds[2]) ? $subconds[2] : null); // the refvalue is null when the operator is "IS NULL"
           if (is_bool($refvalue))
           {
             $refvalue = ($refvalue ? 'true' : 'false');
           }
           else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+          {
+            // NOP
+          }
+          else if (!$refvalue && strcasecmp($subconds[1], 'IS NULL') == 0) // a IS NULL
+          {
+            // NOP
+          }
+          else if (!$refvalue && strcasecmp($subconds[1], 'IS NOT NULL') == 0) // a IS NOT NULL
           {
             // NOP
           }
@@ -456,12 +464,20 @@ class PhersistentMySQL {
       else // simple condition
       {
         //echo "SIMPLE COND".PHP_EOL;
-        $refvalue = $subconds[2];
+        $refvalue = (isset($subconds[2]) ? $subconds[2] : null); // the refvalue is null when the operator is "IS NULL"
         if (is_bool($refvalue))
         {
           $refvalue = ($refvalue ? 'true' : 'false');
         }
         else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+        {
+          // NOP
+        }
+        else if (!$refvalue && strcasecmp($subconds[1], 'IS NULL') == 0) // a IS NULL
+        {
+          // NOP
+        }
+        else if (!$refvalue && strcasecmp($subconds[1], 'IS NOT NULL') == 0) // a IS NOT NULL
         {
           // NOP
         }
@@ -541,6 +557,29 @@ class PhersistentMySQL {
     return $instances;
   }
 
+  public function count_by($class_name, $where)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name($phi);
+    $alias = $table_name[0];
+
+    $expr = $this->find_by_where_recursive($where, $alias); // just generates the criteria from the recursive struture in $where
+    $query_where = $expr[0];
+
+    $records = array();
+    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
+    while ($row = $r->fetch_assoc())
+    {
+      // FIXME: table is really row or record
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    return $records[0]['columns']['count'];
+  }
 
   /**
    * Returns a table structure if the id exists on the table.
