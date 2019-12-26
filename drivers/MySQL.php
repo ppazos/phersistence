@@ -26,7 +26,7 @@ class MySQL {
 
   // incorrect query syntax
   const ERR_PARSE = 1065;
-  
+
 
   function __construct()
   {
@@ -337,6 +337,18 @@ class MySQL {
     $columns_string = substr($columns_string, 0, -2);
 
     $this->execute('CREATE INDEX '. $index_name .' ON '. $table_name .'('. $columns_string .')');
+  }
+
+  function add_fulltext_index($table_name, $column_names, $index_name)
+  {
+    $columns_string = '';
+    foreach ($column_names as $col)
+    {
+      $columns_string .= $col .', ';
+    }
+    $columns_string = substr($columns_string, 0, -2);
+
+    $this->execute('CREATE FULLTEXT INDEX '. $index_name .' ON '. $table_name .'('. $columns_string .')');
   }
 
   function add_fk($table_name, $column_name, $fk_name, $ref_table_name, $ref_column_name)
