@@ -26,7 +26,7 @@ class MySQL {
 
   // incorrect query syntax
   const ERR_PARSE = 1065;
-  
+
 
   function __construct()
   {
@@ -256,7 +256,13 @@ class MySQL {
    */
   function create_table($table_name)
   {
-    $this->execute('CREATE TABLE '.$table_name .' (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id))');
+    // in mysql >= 5.6 innodb supports fulltext indexes
+    // in lower versions that is supported only by MyISAM
+    // in 5.5 the default table type is inoodb and that breacks the fulltext index creation
+    if ($this->server_version() >= 50600)
+      $this->execute('CREATE TABLE '.$table_name .' (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id))');
+    else
+      $this->execute('CREATE TABLE '.$table_name .' (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id)) ENGINE=MyISAM');
   }
 
   /**
@@ -339,6 +345,18 @@ class MySQL {
     $this->execute('CREATE INDEX '. $index_name .' ON '. $table_name .'('. $columns_string .')');
   }
 
+  function add_fulltext_index($table_name, $column_names, $index_name)
+  {
+    $columns_string = '';
+    foreach ($column_names as $col)
+    {
+      $columns_string .= $col .', ';
+    }
+    $columns_string = substr($columns_string, 0, -2);
+
+    $this->execute('CREATE FULLTEXT INDEX '. $index_name .' ON '. $table_name .'('. $columns_string .')');
+  }
+
   function add_fk($table_name, $column_name, $fk_name, $ref_table_name, $ref_column_name)
   {
     $this->execute('ALTER TABLE '. $table_name .' ADD CONSTRAINT '. $fk_name .' FOREIGN KEY ('. $column_name .') REFERENCES '. $ref_table_name .'('. $ref_column_name .')');
@@ -349,9 +367,9 @@ class MySQL {
     // TDB
   }
 
-   /** ******************************
-    * Worksing with transactions
-    */
+  /** ******************************
+   * Worksing with transactions
+   */
   function transaction_start($is_read_only = false)
   {
     if ($is_read_only)
@@ -380,6 +398,19 @@ class MySQL {
     }
     mysqli_rollback($this->connection);
     $this->transaction_on = false;
+  }
+
+  /** *******************************
+   * Utils
+   */
+  function server_version()
+  {
+    if (!$this->connection)
+    {
+      throw new \Exception("Not connect to MySQL");
+    }
+
+    return mysqli_get_server_version($this->connection);
   }
 }
 ?>
