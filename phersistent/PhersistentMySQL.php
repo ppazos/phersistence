@@ -452,6 +452,11 @@ class PhersistentMySQL {
           {
             // NOP
           }
+          else if (strcasecmp($subconds[1], 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
+          {
+            $expressions[] = 'NOT MATCH('. $table_alias .".". $subconds[0] .') '. $subconds[2];
+            continue;
+          }
           else
           {
             $refvalue = '"'. addslashes($refvalue) .'"';
@@ -480,6 +485,11 @@ class PhersistentMySQL {
         else if (!$refvalue && strcasecmp($subconds[1], 'IS NOT NULL') == 0) // a IS NOT NULL
         {
           // NOP
+        }
+        else if (strcasecmp($subconds[1], 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
+        {
+          $expressions[] = 'MATCH('. $table_alias .".". $subconds[0] .') '. $subconds[2] .' ';
+          continue;
         }
         else
         {
