@@ -123,7 +123,9 @@ class Phersistent {
     {
       throw new \Exception('Function '. $func .' doesnt exists');
     }
-    return $this->__functions[$func]($ins, $args);
+    array_unshift($args, $ins);
+    //return $this->__functions[$func]($args);
+    return call_user_func_array($this->__functions[$func], $args);
   }
 
   public function getHasOneDeclarations()

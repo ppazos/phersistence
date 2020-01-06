@@ -145,8 +145,8 @@ class PhInstance {
 
       if ($this->phclass->is_serialized_array($attr))
       {
-        if (!$value) $value = array();
-        
+        if (!$value || $value == self::NOT_LOADED_ASSOC) $value = array();
+
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')
         {
@@ -191,7 +191,11 @@ class PhInstance {
         }
         else
         {
-          throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed');
+          ob_start();
+          var_dump($value);
+          $value_dump = ob_get_contents();
+          ob_end_clean();
+          throw new \Exception('Serialized array field '. $attr .' can only be initialized with an array, non array passed: '. $value_dump);
         }
       }
       else if ($this->phclass->is_serialized_object($attr))
@@ -582,7 +586,7 @@ class PhInstance {
   // FIXME: get constraints from the parent, since we also process attrs inherited
   // TODO: if a constraint of the same type for the same attr is defined on parent
   //       and child class, the constraint on the child overrides the parent constraint
-  public function validate($cascade = true)
+  public function validate($cascade = true, $set = true)
   {
     //echo 'INSTANCE validate '. $this->getClass() . PHP_EOL;
     $errors = array();
@@ -660,6 +664,10 @@ class PhInstance {
     }
 
     if (count($errors) == 0) return true;
+
+    // assigns the errors to the correspondent object when validating in cascade
+    if ($set) $this->errors = new ObjectValidationErrors($errors);
+
     return new ObjectValidationErrors($errors);
   }
 }
