@@ -112,6 +112,7 @@ class PhersistentMySQL {
 
     // insert with column values
     $insert_query = $this->table_to_insert($table);
+    //print_r($insert_query);
     $r = $this->driver->execute($insert_query);
 
     if($r === 1)
@@ -765,6 +766,7 @@ class PhersistentMySQL {
         }
         else // many to many uses join table
         {
+          //echo 'is NOT one to many '. $field . PHP_EOL;
           // TBD: manage join table
         }
       }

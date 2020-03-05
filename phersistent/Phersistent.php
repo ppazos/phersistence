@@ -461,8 +461,20 @@ class Phersistent {
       return false; // it is not even a has many
     }
 
-    $hmrel = $this->get_has_many($hmattr);
+    $hmrel = $this->get_has_many($hmattr); // class, collectionType, relName
 
+    // if A has_many A, then that is one_to_many, we don't support many_to_many yet,
+    // so A many_to_many A is not possible to declare directly, could be possible
+    // declaring the JOIN table as an extra model.
+
+    // if the has many was declared to the same class
+    // hmrel->class has the namespace, also the get_class
+    if ($hmrel->class == get_class($this))
+    {
+      return true;
+    }
+
+    // if the has_many was declared to another class
     $assoc_ph = $this->__manager->getDefinition($hmrel->class);
 
     // if assoc has many class, has many of self, is many to many

@@ -52,6 +52,9 @@ switch ($command)
   case "test_amplify":
     require_once('tests/test_amplify.php');
   break;
+  case "test_note_hasmany_note":
+    require_once('tests/test_note_hasmany_note.php');
+  break;
   default:
     echo "No command";
 }
