@@ -268,9 +268,8 @@ class PhersistentMySQL {
   {
     $parts = explode('\\', $class_name);
     $class = $parts[count($parts)-1];
-    $phi = $GLOBALS[$class]->create();
-
-    $table_name = $this->get_table_name($phi);
+    //$phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name_ph($GLOBALS[$class]);
 
     try
     {
@@ -278,6 +277,10 @@ class PhersistentMySQL {
 
       //print_r($table);
 
+      // the row class chould be the same as $class_name or a subclass, si we need
+      // to use the specific class in the row to create the right instance here
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
+      $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
       //print_r($phi);
@@ -332,6 +335,10 @@ class PhersistentMySQL {
     $instances = array();
     foreach($records as $table)
     {
+      // the row class chould be the same as $class_name or a subclass, si we need
+      // to use the specific class in the row to create the right instance here
+      //$phi = $GLOBALS[$class]->create();
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
@@ -374,6 +381,10 @@ class PhersistentMySQL {
     $instances = array();
     foreach($records as $table)
     {
+      // the row class chould be the same as $class_name or a subclass, si we need
+      // to use the specific class in the row to create the right instance here
+      //$phi = $GLOBALS[$class]->create();
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
@@ -555,6 +566,10 @@ class PhersistentMySQL {
     $instances = array();
     foreach($records as $table)
     {
+      // the row class chould be the same as $class_name or a subclass, si we need
+      // to use the specific class in the row to create the right instance here
+      //$phi = $GLOBALS[$class]->create();
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
       $phi = $GLOBALS[$class]->create();
       $phi->setProperties($table['columns']);
 
@@ -826,16 +841,8 @@ class PhersistentMySQL {
     return $phi;
   }
 
-  public function get_table_name(PhInstance $phi)
+  public function get_table_name_ph(Phersistent $ph)
   {
-    // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
-    // TODO: consider table name override declared on class
-
-    // ***************************************************
-    // For now inheritance ORM is all STI.
-    // So need to check for parent = Phersistent, and that class will be the table name
-    $ph = $phi->getDefinition();
-
     // table name declared in the class
     if (property_exists($ph, 'table'))
     {
@@ -851,6 +858,18 @@ class PhersistentMySQL {
     $class_name = get_class($ph);
 
     return $this->class_to_table_name($class_name);
+  }
+
+  public function get_table_name(PhInstance $phi)
+  {
+    // TODO: should check STI and MTI (if part of STI, should return the name of the table where the STI is saved)
+    // TODO: consider table name override declared on class
+
+    // ***************************************************
+    // For now inheritance ORM is all STI.
+    // So need to check for parent = Phersistent, and that class will be the table name
+    $ph = $phi->getDefinition();
+    return $this->get_table_name_ph($ph);
   }
 
   // For \a\b\TheClass, returns the_class
