@@ -87,6 +87,14 @@ class PhersistentDefManager {
           // backlink FK is INT
           // if D has_many E, E.backlink_to_d = INT is declared
           $this->classDefinitions[$hmdec->class]->{$backlink_name} = Phersistent::INT;
+
+          // if the hmdec class has subclasses, also those should have the backlink injected
+          // https://github.com/ppazos/phersistence/issues/58
+          $subclasses = $this->classDefinitions[$hmdec->class]->getSubclasses();
+          foreach ($subclasses as $subclass)
+          {
+            $this->classDefinitions[$subclass]->{$backlink_name} = Phersistent::INT;
+          }
         }
         else
         {

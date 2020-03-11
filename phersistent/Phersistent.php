@@ -565,6 +565,22 @@ class Phersistent {
     return $this->__manager->runRaw($sql);
   }
 
+  // Returns the Phersistent subclasses of this Phersistent class
+  public function getSubclasses()
+  {
+    $parent = get_class($this);
+
+    //echo "---------- CLASS ". $parent . PHP_EOL;
+
+    $subclasses = array();
+    foreach (get_declared_classes() as $class)
+    {
+      if (is_subclass_of($class, $parent)) $subclasses[] = $class;
+    }
+
+    return $subclasses;
+  }
+
   /*
   public function __call($method, $args)
   {
