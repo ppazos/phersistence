@@ -436,9 +436,18 @@ class PhInstance {
     return (is_a($this->phclass, $phersistent));
   }
 
+  // returns the full class name with namespaces
   public function getClass()
   {
     return get_class($this->phclass);
+  }
+
+  // returns the class name without the namespaces
+  public function getSimpleClass()
+  {
+    $class = get_class($this->phclass);
+    $parts = explode('\\', $class);
+    return $parts[count($parts)-1];
   }
 
   public function getParentClass()
