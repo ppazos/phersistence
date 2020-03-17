@@ -160,9 +160,9 @@ class PhersistentDefManager {
     return $this->__ph_db->save_instance($phi);
   }
 
-  public function listInstances($class_name, $max, $offset)
+  public function listInstances($class_name, $max, $offset, $sort, $order)
   {
-    return $this->__ph_db->list_instances($class_name, $max, $offset);
+    return $this->__ph_db->list_instances($class_name, $max, $offset, $sort, $order);
   }
 
   public function listHasManyInstances($owner, $hm_attr, $hm_class)
