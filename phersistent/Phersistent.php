@@ -324,7 +324,7 @@ class Phersistent {
     return $this->__manager->count(get_class($this));
   }
 
-  public function listAll($max = 10, $offset = 0, $sort = 'id', $order = 'asc')
+  public function listAll($max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
   {
     return $this->__manager->listInstances(get_class($this), $max, $offset, $sort, $order);
   }

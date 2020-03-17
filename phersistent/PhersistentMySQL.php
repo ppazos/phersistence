@@ -322,7 +322,7 @@ class PhersistentMySQL {
     $table_name = $this->get_table_name($phi);
 
     $records = array();
-    $r = $this->driver->query('SELECT * FROM '. $table_name .' LIMIT '. $offset .', '. $max .' ORDER BY '. $sort .' '. $order);
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
