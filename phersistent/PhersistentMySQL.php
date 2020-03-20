@@ -314,7 +314,7 @@ class PhersistentMySQL {
     return $row['count'];
   }
 
-  public function list_instances($class_name, $max, $offset)
+  public function list_instances($class_name, $max, $offset, $sort, $order)
   {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
@@ -322,7 +322,7 @@ class PhersistentMySQL {
     $table_name = $this->get_table_name($phi);
 
     $records = array();
-    $r = $this->driver->query('SELECT * FROM '. $table_name .' LIMIT '. $offset .', '. $max);
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
