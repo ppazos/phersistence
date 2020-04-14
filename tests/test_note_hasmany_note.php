@@ -13,7 +13,7 @@ spl_autoload_register(function ($class) {
 // SCHEMA
 
 $d = new \drivers\MySQL();
-$d->connect('localhost', 'root', 'toor');
+$d->connect('localhost', 'user', 'user123!');
 $d->select_db('phersistent');
 
 
@@ -68,7 +68,7 @@ class PatientCaseNote extends \phersistent\Phersistent {
   public $note = self::TEXT;
 
   // answers to this note, could be empty
-  public $notes = array(\phersistent\PhCollection::class, PatientCaseNote::class);
+  public $notes = array(\phersistent\PhSet::class, PatientCaseNote::class);
 
   public $table = 'patient_case_note';
 
@@ -78,11 +78,18 @@ class PatientCaseNote extends \phersistent\Phersistent {
       'date_created' => date('Y-m-d H:i:s')
     );
   }
+
+  // for the $notes has many association defined as a set, it is optional to define
+  // a custom equality function to avoid duplicated items in the set, the default
+  // function checks by id.
+  function notes_equality($a, $b) {
+    return $a->get_note() == $b->get_note();
+  }
 }
 
 
 // setup
-$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user123!', 'phersistent');
 $man = new \phersistent\PhersistentDefManager('', $ph_db);
 
 
@@ -91,6 +98,9 @@ $case = $PatientCase->create(array(
     $PatientCaseNote->create(array(
       'note' => 'Hi, I called them but didnt got an answer, trying tomorrow',
       'notes' => array(
+        $PatientCaseNote->create(array(
+          'note' => 'I just called and was able to reach someone'
+        )),
         $PatientCaseNote->create(array(
           'note' => 'I just called and was able to reach someone'
         ))
@@ -104,8 +114,10 @@ $case = $PatientCase->create(array(
 // this should include the backlinks to case and the same note
 print_r($case->get_notes()[0]->getDefinition()->get_all_fields());
 
+//print_r($case); // sets the patient_case_note_notes_back OK but is not saved
+
 $case->save();
-//print_r($note); // sets the patient_case_note_notes_back OK but is not saved
+
 exit;
 
 

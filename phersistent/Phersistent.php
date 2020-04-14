@@ -62,6 +62,18 @@ class Phersistent {
       }
       if (is_array($type))
       {
+        // for has many declaration
+        // public $locations = array(\phersistent\PhCollection::class, OrganizationProviderLocation::class);
+        // $attr = $locations
+        // $type[0] = collection class
+        // $type[1] = associated class
+        // $type[2] = options (optional array with specific keys)
+
+        // for has one declaration
+        // $attr = name of attribute
+        // $type[0] = associated class
+        // $type[1] = relname (optional)
+
         /*
         echo $type[0] .PHP_EOL;
         echo gettype($type[0]) .PHP_EOL; // string
@@ -73,17 +85,17 @@ class Phersistent {
         */
 
         // class without namespace
-        $class = array_slice(explode('\\', $type[0]), -1)[0];
+        //$class = array_slice(explode('\\', $type[0]), -1)[0];
 
-        //if (is_subclass_of($type[0], '\phersistent\Phersistent'))
-        if ($class == 'Phersistent')
+        //if ($class == 'Phersistent')
+        if (is_subclass_of($type[0], '\phersistent\Phersistent'))
         {
           $this->hasOne($attr, $type[0], $type[1]);
         }
-        else if ($class == 'PhCollection')
+        else if (is_subclass_of($type[0], '\phersistent\PhCollection') || $type[0] == \phersistent\PhCollection::class)
         {
           //echo get_class($this) .' hasMany '. $attr .' <'. $type[1] .'>'. PHP_EOL;
-          $this->hasMany($attr, $type[1]);
+          $this->hasMany($attr, $type[1], $type[0]);
         }
       }
     }
@@ -156,7 +168,7 @@ class Phersistent {
   * $collectionType collection, list, set, orderedSet
   * $relName UML relationship name
   */
-  protected function hasMany($name, $class, $collectionType = 'collection', $relName = null)
+  protected function hasMany($name, $class, $collectionType, $relName = null)
   {
     $this->__many[$name] = new StdClass();
     $this->__many[$name]->class = $class; // A subclass of Phersistent
@@ -282,9 +294,23 @@ class Phersistent {
     foreach ($this->__many as $attr=>$rel)
     {
       // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
-      if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
-      if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
-      if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
+      // if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
+      // if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
+      // if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
+
+      // checks for custom equality function for sets
+      if ($rel->collectionType == \phersistent\PhSet::class && method_exists($this, $attr.'_equality'))
+      {
+        // get reference to callable function like:
+        // $v = Array($this,"checkDemo");
+        // $v("hello");
+        $equality_function = array($this, $attr.'_equality'); // this is a reference to the method!
+        $ins->{$attr} = new $rel->collectionType($equality_function);
+      }
+      else
+      {
+        $ins->{$attr} = new $rel->collectionType();
+      }
 
       if (isset($attrs[$attr]) && is_array($attrs[$attr]))
       {

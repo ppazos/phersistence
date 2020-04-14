@@ -52,11 +52,13 @@ switch ($command)
   case "test_amplify":
     require_once('tests/test_amplify.php');
   break;
-  case "test_note_hasmany_note":
-    require_once('tests/test_note_hasmany_note.php');
-  break;
-  default:
-    echo "No command";
+  default: /// generic file execution
+    if (!file_exists($command))
+    {
+      echo "File $command doesn't exist";
+      exit;
+    }
+    require_once($command);
 }
 
 ?>

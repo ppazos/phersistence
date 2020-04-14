@@ -4,8 +4,8 @@ namespace phersistent;
 
 class PhCollection implements \Iterator, \ArrayAccess { // implements Traversable {
 
-  private $position = 0;
-  private $items = array();
+  protected $position = 0;
+  protected $items = array();
 
   public function add($instance)
   {
@@ -111,11 +111,29 @@ class PhList extends PhCollection {
 
 class PhSet extends PhCollection {
 
+  private $equality_function;
+
+  public function __construct($equality_function = NULL)
+  {
+    if ($equality_function == NULL)
+    {
+      $this->equality_function = function($a, $b) {
+        return $a->get_id() != NULL && $b->get_id() != NULL && $a->get_id() == $b->get_id();
+      };
+    }
+    else
+    {
+      $this->equality_function = $equality_function;
+    }
+  }
+
   public function add($instance)
   {
+    // can't call directly, need the variable
+    $eq = $this->equality_function;
     foreach ($this->items as $i=>$ins)
     {
-      if ($ins->id == $instance->id) // id should be injected into PhInstances
+      if ($eq($ins, $instance))
       {
         return; // Dont add the instance
       }
