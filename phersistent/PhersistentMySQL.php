@@ -126,7 +126,8 @@ class PhersistentMySQL {
       {
         foreach ($collection as $item)
         {
-          $backlink = $this->backlink_name($phi, $attr);
+          //$backlink = $this->backlink_name($phi, $attr);
+          $backlink = $phi->getDefinition()->backlink_name($phi, $attr);
 
           //echo 'backlink name: '. $backlink . PHP_EOL;
 
@@ -225,7 +226,8 @@ class PhersistentMySQL {
       {
         foreach ($collection as $item)
         {
-          $backlink = $this->backlink_name($phi, $attr);
+          //$backlink = $this->backlink_name($phi, $attr);
+          $backlink = $phi->getDefinition()->backlink_name($phi, $attr);
 
           //echo 'backlink name: '. $backlink . PHP_EOL;
 
@@ -755,20 +757,21 @@ class PhersistentMySQL {
 
     $fields = $phi->getDefinition()->get_all_fields();
 
-    foreach ($fields as $field => $type)
+    foreach ($fields as $attr => $type)
     {
-      if ($field == 'table') continue; // table is a reserved attr name to specify custom table names
+      if ($attr == 'table') continue; // table is a reserved attr name to specify custom table names
 
-      if ($phi->getDefinition()->is_has_many($field)) // has many
+      if ($phi->getDefinition()->is_has_many($attr)) // has many
       {
         // one to many uses back links from the many side
-        if ($phi->getDefinition()->is_one_to_many($field))
+        if ($phi->getDefinition()->is_one_to_many($attr))
         {
-          $backlink_name = $this->backlink_name($phi, $field);
+          //$backlink_name = $this->backlink_name($phi, $attr);
+          $backlink_name = $phi->getDefinition()->backlink_name($phi, $attr);
 
           $table['many_back'][$backlink_name] = array();
 
-          foreach ($phi->get($field) as $i=>$hmphi)
+          foreach ($phi->get($attr) as $i=>$hmphi)
           {
             $table['many_back'][$backlink_name][] = $this->phi_to_data($hmphi);
 
@@ -781,14 +784,14 @@ class PhersistentMySQL {
         }
         else // many to many uses join table
         {
-          echo 'is NOT one to many '. $field . PHP_EOL;
+          echo 'is NOT one to many '. $attr . PHP_EOL;
           // TBD: manage join table
         }
       }
-      else if ($phi->getDefinition()->is_has_one($field)) // has one
+      else if ($phi->getDefinition()->is_has_one($attr)) // has one
       {
         // FK field
-        $has_one_field = $field . '_id';
+        $has_one_field = $attr . '_id';
 
         // if has one is not saved, the id will be null
         // internally PhInstance will set the xxx_id field
@@ -796,23 +799,23 @@ class PhersistentMySQL {
 
         // creates related table with the has_one value
         // the associated element can be null
-        $table['foreigns'][$field] = $this->phi_to_data($phi->get($field));
+        $table['foreigns'][$attr] = $this->phi_to_data($phi->get($attr));
       }
-      else if ($phi->getDefinition()->is_serialized_array($field) || $phi->getDefinition()->is_serialized_object($field))
+      else if ($phi->getDefinition()->is_serialized_array($attr) || $phi->getDefinition()->is_serialized_object($attr))
       {
         // addslashes escapes the internal strings in the SQL query
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
-        $value = $phi->get($field);
+        $value = $phi->get($attr);
 
-        if ($value != null) $table['columns'][$field] = json_encode($value); //addslashes(json_encode($phi->get($field)));
+        if ($value != null) $table['columns'][$attr] = json_encode($value); //addslashes(json_encode($phi->get($attr)));
       }
       else // simple field
       {
         // test for fields that should not be saved
-        if ($field == 'is_dirty') continue;
+        if ($attr == 'is_dirty') continue;
 
-        //echo $field .' '. $type .' is simple field '. PHP_EOL;
-        $table['columns'][$field] = $phi->get($field);
+        //echo $attr .' '. $type .' is simple field '. PHP_EOL;
+        $table['columns'][$attr] = $phi->get($attr);
       }
     }
 
@@ -874,7 +877,7 @@ class PhersistentMySQL {
 
   // For \a\b\TheClass, returns the_class
   // Convention: table names are snake case but class names are camel case
-  private function class_to_table_name($class_name)
+  public function class_to_table_name($class_name)
   {
     // \a\b\TheClass => TheClass
     $simple_name = $this->full_class_name_to_simple_name($class_name);
@@ -883,9 +886,14 @@ class PhersistentMySQL {
     return \basic\BasicString::camel_to_snake($simple_name);
   }
 
+
+
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++
   /**
    * name of the column for the backlink FK for one to many relationships.
    */
+   /*
   public function backlink_name($phi, $field)
   {
     $ph = $phi->getDefinition();
@@ -905,6 +913,7 @@ class PhersistentMySQL {
 
     return strtolower($prefix .'_'. $field .'_back');
   }
+*/
 
   // Similar to previous method but $ph is Phersistent not PhInstance.
   public function backlink_name_def($ph, $field)
@@ -920,6 +929,7 @@ class PhersistentMySQL {
 
     return strtolower($prefix .'_'. $field .'_back');
   }
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   /**
    * Maps each phersistent data type to a MySQL data type.

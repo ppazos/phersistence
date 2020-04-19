@@ -7,10 +7,11 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
   protected $position = 0;
   protected $items = array();
 
-  public function add($instance)
+  public function add(PhInstance $instance)
   {
     $this->items[] = $instance;
   }
+
   public function add_all($instances = array())
   {
     foreach ($instances as $ins)
@@ -25,15 +26,25 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
     $this->rewind();
   }
 
-  public function remove($instance)
+  public function remove(PhInstance $instance)
   {
+    $removed = false;
+
+    if ($instance->id == NULL)
+    {
+      throw new \Exception("Not saved instance of type ". $instance->getClass() ." can't be removed from hasmany");
+    }
+
     foreach ($this->items as $i=>$ins)
     {
       if ($ins->get_id() == $instance->get_id())
       {
         array_splice($this->items, $i, 1);
+        $removed = true;
       }
     }
+
+    return $removed;
   }
 
   public function all()

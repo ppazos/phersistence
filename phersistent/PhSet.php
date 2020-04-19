@@ -10,8 +10,18 @@ class PhSet extends PhCollection {
   {
     if ($equality_function == NULL)
     {
-      $this->equality_function = function($a, $b) {
-        return $a->get_id() != NULL && $b->get_id() != NULL && $a->get_id() == $b->get_id();
+      $this->equality_function = function(PhInstance $a, PhInstance $b) {
+        if ($a->id == NULL)
+        {
+          throw new \Exception("Can't compare instance of ". $a->getClass() ." if id is NULL");
+        }
+        if ($b->id == NULL)
+        {
+          throw new \Exception("Can't compare instance of ". $b->getClass() ." if id is NULL");
+        }
+
+        // TODO: check a and b are in the same hierarchical structure (class or subclass)
+        return $a->id == $b->id;
       };
     }
     else
@@ -20,7 +30,7 @@ class PhSet extends PhCollection {
     }
   }
 
-  public function add($instance)
+  public function add(PhInstance $instance)
   {
     // can't call directly, need the variable
     $eq = $this->equality_function;
@@ -33,6 +43,21 @@ class PhSet extends PhCollection {
     }
     parent::add($instance);
   }
+
+  public function add_all($instances = array())
+  {
+    foreach ($instances as $ins)
+    {
+      $this->add($ins); // uses equality functon
+    }
+  }
+
+  // remove is implemented in PhCOllection since it has to be done using the id not
+  // the equality_function, because the DB could be inconsistent using the
+  // equality_function without checking the ids, for instance if a1 hasmany b1, b2
+  // and a2 hasmany b3, b4, if b4 and b2 have the same value used in the equality_function,
+  // then the a1->remove(b4) remove will return true but the item b4 wasn't really in a1,
+  // so we need to ids, and if the id is not set, it throws an exception.
 }
 
 ?>

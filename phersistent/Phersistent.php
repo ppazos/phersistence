@@ -561,6 +561,11 @@ class Phersistent {
     $this->__manager = $man;
   }
 
+  public function get_manager()
+  {
+    return $this->__manager;
+  }
+
   public function get_all_constraints()
   {
     return $this->__constraints;
@@ -595,6 +600,24 @@ class Phersistent {
     }
 
     return $subclasses;
+  }
+
+  public function backlink_name(PhInstance $phi, $hm_field)
+  {
+    // table name declared in the class
+    if (property_exists($this, 'table'))
+    {
+      $prefix = $this->table;
+    }
+    else
+    {
+      // if CURRENT_CLASS(hasmany(assoc,OTHER_CLASS))
+      // then $backlink_name = current_class_assoc_id
+      // and that column should exist on the OTHER_CLASS table
+      $prefix = $this->__manager->get_db()->class_to_table_name($phi->getClass());
+    }
+
+    return strtolower($prefix .'_'. $hm_field .'_back');
   }
 
   /*

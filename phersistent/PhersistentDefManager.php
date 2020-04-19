@@ -167,7 +167,7 @@ class PhersistentDefManager {
 
   public function listHasManyInstances($owner, $hm_attr, $hm_class)
   {
-    $backlink_name = $this->__ph_db->backlink_name($owner, $hm_attr);
+    $backlink_name = $owner->getDefinition()->backlink_name($owner, $hm_attr);
 
     return $this->__ph_db->list_hasmany_instances($owner->get_id(), $hm_class, $backlink_name);
   }
@@ -190,6 +190,11 @@ class PhersistentDefManager {
   public function runRaw($sql)
   {
     return $this->__ph_db->runRaw($sql);
+  }
+
+  public function get_db()
+  {
+    return $this->__ph_db;
   }
 }
 
