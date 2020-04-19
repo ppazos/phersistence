@@ -293,27 +293,17 @@ class Phersistent {
     // inject has many
     foreach ($this->__many as $attr=>$rel)
     {
-      // TODO: podria usar $rel->class para restringir el contenido de las coleccions a esa clase
-      // if ($rel->collectionType == 'collection') $ins->{$attr} = new PhCollection();
-      // if ($rel->collectionType == 'list') $ins->{$attr} = new PhList();
-      // if ($rel->collectionType == 'set') $ins->{$attr} = new PhSet();
-
-      // checks for custom equality function for sets
-      if ($rel->collectionType == \phersistent\PhSet::class && method_exists($this, $attr.'_equality'))
-      {
-        // get reference to callable function like:
-        // $v = Array($this,"checkDemo");
-        // $v("hello");
-        $equality_function = array($this, $attr.'_equality'); // this is a reference to the method!
-        $ins->{$attr} = new $rel->collectionType($equality_function);
-      }
-      else
-      {
-        $ins->{$attr} = new $rel->collectionType();
-      }
+      // This declared the field in the instance, which is needed to check if the field exists in the instance
+      $ins->{$attr} = null;
 
       if (isset($attrs[$attr]) && is_array($attrs[$attr]))
       {
+        // Only instantiate the collection if there are values for it, so if the collection
+        // is NULL we know the collection was not loaded and we can use the NULL value
+        // to lazy load the items when required.
+        //
+        $ins->initialize_has_many($attr);
+
         // items in the array should already by PhInstances
         $hm = $attrs[$attr];
         foreach ($hm as $phi)

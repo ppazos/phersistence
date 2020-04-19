@@ -781,7 +781,7 @@ class PhersistentMySQL {
         }
         else // many to many uses join table
         {
-          //echo 'is NOT one to many '. $field . PHP_EOL;
+          echo 'is NOT one to many '. $field . PHP_EOL;
           // TBD: manage join table
         }
       }
