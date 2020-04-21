@@ -7,10 +7,11 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
   protected $position = 0;
   protected $items = array();
 
-  public function add($instance)
+  public function add(PhInstance $instance)
   {
     $this->items[] = $instance;
   }
+
   public function add_all($instances = array())
   {
     foreach ($instances as $ins)
@@ -25,15 +26,25 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
     $this->rewind();
   }
 
-  public function remove($instance)
+  public function remove(PhInstance $instance)
   {
+    $removed = false;
+
+    if ($instance->id == NULL)
+    {
+      throw new \Exception("Not saved instance of type ". $instance->getClass() ." can't be removed from hasmany");
+    }
+
     foreach ($this->items as $i=>$ins)
     {
       if ($ins->get_id() == $instance->get_id())
       {
         array_splice($this->items, $i, 1);
+        $removed = true;
       }
     }
+
+    return $removed;
   }
 
   public function all()
@@ -98,47 +109,6 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
   public function offsetGet($offset)
   {
     return isset($this->items[$offset]) ? $this->items[$offset] : null;
-  }
-}
-
-class PhList extends PhCollection {
-
-  public function put($idx, $instance)
-  {
-    $this->items[$idx] = $instance;
-  }
-}
-
-class PhSet extends PhCollection {
-
-  private $equality_function;
-
-  public function __construct($equality_function = NULL)
-  {
-    if ($equality_function == NULL)
-    {
-      $this->equality_function = function($a, $b) {
-        return $a->get_id() != NULL && $b->get_id() != NULL && $a->get_id() == $b->get_id();
-      };
-    }
-    else
-    {
-      $this->equality_function = $equality_function;
-    }
-  }
-
-  public function add($instance)
-  {
-    // can't call directly, need the variable
-    $eq = $this->equality_function;
-    foreach ($this->items as $i=>$ins)
-    {
-      if ($eq($ins, $instance))
-      {
-        return; // Dont add the instance
-      }
-    }
-    parent::add($instance);
   }
 }
 

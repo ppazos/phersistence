@@ -22,38 +22,88 @@ class PhInstance {
 
   private function addTo($hasManyName, PhInstance $ins)
   {
+    if ($this->{$hasManyName} == null) // not loaded
+    {
+      $this->get($hasManyName); // does the lazy load
+    }
     $this->{$hasManyName}->add( $ins );
   }
 
   private function cleanFrom($hasManyName)
   {
+    if ($this->{$hasManyName} == null) // not loaded
+    {
+      $this->get($hasManyName); // does the lazy load
+    }
     $this->{$hasManyName}->clean();
   }
 
   private function removeFrom($hasManyName, PhInstance $ins)
   {
-    // to remove an instance, it should be saved since the id is used to find a match
-    if ($ins->get_id() == null)
+    // to remove an instance, it should be saved since the id is used to find a match,
+    // because if the remove is done, even if the equality is checking other attributes than
+    // id, when the remove is done from the collmection, the DB should be updated removing the
+    // backlink and maybe the $ins if the remove cascades the remove to be a delete (cascade is not currently supported).
+    if ($ins->id == null)
     {
       throw new \Exception("Not saved object of type ". $this->getClass() ." can't be removed from '$hasManyName'");
     }
 
-    // collection not loaded? => load to execute the removeFrom
-    /* FIXME: need a lazy load lookup on a different object than the
-    hasmany to avoid setting values of different types to the same
-    field, also the collection will be intialized even if the items
-    are not loaded.
-    if ($this->{$hasManyName} == self::NOT_LOADED_ASSOC)
+    if ($this->{$hasManyName} == null) // not loaded
     {
-      // TBD
+      $this->get($hasManyName); // does the lazy load
     }
-    */
 
-    $this->{$hasManyName}->remove($ins);
+    $removed = $this->{$hasManyName}->remove($ins);
+    if ($removed)
+    {
+      // nullify backlink
+
+      // TODO: this is only for one-to-many only for now, nullify the backlink on $ins
+      $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
+
+      //echo 'NULLIFY BACKLINK '. $backlink_name .PHP_EOL;
+
+      $ins->set($backlink_name, NULL);
+
+      $ins->save();
+    }
+
+    return $removed;
   }
 
+  // Similar to removeFrom but if the $ins was removed, also deletes it from the DB
+  private function removeFromAndDelete($hasManyName, PhInstance $ins)
+  {
+    if ($ins->id == null)
+    {
+      throw new \Exception("Not saved object of type ". $this->getClass() ." can't be removed from '$hasManyName'");
+    }
+
+    if ($this->{$hasManyName} == null) // not loaded
+    {
+      $this->get($hasManyName); // does the lazy load
+    }
+
+    $removed = $this->{$hasManyName}->remove($ins);
+    if ($removed)
+    {
+      // delete $ins
+      $ins->delete();
+    }
+
+    return $removed;
+  }
+
+  // counts elements in the hasmany collection, loads them from the DB is not loaded
+  // TODO: this method can be optimized by using a countBy, since we don't really
+  // need to load the collection, just count the items in the association
   private function size($hasManyName)
   {
+    if ($this->{$hasManyName} == null) // not loaded
+    {
+      $this->get($hasManyName); // does the lazy load
+    }
     return $this->{$hasManyName}->size();
   }
 
@@ -77,6 +127,32 @@ class PhInstance {
     return in_array($value, $this->{$sarrayAttr});
   }
 
+  // Creates the hasmany instance with the right type of collection, used for lazy
+  // loading and class initialization on create
+  public function initialize_has_many($attr)
+  {
+    // hasmany declaration
+    $rel = $this->phclass->get_has_many($attr); // checks this is has many
+
+    //echo 'initialize_has_many ======================'.PHP_EOL;
+    //print_r($rel);
+
+    // checks for custom equality function for sets
+    if ($rel->collectionType == \phersistent\PhSet::class && method_exists($this->phclass, $attr.'_equality'))
+    {
+      // get reference to callable function like:
+      // $v = Array($this,"checkDemo");
+      // $v("hello");
+      $equality_function = array($this->phclass, $attr.'_equality'); // this is a reference to the method!
+      $this->{$attr} = new $rel->collectionType($equality_function);
+    }
+    else
+    {
+      $this->{$attr} = new $rel->collectionType();
+    }
+
+    return $this->{$attr};
+  }
 
   public function get($attr)
   {
@@ -88,15 +164,22 @@ class PhInstance {
       $class = $parts[count($parts)-1];
       $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
     }
-    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr}->size() == 0 && $this->get_id() != null) // can lazy load only if current instance has id
+    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr} == null)
     {
       //$hm_class = $this->phclass->get_has_many($attr)->class;
       //$parts = explode('\\', $has_one_class);
       //$class = $parts[count($parts)-1];
-      // lazy load has many for one to many
-      $hm_class = $this->phclass->get_has_many($attr)->class;
-      $instances = $this->phclass->list_has_many($this, $attr, $hm_class);
-      $this->{$attr}->add_all($instances);
+
+      // the collection is null, this initializes it
+      $this->initialize_has_many($attr);
+
+      // can lazy load only if current instance has id (is saved)
+      if ($this->id != null)
+      {
+        $hm_class = $this->phclass->get_has_many($attr)->class;
+        $instances = $this->phclass->list_has_many($this, $attr, $hm_class);
+        $this->{$attr}->add_all($instances);
+      }
     }
 
     return $this->{$attr};
@@ -295,7 +378,7 @@ class PhInstance {
       }
 
       // sets the value and verifies it's validity (type, etc)
-      if ($value !== self::NOT_LOADED_ASSOC)
+      if ($value !== self::NOT_LOADED_ASSOC) // FIXME: we are not using the not loaded value but null
       {
         $setMethod = 'set_'.$attr;
         $this->$setMethod($value);
@@ -350,6 +433,7 @@ class PhInstance {
     // add_to_XYX
     if (substr($method,0,7) == "add_to_")
     {
+      //print_r($this->phclass->getHasManyDeclarations());
       $attr = lcfirst(substr($method, 7)); // xyx
       if (!property_exists($this, $attr))
       {
@@ -364,13 +448,27 @@ class PhInstance {
     if (substr($method,0,12) == "remove_from_")
     {
       $attr = lcfirst(substr($method, 12));
+
+      // check for remove_from_xxx_and_delete
+      $delete = false;
+      if (\basic\BasicString::endsWith($attr, '_and_delete'))
+      {
+        $attr = substr($attr, 0, -11); // removes _and_delete
+        $delete = true;
+      }
+
       if (!property_exists($this, $attr))
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
-      $this->removeFrom($attr, $args[0]);
-      $this->is_dirty = true;
-      return;
+      $removed = $this->removeFrom($attr, $args[0]);
+      if ($removed)
+      {
+        $this->is_dirty = true;
+
+        if ($delete) $args[0]->delete(); // deletes the instance
+      }
+      return $removed; // true if removed, false if not
     }
 
     // clean_xxx
