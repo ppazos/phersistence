@@ -287,8 +287,12 @@ class PhInstance {
       }
       else if ($this->phclass->is_serialized_object($attr))
       {
+        // echo 'initialize '. $attr . PHP_EOL;
+        // var_dump($value);
+
         // nullable values from DB cant be decoded, null will be set in the instance
-        if (is_null($value)) continue;
+        // this is the same as setting $value = NULL;
+        if (is_null($value) || $value == self::NOT_LOADED_ASSOC) continue;
 
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')

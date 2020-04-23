@@ -801,13 +801,19 @@ class PhersistentMySQL {
         // the associated element can be null
         $table['foreigns'][$attr] = $this->phi_to_data($phi->get($attr));
       }
-      else if ($phi->getDefinition()->is_serialized_array($attr) || $phi->getDefinition()->is_serialized_object($attr))
+      else if ($phi->getDefinition()->is_serialized_array($attr))
       {
         // addslashes escapes the internal strings in the SQL query
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
         $value = $phi->get($attr);
 
         if ($value != null) $table['columns'][$attr] = json_encode($value); //addslashes(json_encode($phi->get($attr)));
+      }
+      else if ($phi->getDefinition()->is_serialized_object($attr))
+      {
+        $value = $phi->get($attr);
+        if ($value != null) $table['columns'][$attr] = json_encode($value);
+        else $table['columns'][$attr] = NULL; // JSON OBJECT ALLOWS NULL AS A VALID VALUE
       }
       else // simple field
       {
@@ -826,7 +832,8 @@ class PhersistentMySQL {
     $table['columns']['class'] = $phi->getClass();
     */
 
-    //print_r($table);
+    // echo "PHI TO DATA". PHP_EOL;
+    // print_r($table);
 
     return $table;
   }

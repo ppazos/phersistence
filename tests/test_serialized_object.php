@@ -12,7 +12,7 @@ spl_autoload_register(function ($class) {
 
 // SCHEMA
 $d = new drivers\MySQL();
-$d->connect('localhost', 'root', 'toor');
+$d->connect('localhost', 'user', 'user123!');
 $d->select_db('phersistent');
 
 if (!$d->table_exists('test_sobject'))
@@ -36,8 +36,33 @@ class TestSObject extends \phersistent\Phersistent {
 
 
 // SETUP
-$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user123!', 'phersistent');
 $man = new \phersistent\PhersistentDefManager('model', $ph_db);
+
+
+
+// TEST NULL SOBJECT
+// https://github.com/ppazos/phersistence/issues/65
+
+//$ins = $TestSObject->create(array('sobject'=>array('a'=>'b')));
+$ins = $TestSObject->create();
+
+//var_dump($ins);
+
+assert ($ins->save() !== false); // save with sobject null (is valid)
+
+
+$get = $TestSObject->get($ins->get_id());
+$get->setProperties(array('num'=>2));
+//var_dump($get);
+assert ($get->save() !== false); // save with sobject null (is valid)
+
+
+
+// TEST CREATE WITH SOBJECT
+$ins = $TestSObject->create(array('sobject'=>array('nombre'=>'Pablo', 'edad'=>37, 'concepto'=>array('nombre'=>'Persona'))));
+//var_dump($ins); // OK!
+
 
 
 // SOBJECT TEST (set_object)
@@ -59,6 +84,8 @@ assert($sobject['edad'] == 37);
 // save works
 assert ($ins->save() !== false);
 
+
+
 // get works
 $get = $TestSObject->get($ins->get_id());
 
@@ -71,7 +98,6 @@ assert($sobject['nombre'] == 'Pablo');
 assert($sobject['edad'] == 37);
 
 var_dump($sobject);
-
 
 
 // SOBJECT TEST (create)
