@@ -10,8 +10,8 @@ spl_autoload_register(function ($class) {
 });
 
 $d = new drivers\MySQL();
-$d->connect('localhost', 'root', 'toor');
-$d->select_db('amplify');
+$d->connect('localhost', 'user', 'user123!');
+$d->select_db('phersistent');
 
 if (!$d->table_exists('payor'))
 {

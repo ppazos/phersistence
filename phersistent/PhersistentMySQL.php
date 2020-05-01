@@ -522,7 +522,7 @@ class PhersistentMySQL {
    * single table inheritance. For MTI we need to split the conditions over multiple
    * tables and join using the id.
    */
-  public function find_by($class_name, $where, $max, $offset)
+  public function find_by($class_name, $where, $max, $offset, $sort, $order)
   {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
@@ -555,7 +555,7 @@ class PhersistentMySQL {
     $query_where = $expr[0];
 
     $records = array();
-    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' LIMIT '. $offset .', '. $max);
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record

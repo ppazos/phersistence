@@ -10,7 +10,7 @@ spl_autoload_register(function ($class) {
 });
 
 
-$ph_db = new \phersistent\PhersistentMySQL('localhost', 'root', 'toor', 'phersistent');
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user123!', 'phersistent');
 $man = new \phersistent\PhersistentDefManager('model', $ph_db);
 
 global $Person;

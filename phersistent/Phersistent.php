@@ -350,10 +350,10 @@ class Phersistent {
     return $this->__manager->listHasManyInstances($owner, $hm_attr, $hm_class);
   }
 
-  public function findBy($where = array(), $max = 10, $offset = 0)
+  public function findBy($where = array(), $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
   {
-    if (count($where) == 0) return $this->listAll($max, $offset);
-    return $this->__manager->findBy(get_class($this), $where, $max, $offset);
+    if (count($where) == 0) return $this->listAll($max, $offset, $sort, $order);
+    return $this->__manager->findBy(get_class($this), $where, $max, $offset, $sort, $order);
   }
 
   public function countBy($where = array())
