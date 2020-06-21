@@ -90,7 +90,7 @@ class PhersistentMySQL {
     $table = $this->phi_to_data($phi);
 
     //var_dump($table);
-    print_r($table);
+    //print_r($table);
 
     /*
     // save foreigns first to get their fk ids and set them to the table before save
