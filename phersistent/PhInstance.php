@@ -187,6 +187,9 @@ class PhInstance {
 
   public function set($attr, $value)
   {
+    //echo 'set '. $attr .' ';
+    //var_dump($value);
+
     // TODO: type check against attr definition
 
     if ($this->phclass->is_serialized_object($attr))
@@ -204,13 +207,19 @@ class PhInstance {
     }
     else if ($this->phclass->is_number($attr) && is_string($value))
     {
-      if (empty($value)) $value = NULL;
+      if ($value === '') $value = NULL;
       else
       {
         // TODO: check for PHP_INT_MAX since the value can be truncated
-        $value = $value + 0; // converts the value to a number
+        if ($this->phclass->is_int($attr))
+          $value = $value + 0; // converts the value to a number
+        else
+          $value = $value + 0.0;
       }
     }
+
+    //echo ' final value: ';
+    //var_dump($value);
     $this->{$attr} = $value;
   }
 

@@ -2,8 +2,8 @@
 
 spl_autoload_register(function ($class) {
   global $_BASE;
-  echo 'spl_autoload_register '. $class . PHP_EOL;
-  echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
+  //echo 'spl_autoload_register '. $class . PHP_EOL;
+  //echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
 
   if (file_exists($_BASE.str_replace('\\', '/', $class).'.php'))
     require_once($_BASE.str_replace('\\', '/', $class).'.php');
@@ -46,10 +46,21 @@ $man = new \phersistent\PhersistentDefManager('', $ph_db);
 $number_test = $NumberTest->create(array(
   'number1' => 0,
   'number2' => 0,
-  'number3' => 0,
-  'number4' => 0
+  'number3' => 0.0,
+  'number4' => 0.0
 ));
 
 $number_test->save();
+
+// get is loading null not zero
+$number_test_get = $NumberTest->get($number_test->get_id());
+
+assert($number_test_get->get_number1() === 0);
+assert($number_test_get->get_number2() === 0);
+assert($number_test_get->get_number3() === 0.0);
+assert($number_test_get->get_number4() === 0.0);
+
+//var_dump($number_test_get);
+//var_dump($number_test_get->get_number1());
 
 ?>

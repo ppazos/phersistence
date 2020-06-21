@@ -552,6 +552,16 @@ class Phersistent {
     return in_array($this->{$attr}, array(self::INT, self::LONG, self::FLOAT, self::DOUBLE));
   }
 
+  public function is_int($attr)
+  {
+    return $this->is_number($attr) && in_array($this->{$attr}, array(self::INT, self::LONG));
+  }
+
+  public function is_real($attr)
+  {
+    return $this->is_number($attr) && in_array($this->{$attr}, array(self::FLOAT, self::DOUBLE));
+  }
+
 
   /**
    * Configured from PhersistentDefManager.

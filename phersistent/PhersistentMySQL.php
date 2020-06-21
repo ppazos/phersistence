@@ -278,6 +278,7 @@ class PhersistentMySQL {
       $table = $this->get_row($table_name, $id);
 
       //print_r($table);
+      //var_dump($table);
 
       // the row class chould be the same as $class_name or a subclass, si we need
       // to use the specific class in the row to create the right instance here
@@ -286,6 +287,7 @@ class PhersistentMySQL {
       $phi->setProperties($table['columns']);
 
       //print_r($phi);
+      //var_dump($phi);
 
       $phi->set_id($table['columns']['id']);
       $phi->set_class($table['columns']['class']);
@@ -622,7 +624,9 @@ class PhersistentMySQL {
 
     if(mysqli_num_rows($r) == 1)
     {
-      $row = $r->fetch_assoc();
+      $row = $r->fetch_assoc(); // all values are strings, even numbers and booleans!
+      // TODO: would be intelligent to get the types of columns from the table and transform the data to the correspondent datatype
+      // https://forums.whirlpool.net.au/archive/526795
       $table['columns'] = $row;
       $r->close();
     }
