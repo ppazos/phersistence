@@ -554,12 +554,26 @@ class Phersistent {
 
   public function is_int($attr)
   {
-    return $this->is_number($attr) && in_array($this->{$attr}, array(self::INT, self::LONG));
+    if (!property_exists($this, $attr))
+    {
+      // check if attr is an injected FK, if it is injected, is not declared on the PH!
+      // xxx_id ends with id and xxx is a has_one
+      if (\basic\BasicString::endsWith($attr, '_id') && $this->is_has_one(\basic\BasicString::removeSuffix($attr, '_id')))
+      {
+        return true; // FK attr is INT
+      }
+      else
+      {
+        throw new \Exception('Attribute '. $attr .' is not declared on class '. get_class($this));
+      }
+    }
+
+    return in_array($this->{$attr}, array(self::INT, self::LONG));
   }
 
   public function is_real($attr)
   {
-    return $this->is_number($attr) && in_array($this->{$attr}, array(self::FLOAT, self::DOUBLE));
+    return $this->is_number($attr) && !$this->is_int($attr);
   }
 
 
