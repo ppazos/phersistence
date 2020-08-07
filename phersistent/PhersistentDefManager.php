@@ -182,9 +182,9 @@ class PhersistentDefManager {
     return $this->__ph_db->count_by($class_name, $where);
   }
 
-  public function deleteInstance($phi)
+  public function deleteInstance($phi, $logical)
   {
-    $this->__ph_db->delete_instance($phi);
+    $this->__ph_db->delete_instance($phi, $logical);
   }
 
   public function runRaw($sql)

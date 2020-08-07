@@ -660,9 +660,9 @@ class PhInstance {
   }
 
   // TODO: support logical delete
-  public function delete()
+  public function delete($logical = false)
   {
-    $this->phclass->delete($this);
+    $this->phclass->delete($this, $logical);
   }
 
   /**

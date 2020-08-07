@@ -367,9 +367,9 @@ class Phersistent {
     return $this->__manager->saveInstance($phi);
   }
 
-  public function delete($phi)
+  public function delete($phi, $logical)
   {
-    $this->__manager->deleteInstance($phi);
+    $this->__manager->deleteInstance($phi, $logical);
   }
 
   public function isValidDef($otherClassName)

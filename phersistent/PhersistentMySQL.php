@@ -250,11 +250,19 @@ class PhersistentMySQL {
     return $id;
   }
 
-  public function delete_instance($phi)
+  public function delete_instance($phi, $logical)
   {
     if ($phi->id == null) throw new \Exception("Instance can't be deleted, it is not yet saved to the database");
     $table_name = $this->get_table_name($phi);
-    $r = $this->driver->query('DELETE FROM '. $table_name .' WHERE id='. $phi->id);
+    if ($logical)
+    {
+      $r = $this->driver->query('UPDATE '. $table_name .' SET deleted=true WHERE id='. $phi->id);
+      $phi->set_deleted(true);
+    }
+    else
+    {
+      $r = $this->driver->query('DELETE FROM '. $table_name .' WHERE id='. $phi->id);
+    }
     if ($r == 0)
     {
       throw new \Exception("Couldn't delete the instance");
