@@ -55,11 +55,11 @@ class MySQL {
 
     if (!is_null($dbname))
     {
-      $this->selectDB($dbname);
+      $this->select_db($dbname);
     }
   }
 
-  function select_db ($dbname)
+  function select_db($dbname)
   {
     if (!$this->connection)
     {
@@ -166,6 +166,17 @@ class MySQL {
     return $tables;
   }
 
+  function truncate_all_tables()
+  {
+    $tables = $this->get_tables();
+    $this->execute("SET FOREIGN_KEY_CHECKS=0;");
+    foreach ($tables as $table)
+    {
+      $this->execute("TRUNCATE TABLE $table");
+    }
+    $this->execute("SET FOREIGN_KEY_CHECKS=1;");
+  }
+  
   function get_create_tables()
   {
     $create_tables = array();

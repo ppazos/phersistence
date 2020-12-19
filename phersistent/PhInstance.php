@@ -659,7 +659,6 @@ class PhInstance {
     return $res; // returns the id of the saved object, > 0
   }
 
-  // TODO: support logical delete
   public function delete($logical = false)
   {
     $this->phclass->delete($this, $logical);
