@@ -178,12 +178,15 @@ class PhersistentMySQL {
 
   private function update_instance_recursive($phi)
   {
+    //echo 'save_instance_recursive '. $phi->getClass() . PHP_EOL;
     $id = $phi->get_id();
 
     // 1. save/update has ones first to save the FK in the current object
     $hones = $phi->getAllHasOne();
     foreach ($hones as $attr=>$value)
     {
+      //echo 'save_instance_recursive $attr value: '. ($value ? $value->getClass() : 'NULL') . PHP_EOL;
+
       // if the object is null, then the FK should be set to null
       // TODO: it would be better to do it on the Phi->set()
       if ($value == null)
