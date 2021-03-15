@@ -822,12 +822,12 @@ class PhersistentMySQL {
         // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
         $value = $phi->get($attr);
 
-        if ($value != null) $table['columns'][$attr] = json_encode($value); //addslashes(json_encode($phi->get($attr)));
+        if ($value !== null) $table['columns'][$attr] = json_encode($value); //addslashes(json_encode($phi->get($attr)));
       }
       else if ($phi->getDefinition()->is_serialized_object($attr))
       {
         $value = $phi->get($attr);
-        if ($value != null) $table['columns'][$attr] = json_encode($value);
+        if ($value !== null) $table['columns'][$attr] = json_encode($value);
         else $table['columns'][$attr] = NULL; // JSON OBJECT ALLOWS NULL AS A VALID VALUE
       }
       else // simple field
