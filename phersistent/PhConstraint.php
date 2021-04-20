@@ -128,6 +128,131 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     return $errs;
   }
 
+  // returns the tree of errors but instead of ObjectValidationErrors returns just the name of the attribute
+  // something like person => address => line1 => [ValidationError]
+  public function getSimplifiedFieldErrors()
+  {
+    $errors = array();
+    $this->collect_errors($this, $errors);
+    return $errors;
+  }
+
+  private function collect_errors($validation_errors, &$collected)
+  {
+    foreach ($validation_errors->getFieldErrors() as $field => $error)
+    {
+      // list of single errors
+      if (is_array($error))
+      {
+        $collected[$field] = array();
+
+        foreach ($error as $error_i)
+        {
+          $collected[$field][] = $error_i;
+        }
+      }
+      // is another validation_errors object
+      else
+      {
+        $collected[$field] = array();
+
+        // recursion
+        $this->collect_errors($error, $collected[$field]);
+      }
+    }
+  }
+
+  // similar to getSimplifiedFieldErrors but returns the names of the attributes in a flat form
+  // person[address][line1] => [ValidationError]
+  public function getSimplifiedFlatFieldErrors()
+  {
+    $errors = $this->collect_errors_flat($this);
+    $ret = array();
+
+    // fix attribute names for the final flat array
+    foreach ($errors as $attr_keys_errors)
+    {
+      $attr_flat = '';
+      foreach ($attr_keys_errors['keys'] as $i => $attr)
+      {
+        if ($i == 0)
+          $attr_flat .= $attr .'[';
+        else if ($i == count($attr_keys_errors['keys']) -1)
+          $attr_flat .= $attr .']';
+        else
+          $attr_flat .= $attr .'][';
+      }
+      $ret[$attr_flat] = $attr_keys_errors['errors'];
+    }
+    
+
+    return $ret;
+  }
+
+  private function collect_errors_flat($validation_errors)
+  {
+    $attr_errors = array();
+    foreach ($validation_errors->getFieldErrors() as $field => $error)
+    {
+      // list of single errors or array of has many errors for each item
+      // for has many errors, the ObjectValidationErrors can have an array of ObjectValidationErrors, one per Object in a
+      // has many relationship, and inside each OVE could have ValidationError for each attribute (one or many per attribute)
+      if (is_array($error))
+      {
+        $is_single = false;
+        foreach ($error as $i => $err)
+        {
+          //echo "error $i ". PHP_EOL;
+          // If it's a single error...
+          if (is_a($err, '\phersistent\ValidationError'))
+          {
+            //echo "is ValidationError". PHP_EOL;
+            $is_single = true;
+            break;
+          }
+
+          // recursion to check for single errors or for array of ObjectValidationErrors for has many object attributes
+          $attr_errors_rec = $this->collect_errors_flat($err);
+
+          foreach ($attr_errors_rec as $attr => $errmany)
+          {
+            $attr_errors[] = [
+              'errors' => $errmany['errors'],
+              'keys' => [$field, $i, ...$errmany['keys']]
+            ];
+          }
+        }
+
+        if ($is_single)
+        {
+          // if it's a single error
+          $attr_errors[] = [
+            'errors' => $error,
+            'keys' => array($field)
+          ];
+        }
+      }
+      // is another validation_errors object
+      else
+      {
+        // recursion
+        $attr_errors_rec = $this->collect_errors_flat($error);
+
+        foreach ($attr_errors_rec as $attr => $err)
+        {
+          //print_r($err);
+          //$attr_errors[$field.'['.$attr] = $err;
+          $attr_errors[] = [
+            'errors' => $err['errors'],
+            'keys' => [$field, ...$err['keys']]
+          ];
+        }
+      }
+    }
+
+    return $attr_errors;
+  }
+
   // for merging two or more ObjevtValidationErrors
   public function addAll($errors = array())
   {
@@ -307,7 +432,7 @@ class MaxConstraint extends PhConstraint {
 
   public function validate($class, $attr, $value, $object)
   {
-    if (!is_numeric($value)) throw new \Exception("The constraing max does not apply to the value " . $value);
+    if (!is_numeric($value)) throw new \Exception("The constraint max does not apply to the value " . $value);
 
     if ((float)$value <= $this->max) return true;
     else
@@ -343,7 +468,7 @@ class MinConstraint extends PhConstraint {
 
   public function validate($class, $attr, $value, $object)
   {
-    if (!is_numeric($value)) throw new \Exception("The constraing min does not apply to the value " . $value);
+    if (!is_numeric($value)) throw new \Exception("The constraint min does not apply to the value " . $value);
 
     if ((float)$value >= $this->min) return true;
     else
@@ -464,50 +589,50 @@ class DateTimeConstraint extends Matches {
 }
 
 /*
-"^The": matches any string that starts with "The";
-"of despair$": matches a string that ends in the substring "of despair";
-"^abc$": a string that starts and ends with "abc" -- that could only be "abc" itself!
-"notice": a string that has the text "notice" in it.
-You can see that if you don't use either of the two characters we mentioned, as in the last example,
-you're saying that the pattern may occur anywhere inside the string -- you're not "hooking" it to any of the edges.
-"ab*": matches a string that has an a followed by zero or more b's ("a", "ab", "abbb", etc.);
-"ab+": same, but there's at least one b ("ab", "abbb", etc.);
-"ab?": there might be a b or not;
-"a?b+$": a possible a followed by one or more b's ending a string.
-You can also use bounds, which come inside braces and indicate ranges in the number of occurences:
-"ab{2}": matches a string that has an a followed by exactly two b's ("abb");
-"ab{2,}": there are at least two b's ("abb", "abbbb", etc.);
-"ab{3,5}": from three to five b's ("abbb", "abbbb", or "abbbbb").
-Note that you must always specify the first number of a range (i.e, "{0,2}", not "{,2}"). Also, as you might
-have noticed, the symbols '*', '+', and '?' have the same effect as using the bounds "{0,}", "{1,}", and "{0,1}",
-respectively.
-"a(bc)*": matches a string that has an a followed by zero or more copies of the sequence "bc";
-"a(bc){1,5}": one through five copies of "bc."
-There's also the '|' symbol, which works as an OR operator:
-"hi|hello": matches a string that has either "hi" or "hello" in it;
-"(b|cd)ef": a string that has either "bef" or "cdef";
-"(a|b)*c": a string that has a sequence of alternating a's and b's ending in a c;
-A period ('.') stands for any single character:
-"a.[0-9]": matches a string that has an a followed by one character and a digit;
-"^.{3}$": a string with exactly 3 characters.
-Bracket expressions specify which characters are allowed in a single position of a string:
-"[ab]": matches a string that has either an a or a b (that's the same as "a|b");
-"[a-d]": a string that has lowercase letters 'a' through 'd' (that's equal to "a|b|c|d" and even "[abcd]");
-"^[a-zA-Z]": a string that starts with a letter;
-"[0-9]%": a string that has a single digit before a percent sign;
-",[a-zA-Z0-9]$": a string that ends in a comma followed by an alphanumeric character.
-You can also list which characters you DON'T want -- just use a '^' as the first symbol in a bracket expression
-(i.e., "%[^a-zA-Z]%" matches a string with a character that is not a letter between two percent signs).
-In order to be taken literally, you must escape the characters "^.[$()|*+?{\" with a backslash ('\'), as
-they have special meaning. On top of that, you must escape the backslash character itself in PHP3 strings, so,
-for instance, the regular expression "(\$|�)[0-9]+" would have the function call: ereg("(\\$|�)[0-9]+", $str)
-(what string does that validate?)
-Example 1. Examples of valid patterns
-	* /<\/\w+>/
-	* |(\d{3})-\d+|Sm
-	* /^(?i)php[34]/
-	* {^\s+(\s+)?$}
-Example 2. Examples of invalid patterns
+  "^The": matches any string that starts with "The";
+  "of despair$": matches a string that ends in the substring "of despair";
+  "^abc$": a string that starts and ends with "abc" -- that could only be "abc" itself!
+  "notice": a string that has the text "notice" in it.
+  You can see that if you don't use either of the two characters we mentioned, as in the last example,
+  you're saying that the pattern may occur anywhere inside the string -- you're not "hooking" it to any of the edges.
+  "ab*": matches a string that has an a followed by zero or more b's ("a", "ab", "abbb", etc.);
+  "ab+": same, but there's at least one b ("ab", "abbb", etc.);
+  "ab?": there might be a b or not;
+  "a?b+$": a possible a followed by one or more b's ending a string.
+  You can also use bounds, which come inside braces and indicate ranges in the number of occurences:
+  "ab{2}": matches a string that has an a followed by exactly two b's ("abb");
+  "ab{2,}": there are at least two b's ("abb", "abbbb", etc.);
+  "ab{3,5}": from three to five b's ("abbb", "abbbb", or "abbbbb").
+  Note that you must always specify the first number of a range (i.e, "{0,2}", not "{,2}"). Also, as you might
+  have noticed, the symbols '*', '+', and '?' have the same effect as using the bounds "{0,}", "{1,}", and "{0,1}",
+  respectively.
+  "a(bc)*": matches a string that has an a followed by zero or more copies of the sequence "bc";
+  "a(bc){1,5}": one through five copies of "bc."
+  There's also the '|' symbol, which works as an OR operator:
+  "hi|hello": matches a string that has either "hi" or "hello" in it;
+  "(b|cd)ef": a string that has either "bef" or "cdef";
+  "(a|b)*c": a string that has a sequence of alternating a's and b's ending in a c;
+  A period ('.') stands for any single character:
+  "a.[0-9]": matches a string that has an a followed by one character and a digit;
+  "^.{3}$": a string with exactly 3 characters.
+  Bracket expressions specify which characters are allowed in a single position of a string:
+  "[ab]": matches a string that has either an a or a b (that's the same as "a|b");
+  "[a-d]": a string that has lowercase letters 'a' through 'd' (that's equal to "a|b|c|d" and even "[abcd]");
+  "^[a-zA-Z]": a string that starts with a letter;
+  "[0-9]%": a string that has a single digit before a percent sign;
+  ",[a-zA-Z0-9]$": a string that ends in a comma followed by an alphanumeric character.
+  You can also list which characters you DON'T want -- just use a '^' as the first symbol in a bracket expression
+  (i.e., "%[^a-zA-Z]%" matches a string with a character that is not a letter between two percent signs).
+  In order to be taken literally, you must escape the characters "^.[$()|*+?{\" with a backslash ('\'), as
+  they have special meaning. On top of that, you must escape the backslash character itself in PHP3 strings, so,
+  for instance, the regular expression "(\$|�)[0-9]+" would have the function call: ereg("(\\$|�)[0-9]+", $str)
+  (what string does that validate?)
+  Example 1. Examples of valid patterns
+    * /<\/\w+>/
+    * |(\d{3})-\d+|Sm
+    * /^(?i)php[34]/
+    * {^\s+(\s+)?$}
+  Example 2. Examples of invalid patterns
 	* /href='(.*)' - missing ending delimiter
 	* /\w+\s*\w+/J - unknown modifier 'J'
 	* 1-\d3-\d3-\d4| - missing starting delimiter

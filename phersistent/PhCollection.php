@@ -2,7 +2,7 @@
 
 namespace phersistent;
 
-class PhCollection implements \Iterator, \ArrayAccess { // implements Traversable {
+class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implements Traversable {
 
   protected $position = 0;
   protected $items = array();
@@ -56,6 +56,12 @@ class PhCollection implements \Iterator, \ArrayAccess { // implements Traversabl
   {
     return count($this->items);
   }
+
+  // countable
+  public function count()
+  {
+    return count($this->items);
+  } 
 
   // iterator
   public function rewind()
