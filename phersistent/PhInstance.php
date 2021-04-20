@@ -236,12 +236,15 @@ class PhInstance {
     foreach ($fields as $attr => $type)
     {
       // Default value, need to detect if null is set explicitly
+      // This is the value when no value was passed in the props, so should keep the current value!
       $value = self::NOT_LOADED_ASSOC;
       if (array_key_exists($attr, $props)) $value = $props[$attr]; // can be null
 
       if ($this->phclass->is_serialized_array($attr))
       {
-        if (!$value || $value == self::NOT_LOADED_ASSOC) $value = array();
+        if (is_null($value)) $value = array();
+        else if ($value == self::NOT_LOADED_ASSOC) continue; // if no value provided, keep current value
+        else if ($value === '') $value = array(); // solves cases when empty strings are submitted from the UI
 
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')
@@ -300,8 +303,8 @@ class PhInstance {
         // var_dump($value);
 
         // nullable values from DB cant be decoded, null will be set in the instance
-        // this is the same as setting $value = NULL;
-        if (is_null($value) || $value == self::NOT_LOADED_ASSOC) continue;
+        if (is_null($value)) $value = NULL;
+        else if ($value == self::NOT_LOADED_ASSOC) continue; // if no value provided, keep current value
 
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')
