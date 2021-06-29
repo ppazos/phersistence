@@ -216,9 +216,10 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
 
           foreach ($attr_errors_rec as $attr => $errmany)
           {
+            array_unshift($errmany['keys'], $field, $i); // solution for the not supported ... below
             $attr_errors[] = [
               'errors' => $errmany['errors'],
-              'keys' => [$field, $i, ...$errmany['keys']]
+              'keys' => $errmany['keys'] //[$field, $i, ...$errmany['keys']] -- this only works on php 7.4, server has 7.2
             ];
           }
         }
@@ -242,9 +243,10 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
         {
           //print_r($err);
           //$attr_errors[$field.'['.$attr] = $err;
+          array_unshift($err['keys'], $field); // solution for the not supported ... below
           $attr_errors[] = [
             'errors' => $err['errors'],
-            'keys' => [$field, ...$err['keys']]
+            'keys' => $err['keys'] // [$field, ...$err['keys']] -- this only works on php 7.4, server has 7.2
           ];
         }
       }
@@ -666,7 +668,7 @@ class Matches extends PhConstraint {
 
   public function getErrorMessage($value)
   {
-    return "the assigned value '". $value ."' doesn't matches the regex ". $this->regex;
+    return "the assigned value '". $value ."' doesn't match the regex ". $this->regex;
   }
 }
 

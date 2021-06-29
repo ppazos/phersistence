@@ -119,7 +119,11 @@ class PhInstance {
   private function delFrom($sarrayAttr, $value)
   {
     if (!is_string($value)) throw new \Exception('Value should be a string');
-    $this->{$sarrayAttr} = array_diff($this->{$sarrayAttr}, array($value));
+
+    // array_diff generates non sequential indexes
+    // doing json_encode over non sequential indexes generates a JSON object not an array
+    // array_values, reindexes from 0
+    $this->{$sarrayAttr} = array_values(array_diff($this->{$sarrayAttr}, array($value)));
   }
   private function hasValue($sarrayAttr, $value)
   {
@@ -187,7 +191,7 @@ class PhInstance {
 
   public function set($attr, $value)
   {
-    //echo 'set '. $attr .' ';
+    //echo 'set '. $attr . PHP_EOL;
     //var_dump($value);
 
     // TODO: type check against attr definition
@@ -242,6 +246,7 @@ class PhInstance {
 
       if ($this->phclass->is_serialized_array($attr))
       {
+        //var_dump($value);
         if (is_null($value)) $value = array();
         else if ($value == self::NOT_LOADED_ASSOC) continue; // if no value provided, keep current value
         else if ($value === '') $value = array(); // solves cases when empty strings are submitted from the UI
@@ -341,9 +346,9 @@ class PhInstance {
             throw new \Exception('Error decoding json object '. $error);
           }
         }
-        else if (is_array($value))
+        else if (is_array($value) || is_null($value))
         {
-          // do nothing: array values are all valid for serialized objects
+          // do nothing: array and NULL values are all valid for serialized objects
         }
         else
         {
@@ -380,6 +385,7 @@ class PhInstance {
       }
       else if ($this->phclass->is_has_many($attr) && is_array($value))
       {
+        //echo "setProperties HAS MANY $attr". PHP_EOL;
         // if properties want to set has many, the has many is cleaned up
         // *** all the items are removed ***
         $cleanMethod = 'clean_'. $attr;
@@ -391,6 +397,10 @@ class PhInstance {
         {
           $this->{$addToHMMethod}($phi); // verifies phi instanceof PhInstance
         }
+
+        // the set is done by the add_to_xxx
+        // without the continue, the collection was overwritten as an array!
+        continue;
       }
 
       // sets the value and verifies it's validity (type, etc)
