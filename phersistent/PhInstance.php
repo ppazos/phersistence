@@ -5,6 +5,7 @@ namespace phersistent;
 class PhInstance {
 
   const NOT_LOADED_ASSOC = -1;
+  const VALUE_NOT_PROVIDED = "\x20";
 
   // Validation errors from last validation of this instance
   private $errors;
@@ -161,14 +162,17 @@ class PhInstance {
   public function get($attr)
   {
     // is has one, and is null but the FK is not null, lazy load!
-    if ($this->phclass->is_has_one($attr) && $this->{$attr} == null && $this->{$attr.'_id'} != null)
+    if ($this->phclass->is_has_one($attr) &&
+        $this->{$attr} === self::NOT_LOADED_ASSOC &&
+        $this->{$attr.'_id'} != NULL)
     {
       $has_one_class = $this->phclass->{$attr}; //same as $this->phclass->get_has_one($attr)->class;
       $parts = explode('\\', $has_one_class);
       $class = $parts[count($parts)-1];
       $this->{$attr} = $GLOBALS[$class]->get($this->{$attr.'_id'});
     }
-    else if ($this->phclass->is_one_to_many($attr) && $this->{$attr} == null)
+    else if ($this->phclass->is_one_to_many($attr) &&
+             $this->{$attr} === self::NOT_LOADED_ASSOC)
     {
       //$hm_class = $this->phclass->get_has_many($attr)->class;
       //$parts = explode('\\', $has_one_class);
@@ -178,7 +182,7 @@ class PhInstance {
       $this->initialize_has_many($attr);
 
       // can lazy load only if current instance has id (is saved)
-      if ($this->id != null)
+      if ($this->id != NULL)
       {
         $hm_class = $this->phclass->get_has_many($attr)->class;
         $instances = $this->phclass->list_has_many($this, $attr, $hm_class);
@@ -232,7 +236,7 @@ class PhInstance {
     // loops over the declared fields and get the values from props.
     // any other values not declared are ignored from props.
 
-    $fields = $this->getDefinition()->get_all_fields();
+    $fields = $this->getDefinition()->get_all_fields(); // doesn't include attr_id for hasones
 
     // fields doesnt have the FK fields, need to check for those
     // to set the property from props when FKs come.
@@ -241,14 +245,14 @@ class PhInstance {
     {
       // Default value, need to detect if null is set explicitly
       // This is the value when no value was passed in the props, so should keep the current value!
-      $value = self::NOT_LOADED_ASSOC;
-      if (array_key_exists($attr, $props)) $value = $props[$attr]; // can be null
+      $value = self::VALUE_NOT_PROVIDED;
+      if (array_key_exists($attr, $props)) $value = $props[$attr]; // NULL allowed!
 
       if ($this->phclass->is_serialized_array($attr))
       {
         //var_dump($value);
         if (is_null($value)) $value = array();
-        else if ($value == self::NOT_LOADED_ASSOC) continue; // if no value provided, keep current value
+        else if ($value == self::VALUE_NOT_PROVIDED) continue; // if no value provided, keep current value
         else if ($value === '') $value = array(); // solves cases when empty strings are submitted from the UI
 
         // the value comes as a string, then decode
@@ -309,7 +313,7 @@ class PhInstance {
 
         // nullable values from DB cant be decoded, null will be set in the instance
         if (is_null($value)) $value = NULL;
-        else if ($value == self::NOT_LOADED_ASSOC) continue; // if no value provided, keep current value
+        else if ($value == self::VALUE_NOT_PROVIDED) continue; // if no value provided, keep current value
 
         // the value comes as a string, then decode
         if (is_string($value) && $value !== '')
@@ -380,8 +384,13 @@ class PhInstance {
       // check FK fields to set
       else if ($this->phclass->is_has_one($attr) && array_key_exists($attr.'_id', $props))
       {
-        $setMethod = 'set_'.$attr.'_id';
-        $this->$setMethod($props[$attr.'_id']);
+        $hasone_attr_id_value = $props[$attr.'_id'];
+        $this->{'set_'. $attr. '_id'}($hasone_attr_id_value);
+        
+        if ($hasone_attr_id_value != NULL)
+        {
+          $this->{'set_'. $attr}(self::NOT_LOADED_ASSOC); // marking the hasone as not loaded
+        }
       }
       else if ($this->phclass->is_has_many($attr) && is_array($value))
       {
@@ -404,12 +413,22 @@ class PhInstance {
       }
 
       // sets the value and verifies it's validity (type, etc)
-      if ($value !== self::NOT_LOADED_ASSOC) // FIXME: we are not using the not loaded value but null
+      if ($value !== self::VALUE_NOT_PROVIDED)
       {
         $setMethod = 'set_'.$attr;
         $this->$setMethod($value);
       }
     }
+  }
+
+  public function is_assoc_loaded($attr)
+  {
+    if (!$this->phclass->is_has_one($attr) && !$this->phclass->is_has_many($attr))
+    {
+      throw new \Exception("Object of type ". $this->getClass() ." doesn't have a relationship named '$attr'");
+    }
+
+    return $this->{$attr} !== self::NOT_LOADED_ASSOC;
   }
 
   public function __call($method, $args)
@@ -447,7 +466,11 @@ class PhInstance {
       // 3. if the declared is date and the value is string, try to parse and convert to date, internally use string UTC time to store, since that is the one compatible with most DBs
       // 4. check if the declared is has many, the given value should be an array, of items of the same type as the declared
 
-      $this->is_dirty = true;
+      // transients (attributes that are not saved) don't make this dirty
+      if (!in_array($attr, $this->phclass::$transients))
+      {
+        $this->is_dirty = true;
+      }
 
       // this might set is_dirty to false, that is why we set dirty=true before
       // this line, this order is important!
@@ -668,7 +691,7 @@ class PhInstance {
     }
 
     $res = $this->phclass->save($this);
-    $this->is_dirty = false; // clean after save
+    
     return $res; // returns the id of the saved object, > 0
   }
 
@@ -685,7 +708,13 @@ class PhInstance {
     $hasone = array();
     foreach ($this->phclass->getHasOneDeclarations() as $attr=>$rel)
     {
-      $hasone[$attr] = $this->get($attr);
+      // TEST
+      // TEST: temporal
+      // TEST
+      if ($this->$attr !== self::NOT_LOADED_ASSOC) // do not force the loading if the assoc was not loaded
+      {
+        $hasone[$attr] = $this->get($attr); // this forces loading from the db
+      }
     }
     return $hasone;
   }
@@ -702,7 +731,14 @@ class PhInstance {
       // the validation is called, if the collections were not loaded, this
       // loads them, adding an overhead on all validates and saves, it should
       // not validate if the collections are not loaded.
-      $hasmany[$attr] = $this->get($attr); // value is a collection
+
+      // TEST
+      // TEST: temporal
+      // TEST
+      if ($this->$attr !== self::NOT_LOADED_ASSOC) // do not force the loading if the assoc was not loaded
+      {
+        $hasmany[$attr] = $this->get($attr); // value is a collection, this forces loading from the db
+      }
     }
     return $hasmany;
   }

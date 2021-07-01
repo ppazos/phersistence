@@ -1,5 +1,6 @@
 <?php
 
+/*
 spl_autoload_register(function ($class) {
   global $_BASE;
   echo 'spl_autoload_register '. $class . PHP_EOL;
@@ -12,6 +13,7 @@ spl_autoload_register(function ($class) {
 $d = new drivers\MySQL();
 $d->connect('localhost', 'user', 'user123!');
 $d->select_db('phersistent');
+*/
 
 if (!$d->table_exists('payor'))
 {

@@ -38,8 +38,16 @@ class PhersistentMySQL {
     }
     else
     {
-      //echo 'save_instance update' . PHP_EOL;
-      $id = $this->update_instance_recursive($phi);
+      // only update if it's dirty
+      if ($phi->get_is_dirty())
+      {
+        $id = $this->update_instance_recursive($phi);
+      }
+      else
+      {
+        // if it's not dirty, return the id either way
+        $id = $phi->get_id();
+      }
     }
 
     return $id;
@@ -56,7 +64,7 @@ class PhersistentMySQL {
 
     // 1. save/update has ones first to save the FK in the current object
     $hones = $phi->getAllHasOne();
-    foreach ($hones as $attr=>$value)
+    foreach ($hones as $attr => $value)
     {
       // if the object is null, then the FK should be set to null
       // TODO: it would be better to do it on the Phi->set()
@@ -70,7 +78,9 @@ class PhersistentMySQL {
         if ($value->get_id() == null) // insert, is always dirty if not saved
         {
           $idho = $this->save_instance_recursive($value);
-          $value->set_id($idho);           // id set on associated instance
+
+// the recursive call sets the id
+//          $value->set_id($idho);          // id set on associated instance
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
@@ -140,7 +150,9 @@ class PhersistentMySQL {
           if ($item->get_id() == null)
           {
             $hmid = $this->save_instance_recursive($item);
-            $item->set_id($hmid);
+
+            // the recursive call sets the id
+            //$item->set_id($hmid);
           }
           else
           {
@@ -173,6 +185,8 @@ class PhersistentMySQL {
       $phi->set_id($id);
     }
 
+    $phi->set_is_dirty(false); // clean after save
+
     return $id;
   }
 
@@ -199,7 +213,9 @@ class PhersistentMySQL {
         if ($value->get_id() == null) // insert
         {
           $idho = $this->save_instance_recursive($value);
-          $value->set_id($idho);           // id set on associated instance
+
+          // the recursive call sets the id
+          // $value->set_id($idho);           // id set on associated instance
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
@@ -240,7 +256,8 @@ class PhersistentMySQL {
           if ($item->get_id() == null)
           {
             $hmid = $this->save_instance_recursive($item);
-            $item->set_id($hmid);
+            // the recursive call sets the id
+            //$item->set_id($hmid);
           }
           else
           {
@@ -249,6 +266,8 @@ class PhersistentMySQL {
         }
       }
     //}
+
+    $phi->set_is_dirty(false); // clean after save
 
     return $id;
   }
@@ -281,28 +300,27 @@ class PhersistentMySQL {
   {
     $parts = explode('\\', $class_name);
     $class = $parts[count($parts)-1];
-    //$phi = $GLOBALS[$class]->create();
     $table_name = $this->get_table_name_ph($GLOBALS[$class]);
 
     try
     {
-      $table = $this->get_row($table_name, $id);
+      $record = $this->get_row($table_name, $id);
 
-      //print_r($table);
-      //var_dump($table);
+      //print_r($record);
+      //var_dump($record);
 
       // the row class chould be the same as $class_name or a subclass, si we need
       // to use the specific class in the row to create the right instance here
-      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
+      $class = $this->full_class_name_to_simple_name($record['columns']['class']);
       $phi = $GLOBALS[$class]->create();
-      $phi->setProperties($table['columns']);
+      $phi->setProperties($record['columns']);
 
       //print_r($phi);
       //var_dump($phi);
 
-      $phi->set_id($table['columns']['id']);
-      $phi->set_class($table['columns']['class']);
-      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_id($record['columns']['id']);
+      $phi->set_class($record['columns']['class']);
+      $phi->set_deleted($record['columns']['deleted']);
       $phi->set_is_dirty(false);
     }
     catch (\Exception $e)
@@ -384,6 +402,7 @@ class PhersistentMySQL {
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE '. $backlink_name .'='. $owner_id);
+    
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
@@ -424,7 +443,8 @@ class PhersistentMySQL {
   // will arrange the expressions in ANDs, ORs, NOTs
   private function find_by_where_recursive($subtree, $table_alias)
   {
-    //var_dump($subtree);
+    // echo 'find_by_where_recursive'. PHP_EOL;
+    // print_r($subtree);
     $expressions = array();
     foreach ($subtree as $k=>$subconds)
     {
@@ -627,18 +647,17 @@ class PhersistentMySQL {
    */
   public function get_row($table_name, $id)
   {
-    // FIXME: table is really a recor or row
     // Does lazy loading, so foreigns are not loaded.
-    $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+    $record = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
 
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE id='. $id);
 
-    if(mysqli_num_rows($r) == 1)
+    if($r->num_rows == 1)
     {
       $row = $r->fetch_assoc(); // all values are strings, even numbers and booleans!
       // TODO: would be intelligent to get the types of columns from the table and transform the data to the correspondent datatype
       // https://forums.whirlpool.net.au/archive/526795
-      $table['columns'] = $row;
+      $record['columns'] = $row;
       $r->close();
     }
     else
@@ -646,9 +665,7 @@ class PhersistentMySQL {
       throw new \Exception('Record with id '. $id .' on table '. $table_name .' does not exist');
     }
 
-    //print_r($table);
-
-    return $table;
+    return $record;
   }
 
   /**
@@ -786,6 +803,12 @@ class PhersistentMySQL {
 
           $table['many_back'][$backlink_name] = array();
 
+
+          // TEST
+          // TEST: temporal, need to check dirty too
+          // TEST
+          if (!$phi->is_assoc_loaded($attr)) continue;
+
           foreach ($phi->get($attr) as $i=>$hmphi)
           {
             $table['many_back'][$backlink_name][] = $this->phi_to_data($hmphi);
@@ -807,14 +830,19 @@ class PhersistentMySQL {
       {
         // FK field
         $has_one_field = $attr . '_id';
+        $has_one_field_id = $phi->get($has_one_field);
 
         // if has one is not saved, the id will be null
         // internally PhInstance will set the xxx_id field
-        $table['columns'][$has_one_field] = $phi->get($has_one_field);
+        $table['columns'][$has_one_field] = $has_one_field_id;
 
         // creates related table with the has_one value
         // the associated element can be null
-        $table['foreigns'][$attr] = $this->phi_to_data($phi->get($attr));
+        if ($phi->is_assoc_loaded($attr))
+        {
+          $table['foreigns'][$attr] = $this->phi_to_data($phi->get($attr));
+        }
+        // do not load the attr if its not loaded just for saving the hasone
       }
       else if ($phi->getDefinition()->is_serialized_array($attr))
       {

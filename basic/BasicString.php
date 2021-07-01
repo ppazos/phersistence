@@ -50,14 +50,18 @@ class BasicString {
   }
 
   // Random string of desired length from full alphabet
-  function random($length = 10)
+  static function random($length = 10)
   {
-    $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $charactersLength = strlen($characters);
+    return self::random_from_dict($length);
+  }
+
+  static function random_from_dict($length = 10, $dict = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+  {
+    $charactersLength = strlen($dict);
     $randomString = '';
     for ($i = 0; $i < $length; $i++)
     {
-      $randomString .= $characters[mt_rand(0, $charactersLength - 1)];
+      $randomString .= $dict[mt_rand(0, $charactersLength - 1)];
     }
     return $randomString;
   }
@@ -84,8 +88,34 @@ class BasicString {
   {
     // TBD
   }
+
+  // returns true if $needle is a substring of $haystack
+  static function contains($haystack, $needle)
+  {   
+    return strpos($haystack, $needle) !== false;
+  }
+
+  // string similarity calculated using levenshtein
+  static function similarity($a, $b)
+  {
+    return 1 - (levenshtein(strtoupper($a), strtoupper($b)) / max(strlen($a), strlen($b)));
+  }
+
+  static function csv_string_to_array($csv_string)
+  {
+    $array_of_strings = array_map('trim', explode(',', $csv_string));
+    sort($array_of_strings);
+
+    foreach ($array_of_strings as $key => $value) 
+    {
+      if (empty($value))
+      {
+        unset($array_of_strings[$key]);
+      }
+    }
+
+    return empty($array_of_strings) ? NULL : $array_of_strings;
+  }
 }
-
-
 
 ?>
