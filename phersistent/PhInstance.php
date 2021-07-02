@@ -23,20 +23,44 @@ class PhInstance {
 
   private function addTo($hasManyName, PhInstance $ins)
   {
-    if ($this->{$hasManyName} == null) // not loaded
+    if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC) // not loaded
     {
+      // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
-    $this->{$hasManyName}->add( $ins );
+    
+    return $this->{$hasManyName}->add($ins);
   }
 
   private function cleanFrom($hasManyName)
   {
-    if ($this->{$hasManyName} == null) // not loaded
+    if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC) // not loaded
     {
+      // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
+
+    // the collection is empty, there is no clean to do
+    if ($this->{$hasManyName}->size() == 0) return false;
+
+    // to nullify the backlinks
+    $items = $this->{$hasManyName}->all();
+
+    // removes all objects from the collection without any checks
     $this->{$hasManyName}->clean();
+
+    // nullify backlink
+    $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
+
+    // NOTE: this is innefficient when hasmany has thousands of object, it should be documented.
+    foreach ($items as $ins)
+    {
+      $ins->{'set_'. $backlink_name}(NULL);
+      $ins->save();
+    }
+
+    // clean done
+    return true;
   }
 
   private function removeFrom($hasManyName, PhInstance $ins)
@@ -50,8 +74,9 @@ class PhInstance {
       throw new \Exception("Not saved object of type ". $this->getClass() ." can't be removed from '$hasManyName'");
     }
 
-    if ($this->{$hasManyName} == null) // not loaded
+    if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC) // not loaded
     {
+      // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
 
@@ -60,19 +85,16 @@ class PhInstance {
     {
       // nullify backlink
 
-      // TODO: this is only for one-to-many only for now, nullify the backlink on $ins
+      // this is only for one-to-many for now
       $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
-
-      //echo 'NULLIFY BACKLINK '. $backlink_name .PHP_EOL;
-
-      $ins->set($backlink_name, NULL);
-
+      $ins->{'set_'. $backlink_name}(NULL);
       $ins->save();
     }
 
     return $removed;
   }
 
+  /* this is implemented in the same dynamic call in __call for 'remove_from'
   // Similar to removeFrom but if the $ins was removed, also deletes it from the DB
   private function removeFromAndDelete($hasManyName, PhInstance $ins)
   {
@@ -81,8 +103,9 @@ class PhInstance {
       throw new \Exception("Not saved object of type ". $this->getClass() ." can't be removed from '$hasManyName'");
     }
 
-    if ($this->{$hasManyName} == null) // not loaded
+    if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC)
     {
+      // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
 
@@ -95,18 +118,21 @@ class PhInstance {
 
     return $removed;
   }
+  */
 
   // counts elements in the hasmany collection, loads them from the DB is not loaded
   // TODO: this method can be optimized by using a countBy, since we don't really
   // need to load the collection, just count the items in the association
   private function size($hasManyName)
   {
-    if ($this->{$hasManyName} == null) // not loaded
+    if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC)
     {
+      // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
     return $this->{$hasManyName}->size();
   }
+
 
   /** JSON Array Field Operations */
   /**
@@ -181,7 +207,7 @@ class PhInstance {
       // the collection is null, this initializes it
       $this->initialize_has_many($attr);
 
-      // can lazy load only if current instance has id (is saved)
+      // lazy loads the has many collection, if the instance has id (is saved)
       if ($this->id != NULL)
       {
         $hm_class = $this->phclass->get_has_many($attr)->class;
@@ -488,8 +514,12 @@ class PhInstance {
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
-      $this->addTo($attr, $args[0]);
-      $this->is_dirty = true;
+
+      // is_dirty only if item was added because
+      if ($this->addTo($attr, $args[0]))
+      {
+        $this->is_dirty = true;
+      }
       return;
     }
 
@@ -510,7 +540,10 @@ class PhInstance {
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
+
       $removed = $this->removeFrom($attr, $args[0]);
+
+      // is_dirty if the object was removed
       if ($removed)
       {
         $this->is_dirty = true;
@@ -528,8 +561,12 @@ class PhInstance {
       {
         throw new \Exception("Object of type ". $this->getClass() ." doesn't have a declaration for a hasMany named '$attr'");
       }
-      $this->cleanFrom($attr);
-      $this->is_dirty = true;
+
+      // only is_dirty if the clean was done, it's not done if the collection is empty
+      if ($this->cleanFrom($attr))
+      {
+        $this->is_dirty = true;
+      }
       return;
     }
 

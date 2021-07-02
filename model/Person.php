@@ -8,6 +8,8 @@ class Person extends \phersistent\Phersistent {
   public $lastname = self::TEXT;
   public $phone_number = self::TEXT;
 
+  public $addresses = array(\phersistent\PhCollection::class, Address::class);
+
   // instance functions
   function functions()
   {

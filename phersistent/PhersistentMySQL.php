@@ -241,11 +241,17 @@ class PhersistentMySQL {
     //if($r === 1)
     //{
       $hmanies = $phi->getAllHasMany();
-      foreach ($hmanies as $attr=>$collection)
+      foreach ($hmanies as $attr => $collection)
       {
         foreach ($collection as $item)
         {
-          //$backlink = $this->backlink_name($phi, $attr);
+          // if the container phi has id and the children in the hasmany
+          // is not dirty, there is no need to update it.
+          // this is different from the save, because if the container
+          // phi doesn't have an id (save instead of update) all the items
+          // should be updated since the back link should be set.
+          if (!$item->get_is_dirty()) continue;
+
           $backlink = $phi->getDefinition()->backlink_name($phi, $attr);
 
           //echo 'backlink name: '. $backlink . PHP_EOL;

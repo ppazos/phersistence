@@ -38,10 +38,10 @@ class PhSet extends PhCollection {
     {
       if ($eq($ins, $instance))
       {
-        return; // Dont add the instance
+        return false; // Dont add the instance
       }
     }
-    parent::add($instance);
+    return parent::add($instance);
   }
 
   public function add_all($instances = array())
@@ -52,6 +52,7 @@ class PhSet extends PhCollection {
     }
   }
 
+  // FIXME: check this, because remove from might be done with the equality function too
   // remove is implemented in PhCOllection since it has to be done using the id not
   // the equality_function, because the DB could be inconsistent using the
   // equality_function without checking the ids, for instance if a1 hasmany b1, b2
