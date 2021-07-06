@@ -108,3 +108,14 @@ if (!$d->table_exists('provider'))
   $d->add_fk('provider', 'contact_id', 'fk_provider_contact', 'person', 'id');
   $d->add_fk('provider', 'address_id', 'fk_provider_address', 'address', 'id');
 }
+
+if (!$d->table_exists('price_with_codes'))
+{
+  $d->create_table('price_with_codes'); // adds the id column
+  $d->add_column('price_with_codes', 'class',   'varchar(255)', false);
+  $d->add_column('price_with_codes', 'deleted', 'boolean', false);
+
+  $d->add_column('price_with_codes', 'price', 'float', true);
+  $d->add_column('price_with_codes', 'codes', 'text', true);
+  $d->add_column('price_with_codes', 'not_null_codes', 'text', false);
+}

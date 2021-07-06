@@ -589,6 +589,26 @@ class Phersistent {
     return array();
   }
 
+  // true if the attribute has a nullable(true) constraint or no nullable constraint at all (default is nullable),
+  // false if there is a nullable(false) constraints
+  public function is_nullable($attr)
+  {
+    $constraints = $this->get_constraints($attr);
+
+    $attr_is_nullable = true;
+
+    foreach ($constraints as $c)
+    {
+      if ($c instanceof Nullable && $c->getValue() === false)
+      {
+        $attr_is_nullable = false;
+        break;
+      }
+    }
+
+    return $attr_is_nullable;
+  }
+
   public function runRaw($sql)
   {
     return $this->__manager->runRaw($sql);

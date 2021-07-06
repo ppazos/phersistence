@@ -852,11 +852,19 @@ class PhersistentMySQL {
       }
       else if ($phi->getDefinition()->is_serialized_array($attr))
       {
-        // addslashes escapes the internal strings in the SQL query
-        // removed the addslashes because it was escaping twice, table_to_insert() already escapes string values
         $value = $phi->get($attr);
 
-        if ($value !== null) $table['columns'][$attr] = json_encode($value); //addslashes(json_encode($phi->get($attr)));
+        if ($value !== NULL) // json_encode(NULL) === 'null' and should be NULL
+        {
+          // table_to_insert() already escapes string values so addslashes is not needed
+          $value = json_encode($value); //addslashes(json_encode($phi->get($attr)));
+        }
+        else if (!$phi->phclass->is_nullable($attr)) // if the attr is not nullable sets an empty array
+        {
+          $value = [];
+        }
+
+        $table['columns'][$attr] = $value;
       }
       else if ($phi->getDefinition()->is_serialized_object($attr))
       {

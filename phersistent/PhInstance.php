@@ -32,7 +32,7 @@ class PhInstance {
     return $this->{$hasManyName}->add($ins);
   }
 
-  private function cleanFrom($hasManyName)
+  private function cleanFrom($hasManyName, $options = array())
   {
     if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC) // not loaded
     {
@@ -49,14 +49,20 @@ class PhInstance {
     // removes all objects from the collection without any checks
     $this->{$hasManyName}->clean();
 
-    // nullify backlink
-    $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
-
-    // NOTE: this is innefficient when hasmany has thousands of object, it should be documented.
-    foreach ($items as $ins)
+    // special option to tell the clean to avoid updating the contained items,
+    // this is used when the developer wants to delete the previous items after
+    // a setProperties that sets the hasmany collection is executed
+    if (!in_array('DO_NOT_UPDATE', $options))
     {
-      $ins->{'set_'. $backlink_name}(NULL);
-      $ins->save();
+      // nullify backlink
+      $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
+  
+      // NOTE: this is innefficient when hasmany has thousands of object, it should be documented.
+      foreach ($items as $ins)
+      {
+        $ins->{'set_'. $backlink_name}(NULL);
+        $ins->save();
+      }
     }
 
     // clean done
@@ -257,7 +263,8 @@ class PhInstance {
     $this->{$attr} = $value;
   }
 
-  public function setProperties($props = array())
+  // options for now is to tell the hasmany to avoid updating the items when the collection is cleaned
+  public function setProperties($props = array(), $options = array())
   {
     // loops over the declared fields and get the values from props.
     // any other values not declared are ignored from props.
@@ -276,13 +283,26 @@ class PhInstance {
 
       if ($this->phclass->is_serialized_array($attr))
       {
-        //var_dump($value);
-        if (is_null($value)) $value = array();
+        if (empty($value)) // handles null and empty string
+        {
+          if ($this->phclass->is_nullable($attr))
+          {
+            $value = NULL;
+          }
+          else
+          {
+            $value = [];
+          }
+        }
         else if ($value == self::VALUE_NOT_PROVIDED) continue; // if no value provided, keep current value
-        else if ($value === '') $value = array(); // solves cases when empty strings are submitted from the UI
 
+
+        if (is_null($value))
+        {
+          // do nothing, accept NULL value as valid
+        }
         // the value comes as a string, then decode
-        if (is_string($value) && $value !== '')
+        else if (is_string($value) && $value !== '')
         {
           $value = json_decode($value);
 
@@ -424,7 +444,7 @@ class PhInstance {
         // if properties want to set has many, the has many is cleaned up
         // *** all the items are removed ***
         $cleanMethod = 'clean_'. $attr;
-        $this->{$cleanMethod}();
+        $this->{$cleanMethod}($options[$attr] ?? []);
 
         $addToHMMethod = 'add_to_'. $attr;
         $hm = $value;
@@ -563,7 +583,7 @@ class PhInstance {
       }
 
       // only is_dirty if the clean was done, it's not done if the collection is empty
-      if ($this->cleanFrom($attr))
+      if ($this->cleanFrom($attr, $args))
       {
         $this->is_dirty = true;
       }

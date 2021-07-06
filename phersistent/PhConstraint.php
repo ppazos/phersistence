@@ -34,18 +34,10 @@ class FieldValidator {
   {
     $errors = array();
 
-    //$cs = $phi->phclass->get_constraints($attr);
-
-    $attr_is_nullable = false;
-    foreach ($cs as $c)
-    {
-      if ($c instanceof Nullable && $c->getValue() === true)
-      {
-        //echo $attr .' is nullable'. PHP_EOL;
-        $attr_is_nullable = true;
-        break;
-      }
-    }
+    /* the default value for nullable was changed from false to true, so if not
+       constraint is defined, we consider it is nullable, like it happens in the database.
+    */
+    $attr_is_nullable = $phi->phclass->is_nullable($attr);
 
     $value = $phi->get($attr);
 
@@ -694,7 +686,7 @@ class Nullable extends PhConstraint {
 
   public function validate($class, $attr, $value, $object)
   {
-    if ($this->nullable || $value != NULL) return true;
+    if ($this->nullable || $value !== NULL) return true;
     else
     {
       return new ValidationError($class, $attr, $value, $this);
