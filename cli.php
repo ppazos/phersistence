@@ -1,64 +1,79 @@
 <?php
 
-$_BASE = __DIR__ .'/';
+$_BASE = __DIR__ . '/'; // .'/../';
+
+spl_autoload_register(function ($class) {
+  global $_BASE;
+  //echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
+  if (file_exists($_BASE.str_replace('\\', '/', $class).'.php'))
+  {
+    require_once($_BASE.str_replace('\\', '/', $class).'.php');
+  }
+});
+
+\logger\Logger::$on = false;
+\logger\Logger::$force = false;
+
+$test_db = 'phersistent';
+
+$d = new \drivers\MySQL();
+$d->connect('localhost', 'user', 'user1234');
+$d->execute('DROP DATABASE IF EXISTS '. $test_db);
+$d->execute('CREATE DATABASE '. $test_db);
+
+$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user1234', $test_db);
+$man = new \phersistent\PhersistentDefManager('model', $ph_db);
+$d = $ph_db->get_driver();
+
+// generates schema
+require_once('db/schema.php');
+
 
 //print_r($argv);
+//print_r($argc);
 
 /*
-$a = '2342456456456314723';
-var_dump(PHP_INT_MAX);
-var_dump((int)$a);
-$a = $a + 0;
-var_dump($a);
-*/
+ * argv[0] -> cli.php
+ * argv[1] -> suite (optional)
+ * argv[2] -> case (optional)
+ * */
 
-if (count($argv) < 2)
+if ($argc < 2)
 {
-  echo 'No command'. PHP_EOL;
-  exit;
+   echo 'Missing test_root and test_suite'. PHP_EOL;
+   exit;
 }
 
-$command = $argv[1];
 
-switch ($command)
+$run = new \phtest\PhTestRun();
+$run->init('tests');
+
+// clean the database after each test
+$run->after_each_test(function() use ($d) {
+   \logger\Logger::$on = false;
+   $d->truncate_all_tables();
+   \logger\Logger::$on = true;
+});
+
+
+
+
+// case or cases specific
+if ($argc == 3)
 {
-  case "find_by":
-    require_once('tests/test_find_by.php');
-  break;
-  case "test":
-    require_once('tests/test.php');
-  break;
-  case "test_dirty":
-    require_once('tests/test_dirty.php');
-  break;
-  case "sarray":
-    require_once('tests/test_serialized_array.php');
-  break;
-  case "sobject":
-    require_once('tests/test_serialized_object.php');
-  break;
-  case "validations":
-    require_once('tests/test_validations.php');
-  break;
-  case "schema":
-    require_once('tests/schema.php');
-  break;
-  case "test_ph11":
-    require_once('tests/test_ph11.php');
-  break;
-  case "test_ph12":
-    require_once('tests/test_ph12.php');
-  break;
-  case "test_amplify":
-    require_once('tests/test_amplify.php');
-  break;
-  default: /// generic file execution
-    if (!file_exists($command))
-    {
-      echo "File $command doesn't exist";
-      exit;
-    }
-    require_once($command);
+   $run->run_case($argv[1], $argv[2]);
 }
+// suite specified
+else if ($argc == 2)
+{
+   $run->run_suite($argv[1]);
+}
+// run all
+else
+{
+   $run->run_all();
+}
+
+$run->render_reports();
 
 ?>

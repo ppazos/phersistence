@@ -10,6 +10,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
   public function add(PhInstance $instance)
   {
     $this->items[] = $instance;
+    return true;
   }
 
   public function add_all($instances = array())

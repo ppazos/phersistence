@@ -10,7 +10,9 @@ class Phersistent {
   public $id = self::INT;
   public $deleted = self::BOOLEAN;
   public $class = self::TEXT;
-  public $is_dirty = self::BOOLEAN; // this one shouldn't be saved
+  public $is_dirty = self::BOOLEAN; // this one shouldn't be saved (transient)
+
+  public static $transients = ['is_dirty'];
 
   // Basic attribute types
   const INT      = 'int';
@@ -194,99 +196,80 @@ class Phersistent {
 
     // For setting default values if defined and no value was given in attrs
     $default_values = $this->init();
+    $attrs = array_merge($default_values, $attrs); // attrs overwrite default
 
 
     // Inject attributes declared on concrete subclass on new instance
     // This reads the own and inherited attributes of the custom Phersistent class
-    //foreach ($this as $attr=>$type)
     $fields = $this->get_all_fields();
+    // TODO we could avoid iterating through all the class attrs, we just need default_values
+    //      and the attrs params merged together to use as the iteration list
     foreach ($fields as $attr => $type)
     {
-      // dont inject internal hasMany and hasOne definitions
-      //if ($attr == '__one' || $attr == '__many' || $attr == '__manager') continue;
-      //echo "create $attr = $type\n";
-      // if (array_key_exists($attr, $this->__one))
-      // {
-      //  echo $attr .' es HO '. PHP_EOL;
-      // }
-
-
       // has many is injected below
       if (array_key_exists($attr, $this->__many)) continue;
 
        // injects the attribute
       $ins->{$attr} = NULL;
 
-      // process the value
-      $value = NULL;
-      if (isset($attrs[$attr])) $value = $attrs[$attr];
+      $value = $attrs[$attr] ?? NULL;
+
+      // will be used below to set the value
+      $setMethod = 'set_'.$attr;
 
 
-      /* TODO: The has_one should be marked as not loaded if the FK attribute 'xxx_id'
-               is not null on the database and this link is lazy loaded, so the ROM
-               should set this, not this constructor.
-      if (array_key_exists($attr, $this->__one))
-      {
-       $ins->{$attr} = self::NOT_LOADED_ASSOC;
-      }
-      else
-      {
-        $ins->{$attr} = NULL; // injects the attribute
-      }
-      */
+      // has one attributs process
 
       // injects the FK attribute,
       // TODO: this attribute should be set when the associated object is saved
       if (array_key_exists($attr, $this->__one))
       {
-        $ins->{$attr.'_id'} = NULL;
+        $ins->{$attr.'_id'} = NULL; // if the attr_id is NULL, attr should be NULL
 
         // if FK attribute comes, set it
         if (array_key_exists($attr.'_id', $attrs))
         {
-          $ins->{$attr.'_id'} = $attrs[$attr.'_id'];
+          $ins->{$attr.'_id'} = $attrs[$attr.'_id'];  // if the attr_id is not NULL, the attr should be NOT_LOADED
+          $ins->$attr = self::NOT_LOADED_ASSOC; // marking the hasone as not loaded
         }
-      }
 
-      // will be used below to set the value
-      $setMethod = 'set_'.$attr;
-
-      // check for default value
-      if (is_null($value))
-      {
-        if (array_key_exists($attr, $default_values))
-        {
-          $value = $default_values[$attr];
-        }
-      }
-      else // if value comes, set that value
-      {
         // want to create a HO object from the array of values
-        if (array_key_exists($attr, $this->__one) && is_array($value))
+        if (is_array($value))
         {
           // creates an instance of the class declared in the HO attr with the value array
           // this->attr is the declared class for the has one attribute
           $value = $this->__manager->create($this->{$attr}, $value);
         }
 
-        // for serialized arrays
-        if ($this->is_serialized_array($attr))
+        if ($value != NULL)
         {
-          // the value comes as a string, then decode
-          if (is_string($value) && $value !== '')
-          {
-            $value = json_decode($value);
-          }
-          else if (is_array($value))
-          {
-            // ensure every value in the array is string
-            array_walk($value, function(&$value, &$key) {
-              $value = (string)$value;
-            });
-          }
+          $ins->$setMethod($value);
         }
+
+        continue; // has one processed
       }
 
+
+      // common attributes process
+
+      // for serialized arrays
+      if ($this->is_serialized_array($attr))
+      {
+        // the value comes as a string, then decode
+        if (is_string($value) && $value !== '')
+        {
+          $value = json_decode($value);
+        }
+        else if (is_array($value))
+        {
+          // ensure every value in the array is string
+          array_walk($value, function(&$value, &$key) {
+            $value = (string)$value;
+          });
+        }
+      }
+      
+      // sets normal attributes and serialized arrays/objects
       $ins->$setMethod($value);
     }
 
@@ -294,7 +277,8 @@ class Phersistent {
     foreach ($this->__many as $attr=>$rel)
     {
       // This declared the field in the instance, which is needed to check if the field exists in the instance
-      $ins->{$attr} = null;
+      //$ins->{$attr} = null;
+      $ins->$attr = self::NOT_LOADED_ASSOC; // marking the hasmany as not loaded
 
       if (isset($attrs[$attr]) && is_array($attrs[$attr]))
       {
@@ -603,6 +587,26 @@ class Phersistent {
     }
 
     return array();
+  }
+
+  // true if the attribute has a nullable(true) constraint or no nullable constraint at all (default is nullable),
+  // false if there is a nullable(false) constraints
+  public function is_nullable($attr)
+  {
+    $constraints = $this->get_constraints($attr);
+
+    $attr_is_nullable = true;
+
+    foreach ($constraints as $c)
+    {
+      if ($c instanceof Nullable && $c->getValue() === false)
+      {
+        $attr_is_nullable = false;
+        break;
+      }
+    }
+
+    return $attr_is_nullable;
   }
 
   public function runRaw($sql)
