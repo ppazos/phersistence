@@ -149,15 +149,21 @@ class PhInstance {
     if (!is_string($value)) throw new \Exception('Value should be a string');
     $this->{$sarrayAttr}[] = $value; // if the array is null, this also initializes it
   }
+
   private function delFrom($sarrayAttr, $value)
   {
     if (!is_string($value)) throw new \Exception('Value should be a string');
+
+    // TODO: this will mark the phi as dirty even if a value wasn't removed, need to check for the remove to mark as dirty
+
+    if (empty($this->{$sarrayAttr})) return; // nothing to do
 
     // array_diff generates non sequential indexes
     // doing json_encode over non sequential indexes generates a JSON object not an array
     // array_values, reindexes from 0
     $this->{$sarrayAttr} = array_values(array_diff($this->{$sarrayAttr}, array($value)));
   }
+
   private function hasValue($sarrayAttr, $value)
   {
     if (!is_string($value)) throw new \Exception('Value should be a string');
@@ -227,9 +233,6 @@ class PhInstance {
 
   public function set($attr, $value)
   {
-    //echo 'set '. $attr . PHP_EOL;
-    //var_dump($value);
-
     // TODO: type check against attr definition
 
     if ($this->phclass->is_serialized_object($attr))
@@ -258,8 +261,6 @@ class PhInstance {
       }
     }
 
-    //echo ' final value: ';
-    //var_dump($value);
     $this->{$attr} = $value;
   }
 

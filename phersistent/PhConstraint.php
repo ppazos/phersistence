@@ -7,25 +7,25 @@ abstract class PhConstraint {
   public abstract function validate($class, $attr, $value, $object);
 
   // number constraints
-  public static function min( $min ) { return new MinConstraint($min); }
-  public static function max( $max ) { return new MaxConstraint($max); }
-  public static function lower( $max ) { return new MaxConstraint($max-1); }
-  public static function greater( $min ) { return new MinConstraint($min+1); }
-  public static function between( $min, $max ) { return new Between($min, $max); }
+  public static function min    ($min) { return new MinConstraint($min); }
+  public static function max    ($max) { return new MaxConstraint($max); }
+  public static function lower  ($max) { return new LowerConstraint($max); }
+  public static function greater($min) { return new GreaterConstraint($min); }
+  public static function between($min, $max) { return new Between($min, $max); }
 
   // string constraints
-  public static function email() { return new EmailConstraint(); }
-  public static function matches($regex) { return new Matches($regex); }
-  public static function date() { return new DateConstraint(); }
-  public static function datetime() { return new DateTimeConstraint(); }
-  public static function maxLength( $max ) { return new MaxLengthConstraint($max); }
-  public static function minLength( $min ) { return new MinLengthConstraint($min); }
+  public static function email    () { return new EmailConstraint(); }
+  public static function matches  ($regex) { return new Matches($regex); }
+  public static function date     () { return new DateConstraint(); }
+  public static function datetime () { return new DateTimeConstraint(); }
+  public static function maxLength($max) { return new MaxLengthConstraint($max); }
+  public static function minLength($min) { return new MinLengthConstraint($min); }
 
   // general
-  public static function nullable( $nullable ) { return new Nullable($nullable); }
-  public static function blank( $blank ) { return new BlankConstraint($blank); }
-  public static function inList( $array ) { return new InList($array); }
-  public static function unique() { return new Unique(); }
+  public static function nullable($nullable) { return new Nullable($nullable); }
+  public static function blank   ($blank) { return new BlankConstraint($blank); }
+  public static function inList  ($array) { return new InList($array); }
+  public static function unique  () { return new Unique(); }
 }
 
 class FieldValidator {
@@ -415,6 +415,7 @@ class MinLengthConstraint extends PhConstraint {
   }
 }
 
+// lower or equal to
 class MaxConstraint extends PhConstraint {
 
   protected $max;
@@ -451,6 +452,7 @@ class MaxConstraint extends PhConstraint {
   }
 }
 
+// greater or equal to
 class MinConstraint extends PhConstraint {
 
   protected $min;
@@ -484,6 +486,80 @@ class MinConstraint extends PhConstraint {
   public function getErrorMessage($value)
   {
     return "the assigned value ". $value ." should be greater or equal than ". $this->min;
+  }
+}
+
+// strict lower than
+class LowerConstraint extends PhConstraint {
+
+  protected $max;
+
+  public function __construct($max)
+  {
+    $this->max = $max;
+  }
+
+  public function validate($class, $attr, $value, $object)
+  {
+    if (!is_numeric($value)) throw new \Exception("The constraint lower does not apply to the value " . $value);
+
+    if ((float)$value < $this->max) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
+  }
+
+  public function getValue()
+  {
+    return $this->max;
+  }
+
+  public function __toString()
+  {
+    return "" . $this->max;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." should be lower than ". $this->min;
+  }
+}
+
+// strict greather than
+class GreaterConstraint extends PhConstraint {
+
+  protected $min;
+
+  public function __construct($min)
+  {
+    $this->min = $min;
+  }
+
+  public function validate($class, $attr, $value, $object)
+  {
+    if (!is_numeric($value)) throw new \Exception("The constraint greater does not apply to the value " . $value);
+
+    if ((float)$value > $this->min) return true;
+    else
+    {
+      return new ValidationError($class, $attr, $value, $this);
+    }
+  }
+
+  public function getValue()
+  {
+    return $this->min;
+  }
+
+  public function __toString()
+  {
+    return "" . $this->min;
+  }
+
+  public function getErrorMessage($value)
+  {
+    return "the assigned value ". $value ." should be greater than ". $this->min;
   }
 }
 

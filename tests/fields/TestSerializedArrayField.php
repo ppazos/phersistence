@@ -42,14 +42,14 @@ class TestSerializedArrayField extends PhTestCase {
     $this->assert(count($o->get_codes()) === 3, 'Object codes OK');
   }
 
-  public function test_save_empty()
+  public function test_save_minimal()
   {
     global $PriceWithCodes;
 
     $o = $PriceWithCodes->create();
     $o->set_not_null_codes([]); // empty array is valid for not null
 
-    $id = $o->save(); // FIXME: codes is nor part of the INSERT columns
+    $id = $o->save();
 
 
     // tests
@@ -64,13 +64,28 @@ class TestSerializedArrayField extends PhTestCase {
     $this->assert($o->get_codes() === NULL, 'Object codes OK');
   }
 
-  public function test_update()
+  public function test_update_minimal()
   {
     global $PriceWithCodes;
 
-    $this->assert(true, 'Object is saved');
+    // save
+    $o = $PriceWithCodes->create();
+    $o->set_not_null_codes([]); // empty array is valid for not null
+    $id = $o->save();
 
-    // TODO
+    $this->assert($id !== NULL, 'Object is saved');
+
+    // update
+    $o->push_to_codes('A01');
+    $id = $o->save();
+
+    $this->assert($id !== NULL, 'Object is updated');
+    
+    // update
+    $o->del_from_codes('A01');
+    $id = $o->save();
+
+    $this->assert($id !== NULL, 'Object is updated');
   }
 
   public function test_save_get_full()

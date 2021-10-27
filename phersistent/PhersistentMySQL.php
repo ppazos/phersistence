@@ -79,8 +79,8 @@ class PhersistentMySQL {
         {
           $idho = $this->save_instance_recursive($value);
 
-// the recursive call sets the id
-//          $value->set_id($idho);          // id set on associated instance
+          // the recursive call sets the id
+          //          $value->set_id($idho);          // id set on associated instance
           $phi->set($attr .'_id', $idho); // FK set on owner
         }
         else
@@ -543,6 +543,11 @@ class PhersistentMySQL {
         {
           $expressions[] = 'MATCH('. $table_alias .".". $subconds[0] .') '. $subconds[2] .' ';
           continue;
+        }
+        else if (strcasecmp($subconds[1], 'BETWEEN') == 0) // should have 2 ref values
+        {
+          $refvalue2 = $subconds[3]; // TODO: check missing
+          $refvalue = '"'. $refvalue .'" AND "'. $refvalue2 .'"';
         }
         else
         {
