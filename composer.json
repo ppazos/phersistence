@@ -1,7 +1,7 @@
 {
   "name": "cabolabs/phersistence",
   "description": "Human friendly ORM for PHP and MySQL",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "require": {
     "php": ">5.6"
   },
