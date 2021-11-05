@@ -2,8 +2,7 @@
 
 namespace tests\associations;
 
-use \phtest\PhTestCase;
-use \basic\BasicDateTime as d;
+use CaboLabs\PhTest\PhTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of updating

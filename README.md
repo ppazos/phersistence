@@ -1,6 +1,13 @@
 Phersistence
 ============
 
+# Run tests:
+
+```sh
+$ php cli.php associations
+$ php cli.php constraints
+$ php cli.php fields
+```
 
 # Optimizations for has-one
 

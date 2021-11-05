@@ -1,0 +1,9 @@
+/.git export-ignore
+/.vscode export-ignore
+/tests export-ignore
+/script_tests export-ignore
+README export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+cli.php export-ignore
+cli_manual_tests.php export-ignore

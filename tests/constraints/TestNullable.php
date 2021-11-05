@@ -2,7 +2,7 @@
 
 namespace tests\constraints;
 
-use \phtest\PhTestCase;
+use CaboLabs\PhTest\PhTestCase;
 
 /**
  * The goal of these tests is to verify nullability checks in some fields depending on the defined constraints.

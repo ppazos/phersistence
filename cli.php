@@ -2,31 +2,28 @@
 
 $_BASE = __DIR__ . '/'; // .'/../';
 
-spl_autoload_register(function ($class) {
-  global $_BASE;
-  //echo $_BASE.str_replace('\\', '/', $class).'.php' . PHP_EOL;
-  if (file_exists($_BASE.str_replace('\\', '/', $class).'.php'))
-  {
-    require_once($_BASE.str_replace('\\', '/', $class).'.php');
-  }
-});
 
-\logger\Logger::$on = false;
-\logger\Logger::$force = false;
+// composer includes
+require __DIR__ . '/vendor/autoload.php';
+
+
+\CaboLabs\PhLogger\PhLogger::$on = false;
+\CaboLabs\PhLogger\PhLogger::$force = false;
 
 $test_db = 'phersistent';
 
-$d = new \drivers\MySQL();
+$d = new \CaboLabs\Phersistence\drivers\MySQL();
 $d->connect('localhost', 'user', 'user1234');
 $d->execute('DROP DATABASE IF EXISTS '. $test_db);
 $d->execute('CREATE DATABASE '. $test_db);
 
-$ph_db = new \phersistent\PhersistentMySQL('localhost', 'user', 'user1234', $test_db);
-$man = new \phersistent\PhersistentDefManager('model', $ph_db);
+$ph_db = new \CaboLabs\Phersistence\phersistent\PhersistentMySQL('localhost', 'user', 'user1234', $test_db);
+//$man = new \CaboLabs\Phersistence\phersistent\PhersistentDefManager('CaboLabs\\Phersistence\\tests\\model', $ph_db);
+$man = new \CaboLabs\Phersistence\phersistent\PhersistentDefManager('tests/model', $ph_db);
 $d = $ph_db->get_driver();
 
 // generates schema
-require_once('db/schema.php');
+require_once('src/db/schema.php');
 
 
 //print_r($argv);
@@ -38,24 +35,23 @@ require_once('db/schema.php');
  * argv[2] -> case (optional)
  * */
 
+ /*
 if ($argc < 2)
 {
    echo 'Missing test_root and test_suite'. PHP_EOL;
    exit;
 }
+*/
 
-
-$run = new \phtest\PhTestRun();
-$run->init('tests');
+$run = new \CaboLabs\PhTest\PhTestRun();
+$run->init('./tests');
 
 // clean the database after each test
 $run->after_each_test(function() use ($d) {
-   \logger\Logger::$on = false;
+   \CaboLabs\PhLogger\PhLogger::$on = false;
    $d->truncate_all_tables();
-   \logger\Logger::$on = true;
+   \CaboLabs\PhLogger\PhLogger::$on = true;
 });
-
-
 
 
 // case or cases specific

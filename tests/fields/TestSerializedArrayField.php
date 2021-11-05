@@ -2,7 +2,7 @@
 
 namespace tests\fields;
 
-use \phtest\PhTestCase;
+use CaboLabs\PhTest\PhTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving

@@ -1,11 +1,35 @@
 {
   "name": "cabolabs/phersistence",
   "description": "Human friendly ORM for PHP and MySQL",
-  "version": "1.0.4",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/ppazos/PhTest"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/ppazos/PhLogger"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/ppazos/PhBasic"
+    }
+  ],
+  "version": "1.0.5",
   "require": {
-    "php": ">5.6"
+    "php": "^7.0|^8.0",
+    "cabolabs/phtest": "^0.5",
+    "cabolabs/phlogger": "^0.1",
+    "cabolabs/phbasic": "^0.1"
   },
-  "archive": {
-    "exclude": ["phtest", "src", "model", "db"]
+  "autoload": {
+    "psr-4": {
+      "CaboLabs\\Phersistence\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CaboLabs\\Phersistence\\tests\\model\\": "tests/model"
+    }
   }
 }
