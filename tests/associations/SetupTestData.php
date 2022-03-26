@@ -4,7 +4,6 @@ namespace tests\associations;
 
 class SetupTestData {
 
-
   static function hasone_save_cascade_1()
   {
     global $Employer, $Payor;

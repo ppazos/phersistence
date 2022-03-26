@@ -15,7 +15,7 @@
       "url": "https://github.com/ppazos/PhBasic"
     }
   ],
-  "version": "1.0.5",
+  "version": "1.0.6",
   "require": {
     "php": "^7.0|^8.0",
     "cabolabs/phtest": "^0.5",

@@ -489,78 +489,65 @@ class PhersistentMySQL {
         }
         else // simple cond, count will be 3
         {
-          // TODO: same code as below, please refactor!
-          $refvalue = (isset($subconds[2]) ? $subconds[2] : null); // the refvalue is null when the operator is "IS NULL"
-          if (is_bool($refvalue))
-          {
-            $refvalue = ($refvalue ? 'true' : 'false');
-          }
-          else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
-          {
-            // NOP
-          }
-          else if (!$refvalue && strcasecmp($subconds[1], 'IS NULL') == 0) // a IS NULL
-          {
-            // NOP
-          }
-          else if (!$refvalue && strcasecmp($subconds[1], 'IS NOT NULL') == 0) // a IS NOT NULL
-          {
-            // NOP
-          }
-          else if (strcasecmp($subconds[1], 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
-          {
-            $expressions[] = 'NOT MATCH('. $table_alias .".". $subconds[0] .') '. $subconds[2];
-            continue;
-          }
-          else
-          {
-            $refvalue = '"'. addslashes($refvalue) .'"';
-          }
-
-          // simple cond render: alias.col op refvalue
-          $expressions[] = 'NOT '. $table_alias .".". $subconds[0] ." ". $subconds[1]  ." ". $refvalue;
+          $expressions[] = 'NOT '. $this->get_single_expression($table_alias, $subconds);
         }
       }
       else // simple condition
       {
-        //echo "SIMPLE COND".PHP_EOL;
-        $refvalue = (isset($subconds[2]) ? $subconds[2] : null); // the refvalue is null when the operator is "IS NULL"
-        if (is_bool($refvalue))
-        {
-          $refvalue = ($refvalue ? 'true' : 'false');
-        }
-        else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
-        {
-          // NOP
-        }
-        else if (!$refvalue && strcasecmp($subconds[1], 'IS NULL') == 0) // a IS NULL
-        {
-          // NOP
-        }
-        else if (!$refvalue && strcasecmp($subconds[1], 'IS NOT NULL') == 0) // a IS NOT NULL
-        {
-          // NOP
-        }
-        else if (strcasecmp($subconds[1], 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
-        {
-          $expressions[] = 'MATCH('. $table_alias .".". $subconds[0] .') '. $subconds[2] .' ';
-          continue;
-        }
-        else if (strcasecmp($subconds[1], 'BETWEEN') == 0) // should have 2 ref values
-        {
-          $refvalue2 = $subconds[3]; // TODO: check missing
-          $refvalue = '"'. $refvalue .'" AND "'. $refvalue2 .'"';
-        }
-        else
-        {
-          $refvalue = '"'. addslashes($refvalue) .'"';
-        }
-
-        // simple cond render: alias.col op refvalue
-        $expressions[] = $table_alias .".". $subconds[0] ." ". $subconds[1]  ." ". $refvalue;
+        $expressions[] = $this->get_single_expression($table_alias, $subconds);
       }
     }
     return $expressions;
+  }
+
+  private function get_single_expression($table_alias, $subconds)
+  {
+    $refattr  = $subconds[0]; // required!
+    $operator = $subconds[1]; // required!
+    $refvalue = $subconds[2] ?? null; // the refvalue is null when the operator is "IS NULL"
+    if (is_bool($refvalue))
+    {
+      $refvalue = ($refvalue ? 'true' : 'false');
+    }
+    else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+    {
+      // NOP
+    }
+    else if (!$refvalue && strcasecmp($operator, 'IS NULL') == 0) // a IS NULL
+    {
+      // NOP
+    }
+    else if (!$refvalue && strcasecmp($operator, 'IS NOT NULL') == 0) // a IS NOT NULL
+    {
+      // NOP
+    }
+    else if (strcasecmp($operator, 'IN') == 0)
+    {
+      // SAMPLE: ['name', 'IN', ['a', 'b', 'c']]
+      if (!is_array($refvalue))
+      {
+        throw new \Exception("reference value for IN should be an array");
+      }
+
+      $refvalue = '("'. implode('", "', $refvalue) .'")'; // string array
+    }
+    else if (strcasecmp($operator, 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
+    {
+      // SAMPLE: ['rubric', 'MATCH', 'AGAINST("+'. $q .'" IN BOOLEAN MODE)'))]
+      return 'MATCH('. $table_alias .".". $refattr .') '. $refvalue .' ';
+    }
+    else if (strcasecmp($operator, 'BETWEEN') == 0) // should have 2 ref values
+    {
+      $refvalue2 = $subconds[3]; // TODO: check missing
+      $refvalue = '"'. $refvalue .'" AND "'. $refvalue2 .'"';
+    }
+    else
+    {
+      $refvalue = '"'. addslashes($refvalue) .'"';
+    }
+
+    // simple cond render: alias.col op refvalue
+    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue;
   }
 
   /**

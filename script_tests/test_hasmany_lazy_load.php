@@ -212,7 +212,7 @@ if (substr($method,0,12) == "remove_from_")
 
   echo $attr .PHP_EOL;
 
-  if (CaboLabs\PhBasic\BasicString::endsWith($attr, '_and_delete'))
+  if (\CaboLabs\PhBasic\BasicString::endsWith($attr, '_and_delete'))
   {
     $attr = substr($attr, 0, -11);
 
