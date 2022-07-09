@@ -70,11 +70,13 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
     $this->position = 0;
   }
 
+  #[\ReturnTypeWillChange]
   public function current()
   {
     return $this->items[$this->position];
   }
 
+  #[\ReturnTypeWillChange]
   public function key()
   {
     return $this->position;

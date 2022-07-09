@@ -265,11 +265,13 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     $this->position = 0;
   }
 
+  #[\ReturnTypeWillChange]
   public function current()
   {
     return $this->field_errors[$this->position];
   }
 
+  #[\ReturnTypeWillChange]
   public function key()
   {
     return $this->position;
