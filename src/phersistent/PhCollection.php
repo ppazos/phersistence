@@ -115,6 +115,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
     unset($this->items[$offset]);
   }
 
+  #[\ReturnTypeWillChange]
   public function offsetGet($offset)
   {
     return isset($this->items[$offset]) ? $this->items[$offset] : null;

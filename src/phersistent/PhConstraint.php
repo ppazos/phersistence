@@ -310,6 +310,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     unset($this->field_errors[$offset]);
   }
 
+  #[\ReturnTypeWillChange]
   public function offsetGet($offset)
   {
     return isset($this->field_errors[$offset]) ? $this->field_errors[$offset] : null;
