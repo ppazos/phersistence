@@ -254,39 +254,39 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   }
 
   // countable
-  public function count()
+  public function count(): int
   {
     return count($this->field_errors);
   }
 
   // iterator
-  public function rewind()
+  public function rewind(): void
   {
     $this->position = 0;
   }
 
-  public function current()
+  public function current(): mixed
   {
     return $this->field_errors[$this->position];
   }
 
-  public function key()
+  public function key(): mixed
   {
     return $this->position;
   }
 
-  public function next()
+  public function next(): void
   {
     ++$this->position;
   }
 
-  public function valid()
+  public function valid(): bool
   {
     return isset($this->field_errors[$this->position]);
   }
 
   // ArrayAccess
-  public function offsetSet($offset, $value)
+  public function offsetSet($offset, $value): void
   {
     if (is_null($offset))
     {
@@ -298,17 +298,17 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     }
   }
 
-  public function offsetExists($offset)
+  public function offsetExists($offset): bool
   {
     return isset($this->field_errors[$offset]);
   }
 
-  public function offsetUnset($offset)
+  public function offsetUnset($offset): void
   {
     unset($this->field_errors[$offset]);
   }
 
-  public function offsetGet($offset)
+  public function offsetGet($offset): mixed
   {
     return isset($this->field_errors[$offset]) ? $this->field_errors[$offset] : null;
   }
