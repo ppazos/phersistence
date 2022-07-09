@@ -265,12 +265,12 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     $this->position = 0;
   }
 
-  public function current(): mixed
+  public function current()
   {
     return $this->field_errors[$this->position];
   }
 
-  public function key(): mixed
+  public function key()
   {
     return $this->position;
   }
@@ -308,7 +308,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
     unset($this->field_errors[$offset]);
   }
 
-  public function offsetGet($offset): mixed
+  public function offsetGet($offset)
   {
     return isset($this->field_errors[$offset]) ? $this->field_errors[$offset] : null;
   }

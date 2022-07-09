@@ -70,12 +70,12 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
     $this->position = 0;
   }
 
-  public function current(): mixed
+  public function current()
   {
     return $this->items[$this->position];
   }
 
-  public function key(): mixed
+  public function key()
   {
     return $this->position;
   }
@@ -113,7 +113,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
     unset($this->items[$offset]);
   }
 
-  public function offsetGet($offset): mixed
+  public function offsetGet($offset)
   {
     return isset($this->items[$offset]) ? $this->items[$offset] : null;
   }
