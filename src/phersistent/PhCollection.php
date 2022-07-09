@@ -59,7 +59,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
   }
 
   // countable
-  public function count(): int`
+  public function count(): int
   {
     return count($this->items);
   } 
