@@ -270,7 +270,7 @@ class Phersistent {
         else if (is_array($value))
         {
           // ensure every value in the array is string
-          array_walk($value, function(&$value, &$key) {
+          array_walk($value, function(&$value, $key) {
             $value = (string)$value;
           });
         }
