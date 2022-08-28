@@ -352,7 +352,9 @@ class PhersistentMySQL {
     $row = $r->fetch_assoc();
     $r->close();
 
-    return $row['count'];
+    $string_count = $row['count'];
+
+    return intval($string_count);
   }
 
   public function list_instances($class_name, $max, $offset, $sort, $order)
