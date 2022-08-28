@@ -504,7 +504,7 @@ class PhersistentMySQL {
   {
     $refattr  = $subconds[0]; // required!
     $operator = $subconds[1]; // required!
-    $refvalue = $subconds[2] ?? null; // the refvalue is null when the operator is "IS NULL"
+    $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
     if (is_bool($refvalue))
     {
       $refvalue = ($refvalue ? 'true' : 'false');
@@ -639,7 +639,9 @@ class PhersistentMySQL {
     }
     $r->close();
 
-    return $records[0]['columns']['count'];
+    $string_count = $records[0]['columns']['count'];
+
+    return intval($string_count);
   }
 
   /**
