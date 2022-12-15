@@ -5,8 +5,9 @@ namespace CaboLabs\Phersistence\phersistent;
 use CaboLabs\Phersistence\phersistent\PhSet;
 
 use CaboLabs\PhBasic\BasicString;
+use stdClass;
 
-class PhInstance {
+class PhInstance extends stdClass { // extends to avoid dynamic property deprecated https://php.watch/versions/8.2/dynamic-properties-deprecated
 
   const NOT_LOADED_ASSOC = -1;
   const VALUE_NOT_PROVIDED = "\x20";
