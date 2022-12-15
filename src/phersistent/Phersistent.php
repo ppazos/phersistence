@@ -5,7 +5,7 @@ namespace CaboLabs\Phersistence\phersistent;
 use \StdClass;
 use CaboLabs\PhBasic\BasicString;
 
-class Phersistent {
+class Phersistent extends stdClass { // extends to avoid dynamic property deprecated https://php.watch/versions/8.2/dynamic-properties-deprecated
 
   // injected attrs
   public $id = self::INT;
