@@ -15,10 +15,10 @@
       "url": "https://github.com/ppazos/PhBasic"
     }
   ],
-  "version": "1.0.17",
+  "version": "1.0.18",
   "require": {
     "php": "^7.0|^8.0",
-    "cabolabs/phtest": "^0.5",
+    "cabolabs/phtest": "^0.6",
     "cabolabs/phlogger": "^0.1",
     "cabolabs/phbasic": "^0.1"
   },
