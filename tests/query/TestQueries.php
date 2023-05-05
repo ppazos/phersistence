@@ -28,6 +28,83 @@ class TestQueries extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
+  public function test_and_or_1()
+  {
+    global $Person;
+
+    $res = $Person->findBy([
+      'AND' => [
+        ['firstname', '=', 'maría'],
+        'OR' => [
+          'AND' => [
+            ['lastname', '>', 'gonzales'],
+            ['phone_number', 'IS NULL']
+          ],
+          'OR' => [
+            ['lastname', '>', 'perez'],
+            ['phone_number', '=', '090909']
+          ]
+        ]
+      ]
+    ], 20, 0);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
+  public function test_and_or_2()
+  {
+    global $Person;
+
+    $res = $Person->findBy([
+      'AND' => [
+        ['firstname', '=', 'maría'],
+        'OR' => [
+          'AND' => [
+            ['lastname', '>', 'gonzales'],
+            ['phone_number', 'IS NULL']
+          ],
+          'AND' => [
+            ['lastname', '>', 'perez'],
+            ['phone_number', '=', '090909']
+          ],
+          'AND' => [
+            ['lastname', '>', 'torres'],
+            ['phone_number', '=', '717171']
+          ]
+        ]
+      ]
+    ], 20, 0);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
+  public function test_and_or_3()
+  {
+    global $Person;
+
+    $res = $Person->findBy([
+      'AND' => [
+        ['firstname', '=', 'maría'],
+        'OR' => [
+          'AND' => [
+            ['lastname', '>', 'gonzales'],
+            ['phone_number', 'IS NULL'],
+              'OR' => [
+                ['lastname', '>', 'perez'],
+                ['phone_number', '=', '090909'],
+                  'AND' => [
+                    ['lastname', '>', 'torres'],
+                    ['phone_number', '=', '717171']
+                  ]
+              ]
+          ]
+        ]
+      ]
+    ], 20, 0);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
 }
 
 ?>

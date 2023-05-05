@@ -1062,6 +1062,34 @@ class PhersistentMySQL {
 
     return $rows;
   }
+
+  public function _ANDwhere($_and)
+  {
+    $cond_and = "";
+      
+    foreach ($_and as $value) 
+    {
+      $cond_and .= $value[0] ." ". $value[1] ." ". $value[2] . " AND ";
+    }
+
+    return $cond_and;
+  }
+
+  public function _ORwhere($_or)
+  {
+    $cond_or = "";
+
+    foreach ($_or as $value) 
+    {
+      $cond_or .= "( " . $value[0] ." ". $value[1] ." ". $value[2] . " OR ";
+
+      if (end($_or))
+      {
+        $cond_or .= $value[0] ." ". $value[1] ." ". $value[2] ." )";
+      }
+    }
+    return $cond_or;
+  }
 }
 
 ?>
