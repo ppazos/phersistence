@@ -105,6 +105,37 @@ class TestQueries extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
+  public function test_not()
+  {
+    global $Person;
+
+    $res = $Person->findBy([
+      'AND' => [
+        ['firstname', '=', 'maría'],
+        'NOT' => [
+          'AND' => [
+            ['lastname', '>', 'gonzales'],
+            ['phone_number', 'IS NULL'],
+              'OR' => [
+                ['lastname', '>', 'perez'],
+                ['phone_number', '=', '090909'],
+                  'AND' => [
+                    ['lastname', '>', 'torres'],
+                    ['phone_number', '=', '717171']
+                  ],
+                  'NOT' => [
+                    ['lastname', '>', 'smith'],
+                    ['phone_number', '=', '616161']
+                  ]
+              ]
+          ]
+        ]
+      ]
+    ], 20, 0);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
 }
 
 ?>
