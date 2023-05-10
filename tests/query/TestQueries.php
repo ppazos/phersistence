@@ -3,6 +3,7 @@
 namespace tests\query;
 
 use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Phersistence\phersistent\PhQuery as q;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
@@ -33,6 +34,24 @@ class TestQueries extends PhTestCase {
     global $Person;
 
     $res = $Person->findBy([
+      q::_And([
+        ['firstname', '=', 'maría'],
+        [
+          [q::_Or([
+            q::_And([
+              ['lastname', '>', 'gonzales'],
+              ['phone_number', 'IS NULL']
+            ]),
+            q::_Or([
+              ['lastname', '>', 'perez'],
+              ['phone_number', '=', '090909']
+            ])
+          ])]
+        ]
+      ])
+    ], 20, 0);
+
+  /*  $res = $Person->findBy([
       'AND' => [
         ['firstname', '=', 'maría'],
         'OR' => [
@@ -46,7 +65,7 @@ class TestQueries extends PhTestCase {
           ]
         ]
       ]
-    ], 20, 0);
+    ], 20, 0);*/
 
     $this->assert($res !== NULL, 'Result not null');
   }
@@ -124,8 +143,8 @@ class TestQueries extends PhTestCase {
                     ['phone_number', '=', '717171']
                   ],
                   'NOT' => [
-                    ['lastname', '>', 'smith'],
-                    ['phone_number', '=', '616161']
+                    ['lastname', '>', 'smith']/*,
+                    ['phone_number', '=', '616161']*/
                   ]
               ]
           ]

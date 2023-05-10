@@ -586,11 +586,11 @@ class PhersistentMySQL {
     }
     $query_where = substr($query_where, 0, -5); // REMOVES THE LAST AND
     */
-    $expr = $this->find_by_where_recursive($where, $alias);
+    $expr = $this->find_by_where_eval($where, $alias);
     $query_where = $expr[0];
 
     $records = array();
-    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
+    $r = $this->driver->query('SELECT * FROM '. $table_name . ' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
@@ -1062,5 +1062,18 @@ class PhersistentMySQL {
 
     return $rows;
   }
+
+  public function find_by_where_eval($where, $table_alias)
+  {
+    $where_eval = array();
+    $conds = '';
+    foreach ($where as $k=>$subconds)
+    {
+      $conds .= $subconds;
+    }
+    $where_eval[] = $conds;
+    return $where_eval;
+  }
 }
+
 ?>
