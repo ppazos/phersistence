@@ -36,17 +36,19 @@ class TestQueries extends PhTestCase {
     $res = $Person->findBy([
       q::_And([
         ['firstname', '=', 'maría'],[
-          [q::_Or([
-            q::_And([
-              ['lastname', '>', 'gonzales'],
-              ['phone_number', 'IS NULL']
-            ]),
-            q::_Or([
-              ['lastname', '>', 'perez'],
-              ['phone_number', '=', '090909']
+          q::_Or([
+            [q::_And([
+                ['lastname', '>', 'gonzales'],
+                ['phone_number', 'IS NULL']
             ])
+           ],
+           [
+            q::_Or([
+                ['lastname', '>', 'perez'],
+                ['phone_number', '=', '090909']
+            ])
+           ]
           ])
-          ]
         ]
       ])
     ], 20, 0);

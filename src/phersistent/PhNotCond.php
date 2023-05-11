@@ -11,15 +11,15 @@ class PhNotCond {
     $gob_query_not = $operator ?? 'AND' . ' NOT (';
     foreach ($conds as $value)
     {
-      $value[2] ?? " ";
+      $value_2 = $value[2] ? " '". $value[2]. "'" : $value[2] = null;
       
       if ($x < $i)
       {
-        $gob_query_not .= $value[0] ." ". $value[1] ." '". $value[2] . "' AND ";
+        $gob_query_not .= $value[0] ." ". $value[1] . $value_2 . " AND ";
       }
       else
       {
-        $gob_query_not .= $value[0] ." ". $value[1] ." '". $value[2] ."' )";
+        $gob_query_not .= $value[0] ." ". $value[1] . $value_2;
       }
       $x++;
     }

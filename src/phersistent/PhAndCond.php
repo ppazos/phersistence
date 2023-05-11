@@ -11,15 +11,15 @@ class PhAndCond {
     $gob_query_and = '(';
     foreach ($conds as $value)
     {
-      $value[2] ?? " ";
+      $value_2 = $value[2] ? " '". $value[2]. "'" : $value[2] = null;
       
       if ($x < $i)
       {
-        $gob_query_and .= $value[0] ." ". $value[1] ." '". $value[2] . "' AND ";
+        $gob_query_and .= $value[0] ." ". $value[1] . $value_2 . " AND ";
       }
       else
       {
-        $gob_query_and .= $value[0] ." ". $value[1] ." '". $value[2] ."'";
+        $gob_query_and .= $value[0] ." ". $value[1] . $value_2;
       }
       $x++;
     }
