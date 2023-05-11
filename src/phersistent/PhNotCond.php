@@ -15,11 +15,11 @@ class PhNotCond {
       
       if ($x < $i)
       {
-        $gob_query_not .= $value[0] ." ". $value[1] ." ". $value[2] . " AND ";
+        $gob_query_not .= $value[0] ." ". $value[1] ." '". $value[2] . "' AND ";
       }
       else
       {
-        $gob_query_not .= $value[0] ." ". $value[1] ." ". $value[2] ." )";
+        $gob_query_not .= $value[0] ." ". $value[1] ." '". $value[2] ."' )";
       }
       $x++;
     }

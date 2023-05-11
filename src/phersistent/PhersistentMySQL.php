@@ -586,7 +586,7 @@ class PhersistentMySQL {
     }
     $query_where = substr($query_where, 0, -5); // REMOVES THE LAST AND
     */
-    $expr = $this->find_by_where_eval($where, $alias);
+    $expr = $this->find_by_where_eval($where);
     $query_where = $expr[0];
 
     $records = array();
@@ -1063,16 +1063,34 @@ class PhersistentMySQL {
     return $rows;
   }
 
-  public function find_by_where_eval($where, $table_alias)
+  public function find_by_where_eval($where)
   {
     $where_eval = array();
     $conds = '';
-    foreach ($where as $k=>$subconds)
+
+    foreach ($where as $subconds)
     {
-      $conds .= $subconds;
+      if (is_array($subconds))
+      {
+        $conds .= $this->where_conds($subconds);
+      }
+      else
+      {
+        $conds .= $subconds;
+      }
     }
     $where_eval[] = $conds;
     return $where_eval;
+  }
+
+  public function where_conds($conds)
+  {
+    $cond = "";
+    foreach ($conds as $subconds)
+    {
+      $cond .= $subconds;
+    }
+    return $cond;
   }
 }
 

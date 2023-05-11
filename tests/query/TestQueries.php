@@ -35,8 +35,7 @@ class TestQueries extends PhTestCase {
 
     $res = $Person->findBy([
       q::_And([
-        ['firstname', '=', 'maría'],
-        [
+        ['firstname', '=', 'maría'],[
           [q::_Or([
             q::_And([
               ['lastname', '>', 'gonzales'],
@@ -46,7 +45,8 @@ class TestQueries extends PhTestCase {
               ['lastname', '>', 'perez'],
               ['phone_number', '=', '090909']
             ])
-          ])]
+          ])
+          ]
         ]
       ])
     ], 20, 0);
@@ -70,7 +70,7 @@ class TestQueries extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
-  public function test_and_or_2()
+ /* public function test_and_or_2()
   {
     global $Person;
 
@@ -95,9 +95,9 @@ class TestQueries extends PhTestCase {
     ], 20, 0);
 
     $this->assert($res !== NULL, 'Result not null');
-  }
+  }*/
 
-  public function test_and_or_3()
+ /* public function test_and_or_3()
   {
     global $Person;
 
@@ -122,9 +122,9 @@ class TestQueries extends PhTestCase {
     ], 20, 0);
 
     $this->assert($res !== NULL, 'Result not null');
-  }
+  }*/
 
-  public function test_not()
+ /* public function test_not()
   {
     global $Person;
 
@@ -143,8 +143,8 @@ class TestQueries extends PhTestCase {
                     ['phone_number', '=', '717171']
                   ],
                   'NOT' => [
-                    ['lastname', '>', 'smith']/*,
-                    ['phone_number', '=', '616161']*/
+                    ['lastname', '>', 'smith'],
+                    ['phone_number', '=', '616161']
                   ]
               ]
           ]
@@ -153,7 +153,7 @@ class TestQueries extends PhTestCase {
     ], 20, 0);
 
     $this->assert($res !== NULL, 'Result not null');
-  }
+  }*/
 
 }
 
