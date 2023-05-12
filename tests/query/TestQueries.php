@@ -103,18 +103,16 @@ class TestQueries extends PhTestCase {
             [q::_Or([
               ['lastname', '>', '"gonzales"'],
               ['phone_number', 'IS NULL'],[
-                  [q::_And([
+                  q::_And([
                     ['lastname', '>', '"perez"'],
                     ['phone_number', '=', '"090909"'],[
-                        [q::_And([
+                        q::_And([
                           ['lastname', '>', '"torres"'],
                           ['phone_number', '=', '"717171"'],
                           ['phone_number', '=', '"676767"']
                         ])
-                        ]
-                      ]
-                    ])
-                  ]
+                    ]
+                  ])
                 ]
               ])
             ]
@@ -123,59 +121,44 @@ class TestQueries extends PhTestCase {
       ])
     ], 20, 0);
 
-    $res = $Person->findBy([
-      'AND' => [
-        ['firstname', '=', 'maría'],
-        'OR' => [
-          'AND' => [
-            ['lastname', '>', 'gonzales'],
-            ['phone_number', 'IS NULL'],
-              'OR' => [
-                ['lastname', '>', 'perez'],
-                ['phone_number', '=', '090909'],
-                  'AND' => [
-                    ['lastname', '>', 'torres'],
-                    ['phone_number', '=', '717171']
-                  ]
-              ]
-          ]
-        ]
-      ]
-    ], 20, 0);
-
     $this->assert($res !== NULL, 'Result not null');
   }
 
- /* public function test_not()
+  public function test_not()
   {
     global $Person;
 
     $res = $Person->findBy([
-      'AND' => [
-        ['firstname', '=', 'maría'],
-        'NOT' => [
-          'AND' => [
-            ['lastname', '>', 'gonzales'],
-            ['phone_number', 'IS NULL'],
-              'OR' => [
-                ['lastname', '>', 'perez'],
-                ['phone_number', '=', '090909'],
-                  'AND' => [
-                    ['lastname', '>', 'torres'],
-                    ['phone_number', '=', '717171']
-                  ],
-                  'NOT' => [
-                    ['lastname', '>', 'smith'],
-                    ['phone_number', '=', '616161']
-                  ]
-              ]
-          ]
+      q::_And([
+        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"pablo"'],[
+          q::_Not('AND', [
+            [q::_And([
+              ['lastname', '>', '"gonzales"'],
+              ['phone_number', 'IS NULL'],[
+                    q::_Or([
+                    ['lastname', '>', '"perez"'],
+                    ['phone_number', '=', '"090909"'],[
+                      q::_And([
+                        ['lastname', '>', '"torres"'],
+                        ['phone_number', '=', '"717171"']
+                      ]),
+                      q::_Not('OR', [
+                        ['lastname', '>', '"smith"'],
+                        ['phone_number', '=', '"616161"']
+                        ])
+                      ]
+                  ])
+                ]
+              ])
+            ]
+          ])
         ]
-      ]
+      ])
     ], 20, 0);
 
     $this->assert($res !== NULL, 'Result not null');
-  }*/
+  }
 
 }
 

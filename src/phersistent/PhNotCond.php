@@ -8,7 +8,7 @@ class PhNotCond {
   {
     $i = count($conds);
     $x = 1;
-    $gob_query_not = $operator ?? 'AND' . ' NOT (';
+    $gob_query_not = ' NOT (';
     foreach ($conds as $value)
     {
       $value_2 = isset($value[2]) ? " ". $value[2] : null;
@@ -16,7 +16,7 @@ class PhNotCond {
       
       if ($x < $i)
       {
-        $gob_query_not .= $value[0] ." ". $value_1 . $value_2 . " AND ";
+        $gob_query_not .= $value[0] ." ". $value_1 . $value_2 . " " . $operator . " ";
       }
       else
       {

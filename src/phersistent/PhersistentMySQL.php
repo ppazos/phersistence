@@ -1073,22 +1073,7 @@ class PhersistentMySQL {
       if (is_array($subconds))
       {
         $subexprs = $this->find_by_where_eval($subconds);
-        foreach ($subexprs as $subexpr)
-        {
-          if (is_array($subexpr))
-          {
-            $sub_sub_exprs = $this->find_by_where_eval($subexpr);
-            foreach ($sub_sub_exprs as $sub_sub_expr)
-            {
-              
-              $conds .= $sub_sub_expr ." ";
-            }
-          }
-          else
-          {
-            $conds .= $subexpr ." ";
-          }
-        }
+        $conds .= $this->get_sub_conds($subexprs, $conds);
       }
       else
       {
@@ -1097,6 +1082,34 @@ class PhersistentMySQL {
     }
     $where_eval[] = $conds;
     return $where_eval;
+  }
+
+  public function get_sub_conds($subexprs, $conds)
+  {
+    foreach ($subexprs as $subexpr)
+    {
+      if (is_array($subexpr))
+      {
+        $sub_sub_exprs = $this->find_by_where_eval($subexpr);
+        foreach ($sub_sub_exprs as $sub_sub_expr)
+        {
+          if (is_array($subexpr))
+          {
+            $sub_sub_sub_exprs = $this->find_by_where_eval($subexpr);
+            $conds .= $this->find_by_where_eval($sub_sub_sub_exprs, $conds);
+          }
+          else
+          {
+            $conds .= $sub_sub_expr ." ";
+          }
+        }
+      }
+      else
+      {
+        $conds .= $subexpr ." ";
+      }
+    }
+    return $conds;
   }
 }
 
