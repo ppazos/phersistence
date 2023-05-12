@@ -1080,33 +1080,24 @@ class PhersistentMySQL {
             $sub_sub_exprs = $this->find_by_where_eval($subexpr);
             foreach ($sub_sub_exprs as $sub_sub_expr)
             {
-              $conds .= $sub_sub_expr;
+              
+              $conds .= $sub_sub_expr ." ";
             }
           }
           else
           {
-            $conds .= $subexpr;
+            $conds .= $subexpr ." ";
           }
         }
       }
       else
       {
-        $conds .= $subconds;
+        $conds .= $subconds ." ";
       }
     }
     $where_eval[] = $conds;
     return $where_eval;
   }
-
- /* public function where_conds($conds)
-  {
-    $cond = "";
-    foreach ($conds as $subconds)
-    {
-      $cond .= $subconds;
-    }
-    return $cond;
-  }*/
 }
 
 ?>
