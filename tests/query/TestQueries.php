@@ -124,6 +124,21 @@ class TestQueries extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
+  public function test_and_or_not_simple()
+  {
+    global $Person;
+
+    $res = $Person->findBy([
+      q::And([
+        ['firstname', '=', '"maría"'],
+        [q::And([['lastname', '=', '"gonzales"']])],
+        [q::Not([['lastname', '=', '"perez"']])]
+      ])
+    ], 20, 0);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
   public function test_not_1()
   {
     global $Person;
@@ -146,7 +161,7 @@ class TestQueries extends PhTestCase {
                     ],[
                         q::And([
                           ['firstname', '=', '"Paula"'],
-                          [q::Not(['lastname', '=', '"smith"'])]
+                          [q::Not([['lastname', '=', '"smith"']])]
                         ])
                     ]
                   ])
@@ -181,7 +196,7 @@ class TestQueries extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
-  public function test_not_3()
+  public function test_not_simple()
   {
     global $Person;
 
