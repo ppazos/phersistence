@@ -4,7 +4,7 @@ namespace CaboLabs\Phersistence\phersistent;
 
 class PhAndCond {
   
-  public static function evaluate_and($conds = [])
+  public static function evaluate_and($conds)
   {
     $i = count($conds);
     $x = 1;

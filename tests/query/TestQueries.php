@@ -38,16 +38,16 @@ class TestQueries extends PhTestCase {
         ['firstname', '=', '"maría"'],[
           q::Or([
             [q::And([
-                ['lastname', '=', '"gonzales"'],
-                ['phone_number', 'IS NULL']
+              ['lastname', '=', '"gonzales"'],
+              ['phone_number', 'IS NULL']
             ])
-           ],
-           [
-            q::Or([
+            ],
+            [
+              q::Or([
                 ['lastname', '=', '"perez"'],
                 ['phone_number', '=', '"090909"']
-            ])
-           ]
+              ])
+            ]
           ])
         ]
       ])
@@ -106,11 +106,11 @@ class TestQueries extends PhTestCase {
                   q::And([
                     ['lastname', '=', '"perez"'],
                     ['phone_number', '=', '"090909"'],[
-                        q::And([
-                          ['lastname', '=', '"torres"'],
-                          ['phone_number', '>', '"717171"'],
-                          ['phone_number', '=', '"676767"']
-                        ])
+                      q::And([
+                        ['lastname', '=', '"torres"'],
+                        ['phone_number', '>', '"717171"'],
+                        ['phone_number', '=', '"676767"']
+                      ])
                     ]
                   ])
                 ]
@@ -151,18 +151,18 @@ class TestQueries extends PhTestCase {
             [q::And([
               ['lastname', '=', '"gonzales"'],
               ['phone_number', 'IS NULL'],[
-                    q::Or([
-                    ['lastname', '=', '"perez"'],
-                    ['phone_number', '=', '"090909"'],[
-                      q::And([
-                        ['lastname', '=', '"torres"'],
-                        ['phone_number', '=', '"717171"']
-                      ])
-                    ],[
-                        q::And([
-                          ['firstname', '=', '"Paula"'],
-                          [q::Not([['lastname', '=', '"smith"']])]
-                        ])
+                q::Or([
+                  ['lastname', '=', '"perez"'],
+                  ['phone_number', '=', '"090909"'],[
+                    q::And([
+                      ['lastname', '=', '"torres"'],
+                      ['phone_number', '=', '"717171"']
+                    ])
+                  ],[
+                    q::And([
+                      ['firstname', '=', '"Paula"'],
+                      [q::Not([['lastname', '=', '"smith"']])]
+                    ])
                     ]
                   ])
                 ]
