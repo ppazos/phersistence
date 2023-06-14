@@ -1098,6 +1098,43 @@ class PhersistentMySQL {
     }
     return $conds;
   }
+
+  public function find_by_test($class_name, $where, $max, $offset, $sort, $order)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name($phi);
+    $alias = $table_name[0];
+    
+    $expr = $this->find_by_where_eval($where);
+    $query_where = $expr[0];
+
+    $records = array();
+    $r = $this->driver->query('SELECT * FROM '. $table_name . ' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
+    while ($row = $r->fetch_assoc())
+    {
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $instances = array();
+    foreach($records as $table)
+    {
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
+      $phi = $GLOBALS[$class]->create();
+      $phi->setProperties($table['columns']);
+
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
+
+      $instances[] = $phi;
+    }
+    return $instances;
+  }
 }
 
 ?>
