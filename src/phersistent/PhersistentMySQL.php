@@ -1062,6 +1062,42 @@ class PhersistentMySQL {
 
     return $rows;
   }
+
+  public function find_by_where_eval($where)
+  {
+    $where_eval = array();
+    $conds = '';
+
+    foreach ($where as $subconds)
+    {
+      if (is_array($subconds))
+      {
+        $conds .= $this->get_sub_conds($subconds, $conds);
+      }
+      else
+      {
+        $conds .= $subconds ." ";
+      }
+    }
+    $where_eval[] = $conds;
+    return $where_eval;
+  }
+
+  public function get_sub_conds($subexprs, $conds)
+  {
+    foreach ($subexprs as $subexpr)
+    {
+      if (is_array($subexpr))
+      {
+        $conds .= $this->get_sub_conds($subexpr, $conds);
+      }
+      else
+      {
+        $conds .= $subexpr ." ";
+      }
+    }
+    return $conds;
+  }
 }
 
 ?>
