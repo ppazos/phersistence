@@ -209,6 +209,67 @@ class TestQueries2 extends PhTestCase {
     $this->assert($res !== NULL, 'Result not null');
   }
 
+  public function test_count_by_1()
+  {
+    global $Person;
+
+    $res = $Person->countByTest([
+      ['firstname', 'IN', '("Pablo"', '"Maria"', '"Barbara")']
+    ]);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
+  public function test_count_by_2()
+  {
+    global $Person;
+
+    $res = $Person->countByTest([
+      q::And([
+        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"pablo"'],[
+          q::Not([
+            [q::And([
+              ['lastname', '=', '"gonzales"'],
+              ['phone_number', 'IS NULL'],[
+                q::Or([
+                  ['lastname', '=', '"perez"'],
+                  ['phone_number', '=', '"090909"'],[
+                    q::And([
+                      ['lastname', '=', '"torres"'],
+                      ['phone_number', '=', '"717171"']
+                    ])
+                  ],[
+                    q::And([
+                      ['firstname', '=', '"Paula"'],
+                      [q::Not([['lastname', '=', '"smith"']])]
+                    ])
+                    ]
+                  ])
+                ]
+              ])
+            ]
+          ])
+        ]
+      ])
+    ]);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
+  public function test_count_by_3()
+  {
+    global $Person;
+
+    $res = $Person->countByTest([
+      q::Not([
+        ['firstname', '=', '"pablo"']
+      ])
+    ]);
+
+    $this->assert($res !== NULL, 'Result not null');
+  }
+
 }
 
 ?>

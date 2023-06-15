@@ -78,6 +78,7 @@ class PhersistentDefManager {
   // This should be executed after all the model is loaded.
   private function declareBackLinks()
   {
+    $hmd = [];
     foreach ($this->classDefinitions as $class => $defins)
     {
       $hmd = $defins->getHasManyDeclarations();
