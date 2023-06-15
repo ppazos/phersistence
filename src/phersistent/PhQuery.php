@@ -3,8 +3,8 @@
 namespace CaboLabs\Phersistence\phersistent;
 
 use CaboLabs\Phersistence\phersistent\PhAndCond as andCond;
-use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 use CaboLabs\Phersistence\phersistent\PhNotCond as notCond;
+use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 
 class PhQuery {
   static function And($condAnd = [])

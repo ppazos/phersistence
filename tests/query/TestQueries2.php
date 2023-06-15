@@ -10,7 +10,7 @@ use CaboLabs\Phersistence\phersistent\PhQuery as q;
  * objects that contain a serialized array field, and check the attribute values
  * after a get is executed.
  */
-class TestQueries extends PhTestCase {
+class TestQueries2 extends PhTestCase {
 
   // there is an issue the first test doesn't have a log
   public function test_dummy()
@@ -22,7 +22,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       ['firstname', 'IN', '("Pablo"', '"Maria"', '"Barbara")']
     ], 20, 0);
 
@@ -33,7 +33,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"maría"'],[
           q::Or([
@@ -60,7 +60,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"maría"'],[
           q::Or([
@@ -96,7 +96,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"maría"'],[
           q::And([
@@ -128,7 +128,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"maría"'],
         [q::And([['lastname', '=', '"gonzales"']])],
@@ -143,7 +143,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"maría"'],
         ['firstname', '=', '"pablo"'],[
@@ -180,7 +180,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::And([
         ['firstname', '=', '"pablo"'],[
           q::Not([
@@ -200,7 +200,7 @@ class TestQueries extends PhTestCase {
   {
     global $Person;
 
-    $res = $Person->findBy([
+    $res = $Person->findByTest([
       q::Not([
         ['firstname', '=', '"pablo"']
       ])

@@ -1104,8 +1104,7 @@ class PhersistentMySQL {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
     $table_name = $this->get_table_name($phi);
-    $alias = $table_name[0];
-    
+       
     $expr = $this->find_by_where_eval($where);
     $query_where = $expr[0];
 
@@ -1134,6 +1133,31 @@ class PhersistentMySQL {
       $instances[] = $phi;
     }
     return $instances;
+  }
+
+  public function count_byTest($class_name, $where)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name($phi);
+
+    $expr = $this->find_by_where_eval($where);
+    $query_where = $expr[0];
+
+    $records = array();
+    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name . ' WHERE '. $query_where);
+    while ($row = $r->fetch_assoc())
+    {
+      // FIXME: table is really row or record
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $string_count = $records[0]['columns']['count'];
+
+    return intval($string_count);
   }
 }
 
