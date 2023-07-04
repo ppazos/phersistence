@@ -7,17 +7,17 @@ use CaboLabs\Phersistence\phersistent\PhNotCond as notCond;
 use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 
 class PhQuery {
-  static function And($condAnd = [])
+  static function and($condAnd = [])
   {
     return andCond::evaluate_and($condAnd);
   }
   
-  static function Or($condOr = [])
+  static function or($condOr = [])
   {
     return orCond::evaluate_or($condOr);
   }
   
-  static function Not($condNot = [])
+  static function not($condNot = [])
   {
     return notCond::evaluate_not($condNot);
   }
