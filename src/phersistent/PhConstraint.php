@@ -865,7 +865,7 @@ class Unique extends PhConstraint {
     if (count($res) == 0) return true; // there is no stored instance with the same value
     else if ($res[0]->id ==$object->id) return true; // if the stored instance is the same, there is no error
 
-    $res2 = ${$simpleclass}->findByTest($where, 1, 0);
+    $res2 = ${$simpleclass}->findBy2($where, 1, 0);
     if (count($res2) == 0) return true; // there is no stored instance with the same value
     else if ($res2[0]->id ==$object->id) return true; // if the stored instance is the same, there is no error
 

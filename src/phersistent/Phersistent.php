@@ -667,16 +667,16 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   }
   */
 
-  public function findByTest($where = array(), $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
+  public function findBy2($where = array(), $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
   {
     if (count($where) == 0) return $this->listAll($max, $offset, $sort, $order);
-    return $this->__manager->findByTest(get_class($this), $where, $max, $offset, $sort, $order);
+    return $this->__manager->findBy2(get_class($this), $where, $max, $offset, $sort, $order);
   }
 
-  public function countByTest($where = array())
+  public function countBy2($where = array())
   {
     if (count($where) == 0) return $this->count();
-    return $this->__manager->countByTest(get_class($this), $where);
+    return $this->__manager->countBy2(get_class($this), $where);
   }
 }
 

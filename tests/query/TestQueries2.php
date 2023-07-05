@@ -12,12 +12,6 @@ use CaboLabs\Phersistence\phersistent\PhQuery as q;
  */
 class TestQueries2 extends PhTestCase {
 
-  // there is an issue the first test doesn't have a log
-  public function test_dummy()
-  {
-
-  }
-
   private function bootstrap()
   {
     global $Person;
@@ -25,8 +19,19 @@ class TestQueries2 extends PhTestCase {
     $persons = [
       $Person->create([
         'firstname' => 'Pablo',
-        'lastname' => 'gonzales',
-        'phone_number' => null
+        'lastname' => 'gonzales'
+      ]),
+      $Person->create([
+        'firstname' => 'Pablo',
+        'lastname' => 'suarez',
+      ]),
+      $Person->create([
+        'firstname' => 'Maria',
+        'lastname' => 'perez'
+      ]),
+      $Person->create([
+        'firstname' => 'Maria',
+        'lastname' => 'gonzales'
       ]),
       $Person->create([
         'firstname' => 'Maria',
@@ -37,6 +42,35 @@ class TestQueries2 extends PhTestCase {
         'firstname' => 'Barbara',
         'lastname' => 'perez',
         'phone_number' => '090909'
+      ]),
+      $Person->create([
+        'firstname' => 'Paula',
+        'lastname' => 'torres'
+      ]),
+      $Person->create([
+        'firstname' => 'Maria',
+        'lastname' => 'torres',
+        'phone_number' => '717171'
+      ]),
+      $Person->create([
+        'firstname' => 'Maria',
+        'lastname' => 'torres',
+        'phone_number' => '7171718'
+      ]),
+      $Person->create([
+        'firstname' => 'Maria',
+        'lastname' => 'Hernandez',
+        'phone_number' => '343434'
+      ]),
+      $Person->create([
+        'firstname' => 'Barbara',
+        'lastname' => 'perez',
+        'phone_number' => '717171'
+      ]),
+      $Person->create([
+        'firstname' => 'Paula',
+        'lastname' => 'perez',
+        'phone_number' => 'suarez'
       ])
     ];
   
@@ -51,12 +85,15 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       ['firstname', 'IN', '("Pablo", "Maria", "Barbara")']
     ], 20, 0);
 
-    $this->assert(count($res) == 3, 'number of results :' . count($res));
-    $this->assert($res[0]->firstname == 'Pablo', $res[0]->firstname);
+    //should be 10
+    $this->assert(count($res) == 10, count($res) . ' results found');
+    /*echo('<pre>');
+    print_r($res[0]->phclass);
+    echo('<pre>');*/
   }
 
   public function test_and_or_1()
@@ -64,7 +101,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::and([
         ['firstname', '=', '"maría"'],[
           q::or([
@@ -84,7 +121,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 3
+    $this->assert(count($res) == 3, count($res) . ' results found');
   }
 
   public function test_and_or_2()
@@ -92,8 +130,8 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
-      q::and([
+    $res = $Person->findBy2([
+      q::or([
         ['firstname', '=', '"maría"'],[
           q::or([
             [q::and([
@@ -121,7 +159,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 8
+    $this->assert(count($res) == 8, count($res) . ' results found');
   }
 
   public function test_and_or_3()
@@ -129,7 +168,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::and([
         ['firstname', '=', '"maría"'],[
           q::and([
@@ -154,7 +193,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 2
+    $this->assert(count($res) == 2, count($res) . ' results found');
   }
 
   public function test_and_or_not_simple()
@@ -162,7 +202,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::and([
         ['firstname', '=', '"maría"'],
         [q::and([['lastname', '=', '"gonzales"']])],
@@ -170,7 +210,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 1
+    $this->assert(count($res) == 1, count($res) . ' results found');
   }
 
   public function test_not_1()
@@ -178,7 +219,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::and([
         ['firstname', '=', '"maría"'],
         ['firstname', '=', '"pablo"'],[
@@ -196,7 +237,7 @@ class TestQueries2 extends PhTestCase {
                   ],[
                     q::and([
                       ['firstname', '=', '"Paula"'],
-                      [q::not([['lastname', '=', '"smith"']])]
+                      [q::not([['lastname', '=', '"suarez"']])]
                     ])
                     ]
                   ])
@@ -208,7 +249,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 0
+    $this->assert(count($res) == 0, count($res) . ' results found');
   }
 
   public function test_not_2()
@@ -216,7 +258,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::and([
         ['firstname', '=', '"pablo"'],[
           q::not([
@@ -229,7 +271,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 1
+    $this->assert(count($res) == 1, count($res) . ' results found');
   }
 
   public function test_not_simple()
@@ -237,13 +280,14 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findByTest([
+    $res = $Person->findBy2([
       q::not([
         ['firstname', '=', '"pablo"']
       ])
     ], 20, 0);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 10
+    $this->assert(count($res) == 10, count($res) . ' results found');
   }
 
   public function test_count_by_1()
@@ -251,11 +295,12 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->countByTest([
-      ['firstname', 'IN', '("Pablo"', '"Maria"', '"Barbara")']
+    $res = $Person->countBy2([
+      ['firstname', 'IN', '("Pablo", "Maria", "Barbara")']
     ]);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 10
+    $this->assert($res == 10, 'count results: ' . $res);
   }
 
   public function test_count_by_2()
@@ -263,7 +308,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->countByTest([
+    $res = $Person->countBy2([
       q::and([
         ['firstname', '=', '"maría"'],
         ['firstname', '=', '"pablo"'],[
@@ -281,7 +326,7 @@ class TestQueries2 extends PhTestCase {
                   ],[
                     q::and([
                       ['firstname', '=', '"Paula"'],
-                      [q::not([['lastname', '=', '"smith"']])]
+                      [q::not([['lastname', '=', '"suarez"']])]
                     ])
                     ]
                   ])
@@ -293,7 +338,8 @@ class TestQueries2 extends PhTestCase {
       ])
     ]);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 0
+    $this->assert($res == 0, 'count results: ' . $res);
   }
 
   public function test_count_by_3()
@@ -301,13 +347,14 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->countByTest([
+    $res = $Person->countBy2([
       q::not([
         ['firstname', '=', '"pablo"']
       ])
     ]);
 
-    $this->assert($res !== NULL, 'Result not null');
+    //should be 10
+    $this->assert($res == 10, 'count results: ' . $res);
   }
 
 }

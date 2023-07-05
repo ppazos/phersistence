@@ -213,14 +213,14 @@ class PhersistentDefManager {
     return $this->__ph_db;
   }
 
-  public function findByTest($class_name, $where, $max, $offset, $sort, $order)
+  public function findBy2($class_name, $where, $max, $offset, $sort, $order)
   {
-    return $this->__ph_db->find_by_test($class_name, $where, $max, $offset, $sort, $order);
+    return $this->__ph_db->find_by2($class_name, $where, $max, $offset, $sort, $order);
   }
 
-  public function countByTest($class_name, $where)
+  public function countBy2($class_name, $where)
   {
-    return $this->__ph_db->count_byTest($class_name, $where);
+    return $this->__ph_db->count_by2($class_name, $where);
   }
 }
 

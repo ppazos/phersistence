@@ -1099,7 +1099,7 @@ class PhersistentMySQL {
     return $conds;
   }
 
-  public function find_by_test($class_name, $where, $max, $offset, $sort, $order)
+  public function find_by2($class_name, $where, $max, $offset, $sort, $order)
   {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
@@ -1135,7 +1135,7 @@ class PhersistentMySQL {
     return $instances;
   }
 
-  public function count_byTest($class_name, $where)
+  public function count_by2($class_name, $where)
   {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
