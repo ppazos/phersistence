@@ -91,9 +91,9 @@ class TestQueries2 extends PhTestCase {
 
     //should be 10
     $this->assert(count($res) == 10, count($res) . ' results found');
-    /*echo('<pre>');
+    echo('<pre>');
     print_r($res[0]->phclass);
-    echo('<pre>');*/
+    echo('<pre>');
   }
 
   public function test_and_or_1()
@@ -123,6 +123,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 3
     $this->assert(count($res) == 3, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_and_or_2()
@@ -161,6 +162,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 8
     $this->assert(count($res) == 8, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_and_or_3()
@@ -195,6 +197,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 2
     $this->assert(count($res) == 2, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_and_or_not_simple()
@@ -212,6 +215,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 1
     $this->assert(count($res) == 1, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_not_1()
@@ -251,6 +255,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 0
     $this->assert(count($res) == 0, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_not_2()
@@ -273,6 +278,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 1
     $this->assert(count($res) == 1, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_not_simple()
@@ -288,6 +294,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 10
     $this->assert(count($res) == 10, count($res) . ' results found');
+    print_r($res);
   }
 
   public function test_count_by_1()
@@ -301,6 +308,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 10
     $this->assert($res == 10, 'count results: ' . $res);
+    print_r($res);
   }
 
   public function test_count_by_2()
@@ -340,6 +348,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 0
     $this->assert($res == 0, 'count results: ' . $res);
+    print_r($res);
   }
 
   public function test_count_by_3()
@@ -355,6 +364,7 @@ class TestQueries2 extends PhTestCase {
 
     //should be 10
     $this->assert($res == 10, 'count results: ' . $res);
+    print_r($res);
   }
 
 }
