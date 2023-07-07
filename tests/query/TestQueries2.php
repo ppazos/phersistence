@@ -103,7 +103,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([
       q::and([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         [
           q::or([
             [q::and([
@@ -134,7 +134,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([
       q::or([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         [
           q::or([
             [q::and([
@@ -180,7 +180,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([
       q::and([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         [
           q::and([
             [q::or([
@@ -217,7 +217,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([
       q::and([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         [q::and([['lastname', '=', '"gonzales"']])],
         [q::not([['lastname', '=', '"perez"']])]
       ])
@@ -235,7 +235,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([
       q::and([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         ['firstname', '=', '"pablo"'],
         [
           q::not([
@@ -333,7 +333,7 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->countBy2([
       q::and([
-        ['firstname', '=', '"maría"'],
+        ['firstname', '=', '"maria"'],
         ['firstname', '=', '"pablo"'],
         [
           q::not([
