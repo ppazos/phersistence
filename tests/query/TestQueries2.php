@@ -99,7 +99,7 @@ class TestQueries2 extends PhTestCase {
   public function test_and_or_1()
   {
     global $Person;
-   // $this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::and([
@@ -130,7 +130,7 @@ class TestQueries2 extends PhTestCase {
   public function test_and_or_2()
   {
     global $Person;
-   // $this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::or([
@@ -176,7 +176,7 @@ class TestQueries2 extends PhTestCase {
   public function test_and_or_3()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::and([
@@ -213,7 +213,7 @@ class TestQueries2 extends PhTestCase {
   public function test_and_or_not_simple()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::and([
@@ -231,7 +231,7 @@ class TestQueries2 extends PhTestCase {
   public function test_not_1()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::and([
@@ -275,7 +275,7 @@ class TestQueries2 extends PhTestCase {
   public function test_not_2()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::and([
@@ -299,7 +299,7 @@ class TestQueries2 extends PhTestCase {
   public function test_not_simple()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->findBy2([
       q::not([
@@ -315,7 +315,7 @@ class TestQueries2 extends PhTestCase {
   public function test_count_by_1()
   {
     global $Person;
-   // $this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->countBy2([
       ['firstname', 'IN', '("Pablo", "Maria", "Barbara")']
@@ -329,7 +329,7 @@ class TestQueries2 extends PhTestCase {
   public function test_count_by_2()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->countBy2([
       q::and([
@@ -373,7 +373,7 @@ class TestQueries2 extends PhTestCase {
   public function test_count_by_3()
   {
     global $Person;
-    //$this->bootstrap();
+    $this->bootstrap();
 
     $res = $Person->countBy2([
       q::not([
