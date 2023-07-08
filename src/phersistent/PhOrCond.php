@@ -2,25 +2,24 @@
 
 namespace CaboLabs\Phersistence\phersistent;
 
+use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
+
 class PhOrCond {
 
-  public static function evaluate_or($conds)
+  public static function evaluate_or($conds, $table_alias)
   {
     $i = count($conds);
     $x = 1;
     $gob_query_or = '(';
     foreach ($conds as $value)
-    {
-      $value_2 = isset($value[2]) ? " ". $value[2] : null;
-      $value_1 = isset($value[1]) ? $value[1] : null;
-      
+    {      
       if ($x < $i)
       {
-        $gob_query_or .= $value[0] ." ". $value_1 . $value_2 . " OR ";
+        $gob_query_or .= c::get_single_expression($table_alias, $value) . " OR ";
       }
       else
       {
-        $gob_query_or .= $value[0] ." ". $value_1 . $value_2;
+        $gob_query_or .= c::get_single_expression($table_alias, $value);
       }
       $x++;
     }

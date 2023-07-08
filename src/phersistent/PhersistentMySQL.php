@@ -502,7 +502,7 @@ class PhersistentMySQL {
     return $expressions;
   }
 
-  private function get_single_expression($table_alias, $subconds)
+  static function get_single_expression($table_alias, $subconds)
   {
     $refattr  = $subconds[0]; // required!
     $operator = $subconds[1]; // required!
@@ -545,7 +545,10 @@ class PhersistentMySQL {
     }
     else
     {
-      $refvalue = '"'. addslashes($refvalue) .'"';
+      if ($refvalue !== null)
+      {
+        $refvalue = '"'. addslashes($refvalue) .'"';
+      }
     }
 
     // simple cond render: alias.col op refvalue
@@ -1063,37 +1066,19 @@ class PhersistentMySQL {
     return $rows;
   }
 
-  public function find_by_where_eval($where)
+  public function find_by_where_eval($where, $alias)
   {
-    $where_eval = array();
     $conds = '';
 
     foreach ($where as $subconds)
     {
       if (is_array($subconds))
       {
-        $conds .= $this->get_sub_conds($subconds, $conds);
+        $conds .= $this->get_single_expression($alias, $subconds);
       }
       else
       {
         $conds .= $subconds ." ";
-      }
-    }
-    $where_eval[] = $conds;
-    return $where_eval;
-  }
-
-  public function get_sub_conds($subexprs, $conds)
-  {
-    foreach ($subexprs as $subexpr)
-    {
-      if (is_array($subexpr))
-      {
-        $conds .= $this->get_sub_conds($subexpr, $conds);
-      }
-      else
-      {
-        $conds .= $subexpr ." ";
       }
     }
     return $conds;
@@ -1104,12 +1089,12 @@ class PhersistentMySQL {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
     $table_name = $this->get_table_name($phi);
-       
-    $expr = $this->find_by_where_eval($where);
-    $query_where = $expr[0];
+    $alias = $table_name[0];
+
+    $query_where = $this->find_by_where_eval($where, $alias);
 
     $records = array();
-    $r = $this->driver->query('SELECT * FROM '. $table_name . ' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
@@ -1140,12 +1125,13 @@ class PhersistentMySQL {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
     $table_name = $this->get_table_name($phi);
-
-    $expr = $this->find_by_where_eval($where);
-    $query_where = $expr[0];
-
+    
+    $alias = $table_name[0]; 
+ 
+    $query_where = $this->find_by_where_eval($where, $alias);
+    
     $records = array();
-    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name . ' WHERE '. $query_where);
+    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
