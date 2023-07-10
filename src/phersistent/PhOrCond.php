@@ -12,7 +12,12 @@ class PhOrCond {
     $x = 1;
     $gob_query_or = '(';
     foreach ($conds as $value)
-    {      
+    { 
+      if (!is_array($value))
+      {
+        throw new \Exception("This must be an array");
+      }
+           
       if ($x < $i)
       {
         $gob_query_or .= c::get_single_expression($table_alias, $value) . " OR ";

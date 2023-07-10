@@ -11,8 +11,13 @@ class PhAndCond {
     $x = 1;
     $gob_query_and = '(';
 
-    foreach ($conds as $value)
+    foreach ($conds as $key => $value)
     {
+      if (!is_array($value))
+      {
+        throw new \Exception("This must be an array");
+      }
+
       if ($x < $i)
       {
         $gob_query_and .= c::get_single_expression($table_alias, $value). " AND ";

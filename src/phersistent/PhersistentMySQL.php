@@ -552,7 +552,7 @@ class PhersistentMySQL {
     }
 
     // simple cond render: alias.col op refvalue
-    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue;
+    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue; // revisar coloca alias. antes de ()
   }
 
   /**

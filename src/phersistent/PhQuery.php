@@ -9,13 +9,15 @@ use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 class PhQuery {  
   public $table_alias;
 
-  public function __construct($class_name= 'x')
+  public function __construct()
   {
-    $this->table_alias = $class_name;
+    $this->table_alias = '';
   }
 
   static function and($condAnd = [])
   {
+    global $phi;
+    
     return andCond::evaluate_and($condAnd, 'p');
   }
   
