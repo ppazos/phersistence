@@ -10,7 +10,8 @@ class PhOrCond {
   {
     $i = count($conds);
     $x = 1;
-    $gob_query_or = '(';
+    $gob_query_or = '';
+    $gob_query_or .= '(';
     foreach ($conds as $value)
     { 
       if (!is_array($value))
@@ -20,11 +21,11 @@ class PhOrCond {
            
       if ($x < $i)
       {
-        $gob_query_or .= c::get_single_expression($table_alias, $value) . " OR ";
+        $gob_query_or .= c::get_single_expression2($table_alias, $value) . " OR ";
       }
       else
       {
-        $gob_query_or .= c::get_single_expression($table_alias, $value);
+        $gob_query_or .= c::get_single_expression2($table_alias, $value);
       }
       $x++;
     }

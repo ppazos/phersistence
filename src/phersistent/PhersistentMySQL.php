@@ -507,6 +507,7 @@ class PhersistentMySQL {
     $refattr  = $subconds[0]; // required!
     $operator = $subconds[1]; // required!
     $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
+ 
     if (is_bool($refvalue))
     {
       $refvalue = ($refvalue ? 'true' : 'false');
@@ -1074,7 +1075,7 @@ class PhersistentMySQL {
     {
       if (is_array($subconds))
       {
-        $conds .= $this->get_single_expression($alias, $subconds);
+        $conds .= $this->get_single_expression2($alias, $subconds);
       }
       else
       {
@@ -1144,6 +1145,60 @@ class PhersistentMySQL {
     $string_count = $records[0]['columns']['count'];
 
     return intval($string_count);
+  }
+
+  static function get_single_expression2($table_alias, $subconds)
+  {
+    $refattr  = $subconds[0]; // required!
+    $operator = $subconds[1] ?? ' '; // required!
+    $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
+    
+    if (is_bool($refvalue))
+    {
+      $refvalue = ($refvalue ? 'true' : 'false');
+    }
+    else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
+    {
+      // NOP
+    }
+    else if (!$refvalue && strcasecmp($operator, 'IS NULL') == 0) // a IS NULL
+    {
+      // NOP
+    }
+    else if (!$refvalue && strcasecmp($operator, 'IS NOT NULL') == 0) // a IS NOT NULL
+    {
+      // NOP
+    }
+    else if (strcasecmp($operator, 'IN') == 0)
+    {
+      // SAMPLE: ['name', 'IN', ['a', 'b', 'c']]
+      if (!is_array($refvalue))
+      {
+        throw new \Exception("reference value for IN should be an array");
+      }
+
+      $refvalue = '("'. implode('", "', $refvalue) .'")'; // string array
+    }
+    else if (strcasecmp($operator, 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
+    {
+      // SAMPLE: ['rubric', 'MATCH', 'AGAINST("+'. $q .'" IN BOOLEAN MODE)'))]
+      return 'MATCH('. $table_alias .".". $refattr .') '. $refvalue .' ';
+    }
+    else if (strcasecmp($operator, 'BETWEEN') == 0) // should have 2 ref values
+    {
+      $refvalue2 = $subconds[3]; // TODO: check missing
+      $refvalue = '"'. $refvalue .'" AND "'. $refvalue2 .'"';
+    }
+    else
+    {
+      if ($refvalue !== null)
+      {
+        $refvalue = '"'. addslashes($refvalue) .'"';
+      }
+    }
+
+    // simple cond render: alias.col op refvalue
+    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue;
   }
 }
 

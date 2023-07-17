@@ -9,7 +9,8 @@ class PhAndCond {
   {
     $i = count($conds);
     $x = 1;
-    $gob_query_and = '(';
+    $gob_query_and = '';
+    $gob_query_and .= '(';
 
     foreach ($conds as $key => $value)
     {
@@ -20,11 +21,11 @@ class PhAndCond {
 
       if ($x < $i)
       {
-        $gob_query_and .= c::get_single_expression($table_alias, $value). " AND ";
+        $gob_query_and .= c::get_single_expression2($table_alias, $value). " AND ";
       }
       else
       {
-        $gob_query_and .= c::get_single_expression($table_alias, $value);
+        $gob_query_and .= c::get_single_expression2($table_alias, $value);
       }
       $x++;
     }
