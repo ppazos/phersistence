@@ -7,6 +7,7 @@ use CaboLabs\PhBasic\BasicString;
 class PhersistentMySQL {
 
   private $driver;
+  public static $alias;
 
   public function __construct($dbhost, $dbuser, $dbpass, $dbname)
   {
@@ -14,6 +15,7 @@ class PhersistentMySQL {
     $d->connect($dbhost, $dbuser, $dbpass);
     $d->select_db($dbname);
     $this->driver = $d;
+    $this->alias = $this->get_alias();
   }
 
   public function get_driver()
@@ -1147,56 +1149,19 @@ class PhersistentMySQL {
     return intval($string_count);
   }
 
-  static function get_single_expression2($subconds)
+  static function get_single_expression2($subconds, $alias = $this->get_alias())
   {
-    $refattr  = $subconds[0]; // required!
-    $operator = $subconds[1] ?? ' '; // required!
-    $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
-    
-    if (is_bool($refvalue))
-    {
-      $refvalue = ($refvalue ? 'true' : 'false');
-    }
-    else if (!is_string($refvalue) && is_numeric($refvalue)) // numbers wont come as strings, but is_numeric returns true for numeric strings also
-    {
-      // NOP
-    }
-    else if (!$refvalue && strcasecmp($operator, 'IS NULL') == 0) // a IS NULL
-    {
-      // NOP
-    }
-    else if (!$refvalue && strcasecmp($operator, 'IS NOT NULL') == 0) // a IS NOT NULL
-    {
-      // NOP
-    }
-    else if (strcasecmp($operator, 'IN') == 0)
-    {
-      // SAMPLE: ['name', 'IN', ['a', 'b', 'c']]
-      if (!is_array($refvalue))
-      {
-        throw new \Exception("reference value for IN should be an array");
-      }
+    return self::get_single_expression($alias, $subconds);
+  }
 
-      $refvalue = '("'. implode('", "', $refvalue) .'")'; // string array
-    }
-    else if (strcasecmp($operator, 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
-    {
-      // SAMPLE: ['rubric', 'MATCH', 'AGAINST("+'. $q .'" IN BOOLEAN MODE)'))]
-      return 'MATCH('. $refattr .') '. $refvalue .' ';
-    }
-    else if (strcasecmp($operator, 'BETWEEN') == 0) // should have 2 ref values
-    {
-      $refvalue2 = $subconds[3]; // TODO: check missing
-      $refvalue = '"'. $refvalue .'" AND "'. $refvalue2 .'"';
-    }
-    else
-    {
-      if ($refvalue !== null)
-      {
-        $refvalue = '"'. addslashes($refvalue) .'"';
-      }
-    }
-    return $refattr ." ". $operator  ." ". $refvalue;
+  public function get_alias()
+  {
+    global $phi;
+    /*$class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();*/
+    $table_name = $this->get_table_name($phi);
+    $alias = $table_name[0];
+    return $alias;
   }
 }
 

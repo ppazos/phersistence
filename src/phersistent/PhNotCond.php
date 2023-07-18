@@ -14,11 +14,13 @@ class PhNotCond {
     foreach ($conds as $value)
     { 
       if (!is_array($value))
-      {
-        throw new \Exception("This must be an array");
-      }
-      
-      $gob_query_not .= c::get_single_expression2($value);
+        {
+          $gob_query_not .= $value;
+        }
+        else
+        {      
+          $gob_query_not .= c::get_single_expression2($value);
+        }
     }
     $gob_query_not .= ')';
     return $gob_query_not;

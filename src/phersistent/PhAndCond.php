@@ -12,19 +12,29 @@ class PhAndCond {
     $gob_query_and = '';
     $gob_query_and .= '(';
 
-    foreach ($conds as $key => $value)
+    foreach ($conds as $value)
     {
-      if (!is_array($value))
-      {
-        throw new \Exception("This must be an array");
-      }
       if ($x < $i)
       {
-        $gob_query_and .= c::get_single_expression2($value). " AND ";
+        if (!is_array($value))
+        {
+          $gob_query_and .= $value. " AND ";
+        }
+        else
+        {
+         $gob_query_and .= c::get_single_expression2($value). " AND ";
+        }
       }
       else
       {
-        $gob_query_and .= c::get_single_expression2($value);
+        if (!is_array($value))
+        {
+          $gob_query_and .= $value;
+        }
+        else
+        {
+          $gob_query_and .= c::get_single_expression2($value);
+        }
       }
       $x++;
     }
