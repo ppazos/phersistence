@@ -505,9 +505,9 @@ class PhersistentMySQL {
   static function get_single_expression($table_alias, $subconds)
   {
     $refattr  = $subconds[0]; // required!
-    $operator = $subconds[1]; // required!
+    $operator = $subconds[1] ?? ' '; // required!
     $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
- 
+    
     if (is_bool($refvalue))
     {
       $refvalue = ($refvalue ? 'true' : 'false');
@@ -1075,7 +1075,7 @@ class PhersistentMySQL {
     {
       if (is_array($subconds))
       {
-        $conds .= $this->get_single_expression2($alias, $subconds);
+        $conds .= $this->get_single_expression($alias, $subconds);
       }
       else
       {
@@ -1147,7 +1147,7 @@ class PhersistentMySQL {
     return intval($string_count);
   }
 
-  static function get_single_expression2($table_alias, $subconds)
+  static function get_single_expression2($subconds)
   {
     $refattr  = $subconds[0]; // required!
     $operator = $subconds[1] ?? ' '; // required!
@@ -1182,7 +1182,7 @@ class PhersistentMySQL {
     else if (strcasecmp($operator, 'MATCH') == 0) // MATCH for FULLTEXT search: MATCH(col) AGAINST('value')
     {
       // SAMPLE: ['rubric', 'MATCH', 'AGAINST("+'. $q .'" IN BOOLEAN MODE)'))]
-      return 'MATCH('. $table_alias .".". $refattr .') '. $refvalue .' ';
+      return 'MATCH('. $refattr .') '. $refvalue .' ';
     }
     else if (strcasecmp($operator, 'BETWEEN') == 0) // should have 2 ref values
     {
@@ -1196,9 +1196,7 @@ class PhersistentMySQL {
         $refvalue = '"'. addslashes($refvalue) .'"';
       }
     }
-
-    // simple cond render: alias.col op refvalue
-    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue;
+    return $refattr ." ". $operator  ." ". $refvalue;
   }
 }
 

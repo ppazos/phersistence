@@ -7,28 +7,19 @@ use CaboLabs\Phersistence\phersistent\PhNotCond as notCond;
 use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 
 class PhQuery {  
-  public $table_alias;
-
-  public function __construct()
-  {
-    $this->table_alias = '';
-  }
-
   static function and($condAnd = [])
-  {
-    global $phi;
-    
-    return andCond::evaluate_and($condAnd, 'p');
+  {    
+    return andCond::evaluate_and($condAnd);
   }
   
   static function or($condOr = [])
   {
-    return orCond::evaluate_or($condOr,'p');
+    return orCond::evaluate_or($condOr);
   }
   
   static function not($condNot = [])
   {
-    return notCond::evaluate_not($condNot, 'p');
+    return notCond::evaluate_not($condNot);
   }
 }
 ?>

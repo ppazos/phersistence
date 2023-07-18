@@ -5,7 +5,7 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhAndCond {
   
-  public static function evaluate_and($conds, $table_alias)
+  public static function evaluate_and($conds)
   {
     $i = count($conds);
     $x = 1;
@@ -18,14 +18,13 @@ class PhAndCond {
       {
         throw new \Exception("This must be an array");
       }
-
       if ($x < $i)
       {
-        $gob_query_and .= c::get_single_expression2($table_alias, $value). " AND ";
+        $gob_query_and .= c::get_single_expression2($value). " AND ";
       }
       else
       {
-        $gob_query_and .= c::get_single_expression2($table_alias, $value);
+        $gob_query_and .= c::get_single_expression2($value);
       }
       $x++;
     }
