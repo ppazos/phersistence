@@ -8,18 +8,22 @@ use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 
 class PhQuery {  
   static function and($condAnd)
-  {    
-    return andCond::evaluate_and($condAnd);
+  {
+    $ph = new Phersistent;
+    $alias = '';
+    return andCond::evaluate_and($alias[0][0], $condAnd);
   }
   
   static function or($condOr)
   {
-    return orCond::evaluate_or($condOr);
+    $alias = '';
+    return orCond::evaluate_or($alias, $condOr);
   }
   
   static function not($condNot = [])
   {
-    return notCond::evaluate_not($condNot);
+    $alias = '';
+    return notCond::evaluate_not($alias, $condNot);
   }
 }
 ?>

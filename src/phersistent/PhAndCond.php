@@ -5,7 +5,7 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhAndCond {
   
-  public static function evaluate_and($conds)
+  public static function evaluate_and($alias, $conds)
   {
     $i = count($conds);
     $x = 1;
@@ -22,7 +22,7 @@ class PhAndCond {
         }
         else
         {
-         $gob_query_and .= c::get_single_expression2($value). " AND ";
+         $gob_query_and .= c::get_single_expression($alias, $value). " AND ";
         }
       }
       else
@@ -33,7 +33,7 @@ class PhAndCond {
         }
         else
         {
-          $gob_query_and .= c::get_single_expression2($value);
+          $gob_query_and .= c::get_single_expression($alias, $value);
         }
       }
       $x++;

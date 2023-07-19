@@ -6,7 +6,7 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhNotCond {
  
-  public static function evaluate_not($conds)
+  public static function evaluate_not($alias, $conds)
   {
     $gob_query_not = '';
     $gob_query_not .= 'NOT (';
@@ -19,7 +19,7 @@ class PhNotCond {
         }
         else
         {      
-          $gob_query_not .= c::get_single_expression2($value);
+          $gob_query_not .= c::get_single_expression($alias, $value);
         }
     }
     $gob_query_not .= ')';

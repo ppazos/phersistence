@@ -6,7 +6,7 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhOrCond {
 
-  public static function evaluate_or($conds)
+  public static function evaluate_or($alias, $conds)
   {
     $i = count($conds);
     $x = 1;
@@ -23,7 +23,7 @@ class PhOrCond {
         }
         else
         {
-          $gob_query_or .= c::get_single_expression2($value) . " OR ";
+          $gob_query_or .= c::get_single_expression($alias, $value) . " OR ";
         }
       }
       else
@@ -34,7 +34,7 @@ class PhOrCond {
         }
         else
         {
-        $gob_query_or .= c::get_single_expression2($value);
+        $gob_query_or .= c::get_single_expression($alias, $value);
         }
       }
       $x++;

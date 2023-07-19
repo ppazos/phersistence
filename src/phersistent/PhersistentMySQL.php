@@ -15,7 +15,6 @@ class PhersistentMySQL {
     $d->connect($dbhost, $dbuser, $dbpass);
     $d->select_db($dbname);
     $this->driver = $d;
-    $this->alias = $this->get_alias();
   }
 
   public function get_driver()
@@ -1147,21 +1146,6 @@ class PhersistentMySQL {
     $string_count = $records[0]['columns']['count'];
 
     return intval($string_count);
-  }
-
-  static function get_single_expression2($subconds, $alias = $this->get_alias())
-  {
-    return self::get_single_expression($alias, $subconds);
-  }
-
-  public function get_alias()
-  {
-    global $phi;
-    /*$class = $this->full_class_name_to_simple_name($class_name);
-    $phi = $GLOBALS[$class]->create();*/
-    $table_name = $this->get_table_name($phi);
-    $alias = $table_name[0];
-    return $alias;
   }
 }
 
