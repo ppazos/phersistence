@@ -11,7 +11,7 @@ class PhQuery {
   {
     $ph = new Phersistent;
     $alias = '';
-    return andCond::evaluate_and($alias[0][0], $condAnd);
+    return andCond::evaluate_and($alias, $condAnd);
   }
   
   static function or($condOr)
