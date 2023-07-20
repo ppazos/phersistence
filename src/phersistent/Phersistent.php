@@ -90,7 +90,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
         // class without namespace
         //$class = array_slice(explode('\\', $type[0]), -1)[0];
 
-        
+
         // the trailig / is needed for the second comparison below
         //echo "1. ". \CaboLabs\Phersistence\phersistent\PhCollection::class ."\n"; // CaboLabs\Phersistence\phersistent\PhCollection
         //echo "2. ". CaboLabs\Phersistence\phersistent\PhCollection::class ."\n"; // CaboLabs\Phersistence\phersistent\CaboLabs\Phersistence\phersistent\PhCollection
@@ -275,7 +275,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
           });
         }
       }
-      
+
       // sets normal attributes and serialized arrays/objects
       $ins->$setMethod($value);
     }
@@ -667,15 +667,15 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   }
   */
 
-  public function findBy2($where = array(), $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
+  public function findBy2($where, $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
   {
-    if (count($where) == 0) return $this->listAll($max, $offset, $sort, $order);
+    if (!$where) return $this->listAll($max, $offset, $sort, $order);
     return $this->__manager->findBy2(get_class($this), $where, $max, $offset, $sort, $order);
   }
 
   public function countBy2($where = array())
   {
-    if (count($where) == 0) return $this->count();
+    if (!$where) return $this->count();
     return $this->__manager->countBy2(get_class($this), $where);
   }
 }

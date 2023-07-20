@@ -1,0 +1,323 @@
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>Test summary</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.css" integrity="sha512-gOfBez3ehpchNxj4TfBZfX1MDLKLRif67tFJNLQSpF13lXM1t9ffMNCbZfZNBfcN2/SaWvOf+7CvIHtQ0Nci2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" integrity="sha512-Mk4n0eeNdGiUHlWvZRybiowkcu+Fo2t4XwsJyyDghASMeFGH6yUXcdDI3CKq12an5J8fq4EFzRVRdbjerO3RmQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </head>
+    <body id="page-top">
+
+      <!-- Page Wrapper -->
+      <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+          <!-- Sidebar - Brand -->
+
+          <a class="sidebar-brand d-flex align-items-center justify-content-center" href="test_report.html">
+            <div class="sidebar-brand-icon rotate-n-15">
+                <i class="fas fa-laugh-wink"></i>
+            </div>
+            <div class="sidebar-brand-text mx-3">PhTest</div>
+          </a>
+
+          <!-- Divider -->
+          <hr class="sidebar-divider my-0">
+
+          <!-- Nav Item - Dashboard -->
+          <li class="nav-item active">
+            <a id="dashboard" class="nav-link" href="#">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+            </a>
+          </li>
+
+          <!-- Divider -->
+          <hr class="sidebar-divider">
+
+          <!-- Heading -->
+          <div class="sidebar-heading">
+            Test suites
+          </div>
+
+          <!-- Nav Item -->
+          <li class="nav-item">
+               <a id="query" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities_query"
+               aria-expanded="true" aria-controls="collapseUtilities"><i class="fa fa-check text-success"></i> <span>query</span></a>
+               <div id="collapseUtilities_query" class="collapse" aria-labelledby="headingUtilities"
+               data-parent="#accordionSidebar">
+               <div id="collapse_query" class="bg-white py-2 collapse-inner rounded"><a class="collapse-item" href="#">TestQueries2</a></div></div></li>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+          <!-- Main Content -->
+          <div id="content">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+              <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-1 pb-2">
+                <h1 class="h2 text-gray-800"></h1>
+              </div>
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+
+              <h2 id="title_suite"></h2>
+
+              <!-- Content Row -->
+              <div id= "headCardSummary" class="row">
+                <!-- Total suites Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-primary shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total suites</div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">1</div>
+                              </div>
+                              <div class="col-auto">
+                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Total tests cases Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-warning shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Total tests cases</div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">1</div>
+                              </div>
+                              <div class="col-auto">
+                                <i class="fas fa-project-diagram fa-2x text-gray-300"></i></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Cases failed Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-danger shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Cases failed
+                                  </div>
+                                  <div class="row no-gutters align-items-center">
+                                      <div class="col-auto">
+                                          <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">0</div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div class="col-auto">
+                                  <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+
+                <!-- Cases successful Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-success shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Cases successful</div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">1</div>
+                              </div>
+                              <div class="col-auto">
+                                <i class="fas fa-clipboard-check fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="Card_suites">
+                <!-- Content Row -->
+            <div id="card_testsquery0" class="card_query suites_test" style="display:none;">
+               <div class="row" id = "card_TestQueries2">
+                  <div class="col-xl-12 col-lg-12">
+                    <div class="card shadow mb-4">
+                        <!-- Card Header - Dropdown -->
+                        <div  class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                           <h6 class="m-0 font-weight-bold text-primary">TestQueries2</h6>
+                        </div>
+                           <!-- Card Body -->
+                        <div class="card-body">
+                           <table class="table table-borderless" style="margin: -0.5rem;">
+                              <thead>
+                                 <tr class ="border-bottom">
+                                    <th scope="col">Class</th>
+                                    <th scope="col">Asserts</th>
+                                    <th scope="col"></th>
+                                 </tr>
+                              </thead>
+                              <tbody><tr><td>test_in</td><td class="text-success">OK: 10 results found</td></tr><td>test_and_or_0</td><td class="text-success">OK: 0 results found</td><td class="text-secondary">OUTPUT: 2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Pablo", "gonzales", NULL)
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Pablo", "suarez", NULL)
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "perez", NULL)
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "gonzales", NULL)
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "perez", "090909")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Barbara", "perez", "090909")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Paula", "torres", NULL)
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "torres", "717171")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "torres", "7171718")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Maria", "Hernandez", "343434")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Barbara", "perez", "717171")
+2023-Jul-20 18:49:45+00:00 MySQL::execute INSERT INTO person(deleted, class, firstname, lastname, phone_number) VALUES (false, "CaboLabs\\\\Phersistence\\\\tests\\\\model\\\\Person", "Paula", "perez", "suarez")
+2023-Jul-20 18:49:45+00:00 MySQL::query SELECT * FROM person as p WHERE (p.firstname = "maria" AND p.lastname = "gonzales" AND (p.lastname = "perez" OR p.phone_number = "090909")) ORDER BY id ASC LIMIT 0, 20
+</td></tr></tbody></table></div></div></div></div></div>
+              </div>
+
+              <div id="cardSummaryTables" class="row">
+                <div class="col-xl-12 col-lg-12">
+                  <div class="card shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                      <h6 class="m-0 font-weight-bold text-success">Total time:  0.38185 μs</h6>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                      <br><h6 class="m-0 font-weight-bold text-primary">Total Summary</h6><br>
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Total suites</th>
+                            <th scope="col">Total test classes</th>
+                            <th scope="col">Total tests</th>
+                            <th scope="col">Asserts successful</th>
+                            <th scope="col">Asserts failed</th>
+                            <th scope="col">Total asserts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-right">1</td>
+                            <td class="text-right">1</td>
+                            <td class="text-right">2</td>
+                            <td class="text-right">2</td>
+                            <td class="text-right"></td>
+                            <td class="text-right">2</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <h6 class="m-0 font-weight-bold text-primary">Failed Summary</h6><br>
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Suite</th>
+                            <th scope="col">Class</th>
+                            <th class="text-right" scope="col">Successful</th>
+                            <th class="text-right" scope="col">Failed</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          
+                        </tbody>
+                      </table>
+
+                      <br><h6 class="m-0 font-weight-bold text-primary">Successful Summary</h6><br>
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Suite</th>
+                            <th scope="col">Class</th>
+                            <th class="text-right" scope="col">Successful</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+               <td>query</td>
+               <td>TestQueries2</td>
+               <td class="text-right">2</td>
+            </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- End of Main Content -->
+
+      </div>
+      <!-- End of Content Wrapper -->
+
+      <!-- Bootstrap core JavaScript-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.bundle.js" integrity="sha512-4WQnCRyZ0CILKrMrO1P40yJrObxaNBOuImuSCFRV47/CWYh3ISyVPmqZnhiZ4OmhHstEj+QaoMDpQo5SnOXDAw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+      <!-- Core plugin JavaScript-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js" integrity="sha512-0QbL0ph8Tc8g5bLhfVzSqxe9GERORsKhIn1IrpxDAgUsbBGz/V7iSav2zzW325XGd1OMLdL4UiqRJj702IeqnQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.js" integrity="sha512-M82XdXhPLLSki+Ld1MsafNzOgHQB3txZr8+SQlGXSwn6veeqtYhPLbQeAfk9Y/Q9/gXcfa1jWT4YYUeoei6Uow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js" integrity="sha512-+QnjQxxaOpoJ+AAeNgvVatHiUWEDbvHja9l46BHhmzvP0blLTXC4LsvwDVeNhGgqqGQYBQLFhdKFyjzPX6HGmw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js" integrity="sha512-+QnjQxxaOpoJ+AAeNgvVatHiUWEDbvHja9l46BHhmzvP0blLTXC4LsvwDVeNhGgqqGQYBQLFhdKFyjzPX6HGmw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+      <!-- Custom scripts for all pages-->
+      <script>
+        $("li.nav-item").on("click", function (e)
+{
+  var id_li = $("a", this).attr("id");
+  var class_card = 'card_' + id_li;
+
+  if (id_li === 'dashboard')
+  {
+    $('#cardSummaryTables').show();
+    $('#headCardSummary').show();
+    $(this).addClass("active");
+    $('#title_suite').hide();
+    $('#Card_suites').hide();
+
+    if ($('li > div').hasClass('show'))
+    {
+      $('li > div').collapse('hide');
+      console.log($('li > div'));
+    }
+  }
+  else if (id_li === class_card.substring(5))
+  {
+    $('#Card_suites').show();
+    $('#title_suite').show();
+    $('#title_suite').html(id_li);
+    $('#Card_suites').find('.' + class_card).show();
+    $(this).addClass("active");
+
+    $('.suites_test').not('.' + class_card).hide();
+    $('#headCardSummary').hide();
+    $('#cardSummaryTables').hide();
+  }
+
+  $('.nav-item').not(this).removeClass("active");
+});
+      </script>
+    </body>
+  </html>

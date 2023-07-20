@@ -413,7 +413,7 @@ class PhersistentMySQL {
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE '. $backlink_name .'='. $owner_id);
-    
+
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
@@ -508,7 +508,7 @@ class PhersistentMySQL {
     $refattr  = $subconds[0]; // required!
     $operator = $subconds[1] ?? ' '; // required!
     $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
-    
+
     if (is_bool($refvalue))
     {
       $refvalue = ($refvalue ? 'true' : 'false');
@@ -1093,7 +1093,16 @@ class PhersistentMySQL {
     $table_name = $this->get_table_name($phi);
     $alias = $table_name[0];
 
-    $query_where = $this->find_by_where_eval($where, $alias);
+    //$query_where = $this->find_by_where_eval($where, $alias);
+    if (is_array($where))
+    {
+      // simple condition
+      $query_where = self::get_single_expression($alias, $where);
+    }
+    else // and, or, not
+    {
+      $query_where = $where->eval($alias);
+    }
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
@@ -1127,11 +1136,11 @@ class PhersistentMySQL {
     $class = $this->full_class_name_to_simple_name($class_name);
     $phi = $GLOBALS[$class]->create();
     $table_name = $this->get_table_name($phi);
-    
-    $alias = $table_name[0]; 
- 
+
+    $alias = $table_name[0];
+
     $query_where = $this->find_by_where_eval($where, $alias);
-    
+
     $records = array();
     $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
     while ($row = $r->fetch_assoc())

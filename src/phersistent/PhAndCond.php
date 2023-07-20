@@ -4,21 +4,29 @@ namespace CaboLabs\Phersistence\phersistent;
 use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhAndCond {
-  
-  public static function evaluate_and($alias, $conds)
+
+  private $conds = [];
+
+  public function __construct($conds = [])
   {
-    $i = count($conds);
+    // conds no sea vacio
+    $this->conds = $conds;
+  }
+
+  public function eval($alias)
+  {
+    $i = count($this->conds);
     $x = 1;
     $gob_query_and = '';
     $gob_query_and .= '(';
 
-    foreach ($conds as $value)
+    foreach ($this->conds as $value)
     {
       if ($x < $i)
       {
         if (!is_array($value))
         {
-          $gob_query_and .= $value. " AND ";
+          $gob_query_and .= $value->eval($alias). " AND ";
         }
         else
         {
@@ -29,7 +37,7 @@ class PhAndCond {
       {
         if (!is_array($value))
         {
-          $gob_query_and .= $value;
+          $gob_query_and .= $value->eval($alias);
         }
         else
         {

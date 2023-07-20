@@ -6,20 +6,28 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
 
 class PhOrCond {
 
-  public static function evaluate_or($alias, $conds)
+  private $conds = [];
+
+  public function __construct($conds = [])
   {
-    $i = count($conds);
+    // conds no sea vacio
+    $this->conds = $conds;
+  }
+
+  public function eval($alias)
+  {
+    $i = count($this->conds);
     $x = 1;
     $gob_query_or = '';
     $gob_query_or .= '(';
-    
-    foreach ($conds as $value)
+
+    foreach ($this->conds as $value)
     {
       if ($x < $i)
       {
         if (!is_array($value))
         {
-          $gob_query_or .= $value . " OR ";
+          $gob_query_or .= $value->eval($alias) . " OR ";
         }
         else
         {
@@ -30,7 +38,7 @@ class PhOrCond {
       {
         if (!is_array($value))
         {
-          $gob_query_or .= $value;
+          $gob_query_or .= $value->eval($alias);
         }
         else
         {

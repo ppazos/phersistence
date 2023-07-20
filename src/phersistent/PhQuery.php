@@ -6,24 +6,27 @@ use CaboLabs\Phersistence\phersistent\PhAndCond as andCond;
 use CaboLabs\Phersistence\phersistent\PhNotCond as notCond;
 use CaboLabs\Phersistence\phersistent\PhOrCond as orCond;
 
-class PhQuery {  
-  static function and($condAnd)
+class PhQuery {
+  static function and($conds)
   {
-    $ph = new Phersistent;
-    $alias = '';
-    return andCond::evaluate_and($alias, $condAnd);
+    // $ph = new Phersistent;
+    // $alias = '';
+    // return andCond::evaluate_and($alias, $conds);
+    return new PhAndCond($conds);
   }
-  
-  static function or($condOr)
+
+  static function or($conds)
   {
-    $alias = '';
-    return orCond::evaluate_or($alias, $condOr);
+    //$alias = '';
+    //return orCond::evaluate_or($alias, $condOr);
+    return new PhOrCond($conds);
   }
-  
-  static function not($condNot = [])
+
+  static function not($cond)
   {
-    $alias = '';
-    return notCond::evaluate_not($alias, $condNot);
+    // $alias = '';
+    // return notCond::evaluate_not($alias, $condNot);
+    return new PhNotCond($cond);
   }
 }
 ?>

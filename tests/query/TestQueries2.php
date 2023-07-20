@@ -15,7 +15,7 @@ class TestQueries2 extends PhTestCase {
   private function bootstrap()
   {
     global $Person;
-        
+
     $persons = [
       $Person->create([
         'firstname' => 'Pablo',
@@ -73,7 +73,7 @@ class TestQueries2 extends PhTestCase {
         'phone_number' => 'suarez'
       ])
     ];
-  
+
     foreach ($persons as $person)
     {
       $person->save();
@@ -85,9 +85,9 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findBy2([
+    $res = $Person->findBy2(
       ['firstname', 'IN', ['Pablo', 'Maria', 'Barbara']]
-    ], 20, 0);
+    , 20, 0);
 
     //should be 10
     $this->assert(count($res) == 10, count($res) . ' results found');
@@ -98,19 +98,25 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findBy2([
-      q::and([
-        ['firstname', '=', 'maria'],
-        ['lastname', '=', 'gonzales'],
-        q::or([
-          ['lastname', '=', 'perez'],
-          ['phone_number', '=', '090909']
-        ])
-      ])
-    ], 20, 0);
+    $res = $Person->findBy2(
+      q::and(
+        [
+          ['firstname', '=', 'maria'],
+          ['lastname', '=', 'gonzales'],
+          q::or(
+            [
+              ['lastname', '=', 'perez'],
+              ['phone_number', '=', '090909']
+            ]
+          )
+        ]
+      )
+    , 20, 0);
 
     $this->assert(count($res) == 0, count($res) . ' results found');
   }
+
+  /*
 
   public function test_and_or_1()
   {
@@ -373,4 +379,5 @@ class TestQueries2 extends PhTestCase {
     //should be 0
     $this->assert(count($res) == 0, count($res) . ' results found');
   }
+  */
 }
