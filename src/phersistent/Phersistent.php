@@ -675,7 +675,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
 
   public function countBy2($where = array())
   {
-    if (!$where) return $this->count();
+    if (!$where) throw new \Exception("condition where is empty");
     return $this->__manager->countBy2(get_class($this), $where);
   }
 }

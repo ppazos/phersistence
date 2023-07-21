@@ -466,4 +466,13 @@ class TestQueries2 extends PhTestCase {
     //should be 12 because should list all
     $this->assert(count($res) == 12, count($res) . ' results found');
   }
+
+  public function test_without_count()
+  {
+    global $Person;
+    $this->bootstrap();
+
+    $res = $Person->countBy2([], 20, 0);
+    //should throw an exception because there is no where condition
+  }
 }
