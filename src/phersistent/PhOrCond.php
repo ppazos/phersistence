@@ -2,7 +2,7 @@
 
 namespace CaboLabs\Phersistence\phersistent;
 
-use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
+use CaboLabs\Phersistence\phersistent\PhersistentMySQL as e;
 
 class PhOrCond {
 
@@ -16,36 +16,15 @@ class PhOrCond {
 
   public function eval($alias)
   {
-    $i = count($this->conds);
-    $x = 1;
+    $last = end($this->conds);
     $gob_query_or = '';
     $gob_query_or .= '(';
 
     foreach ($this->conds as $value)
     {
-      if ($x < $i)
-      {
-        if (!is_array($value))
-        {
-          $gob_query_or .= $value->eval($alias) . " OR ";
-        }
-        else
-        {
-          $gob_query_or .= c::get_single_expression($alias, $value) . " OR ";
-        }
-      }
-      else
-      {
-        if (!is_array($value))
-        {
-          $gob_query_or .= $value->eval($alias);
-        }
-        else
-        {
-        $gob_query_or .= c::get_single_expression($alias, $value);
-        }
-      }
-      $x++;
+      $gob_query_or .= (!is_array($value)) ? $value->eval($alias) : e::get_single_expression($alias, $value);
+      
+      $gob_query_or .= ($last !== $value) ? " OR " : "";
     }
     $gob_query_or .= ')';
     return $gob_query_or;

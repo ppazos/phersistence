@@ -2,7 +2,7 @@
 
 namespace CaboLabs\Phersistence\phersistent;
 
-use CaboLabs\Phersistence\phersistent\PhersistentMySQL as c;
+use CaboLabs\Phersistence\phersistent\PhersistentMySQL as e;
 
 class PhNotCond {
 
@@ -21,14 +21,7 @@ class PhNotCond {
 
     foreach ($this->conds as $value)
     {
-      if (!is_array($value))
-      {
-        $gob_query_not .= $value->eval($alias);
-      }
-      else
-      {
-        $gob_query_not .= c::get_single_expression($alias, $value);
-      }
+      $gob_query_not .= (!is_array($value)) ? $value->eval($alias) : e::get_single_expression($alias, $value);
     }
     $gob_query_not .= ')';
     return $gob_query_not;

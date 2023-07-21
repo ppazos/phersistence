@@ -1068,24 +1068,6 @@ class PhersistentMySQL {
     return $rows;
   }
 
-  public function find_by_where_eval($where, $alias)
-  {
-    $conds = '';
-
-    foreach ($where as $subconds)
-    {
-      if (is_array($subconds))
-      {
-        $conds .= $this->get_single_expression($alias, $subconds);
-      }
-      else
-      {
-        $conds .= $subconds ." ";
-      }
-    }
-    return $conds;
-  }
-
   public function find_by2($class_name, $where, $max, $offset, $sort, $order)
   {
     $class = $this->full_class_name_to_simple_name($class_name);
@@ -1093,7 +1075,6 @@ class PhersistentMySQL {
     $table_name = $this->get_table_name($phi);
     $alias = $table_name[0];
 
-    //$query_where = $this->find_by_where_eval($where, $alias);
     if (is_array($where))
     {
       // simple condition
@@ -1139,7 +1120,15 @@ class PhersistentMySQL {
 
     $alias = $table_name[0];
 
-    $query_where = $this->find_by_where_eval($where, $alias);
+    if (is_array($where))
+    {
+      // simple condition
+      $query_where = self::get_single_expression($alias, $where);
+    }
+    else // and, or, not
+    {
+      $query_where = $where->eval($alias);
+    }
 
     $records = array();
     $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
