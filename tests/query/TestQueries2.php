@@ -85,9 +85,7 @@ class TestQueries2 extends PhTestCase {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->findBy2(
-      ['firstname', 'IN', ['Pablo', 'Maria', 'Barbara']]
-    , 20, 0);
+    $res = $Person->findBy2(['firstname', 'IN', ['Pablo', 'Maria', 'Barbara']], 20, 0);
 
     //should be 10
     $this->assert(count($res) == 10, count($res) . ' results found');
@@ -99,21 +97,18 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          ['lastname', '=', 'gonzales'],
-          q::or(
-            [
-              ['lastname', '=', 'perez'],
-              ['phone_number', '=', '090909']
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maria'],
+        ['lastname', '=', 'gonzales'],
+        q::or([
+          ['lastname', '=', 'perez'],
+          ['phone_number', '=', '090909']
+        ])
+      ]),
+      20, 0
+    );
 
-    $this->assert(count($res) == 0, count($res) . ' results found');
+    $this->assert(count($res) == 0, '0 results found');
   }
 
   public function test_and_or_1()
@@ -122,31 +117,50 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          q::or(
-            [
-              q::and(
-                [
-                  ['lastname', '=', 'gonzales'],
-                  ['phone_number', 'IS NULL']
-                ]
-              ),
-              q::or(
-                [
-                  ['lastname', '=', 'perez'],
-                  ['phone_number', '=', '090909']
-                ]
-              )
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maria'],
+        q::or([
+          q::and([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL']
+          ]),
+          q::or([
+            ['lastname', '=', 'perez'],
+            ['phone_number', '=', '090909']
+          ])
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 3
-    $this->assert(count($res) == 3, count($res) . ' results found');
+    $this->assert(count($res) == 3, '3 results found');
+  }
+
+  public function test_and_or_11()
+  {
+    global $Person;
+    $this->bootstrap();
+
+    $res = $Person->findBy2(
+      q::and([
+        ['firstname', '=', 'maria'],
+        q::or([
+          q::and([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL']
+          ]),
+          q::and([
+            ['lastname', '=', 'perez'],
+            ['phone_number', '=', '090909']
+          ])
+        ])
+      ]),
+      20, 0
+    );
+
+    //should be 3
+    $this->assert(count($res) == 2, '2 results found');
   }
 
   public function test_and_or_2()
@@ -155,47 +169,34 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::or(
-        [
-          ['firstname', '=', 'maria'],
-          q::or(
-            [
-              q::and(
-                [
-                  ['lastname', '=', 'gonzales'],
-                  ['phone_number', 'IS NULL']
-                ]
-              ),
-              q::and(
-                [
-                  ['lastname', '=', 'perez'],
-                  ['phone_number', '=', '090909']
-                ]
-              ),
-              q::and(
-                [
-                  ['lastname', '=', 'torres'],
-                  ['phone_number', '<>', '717171']
-                ]
-              )
-            ]
-          ),
-          q::and(
-            [
-              ['lastname', '=', 'Hernandez'],
-              q::or(
-                [
-                  ['phone_number', '=', '343434']
-                ]
-              )
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::or([
+        ['firstname', '=', 'maria'],
+        q::or([
+          q::and([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL']
+          ]),
+          q::and([
+            ['lastname', '=', 'perez'],
+            ['phone_number', '=', '090909']
+          ]),
+          q::and([
+            ['lastname', '=', 'torres'],
+            ['phone_number', '<>', '717171']
+          ])
+        ]),
+        q::and([
+          ['lastname', '=', 'Hernandez'],
+          q::or([ // FIXME: this or has only one subcondition
+            ['phone_number', '=', '343434']
+          ])
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 8
-    $this->assert(count($res) == 8, count($res) . ' results found');
+    $this->assert(count($res) == 8, '8 results found');
   }
 
   public function test_and_or_3()
@@ -204,38 +205,29 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          q::and(
-            [
-              q::or(
-                [
-                  ['lastname', '=', 'gonzales'],
-                  ['phone_number', 'IS NULL'],
-                  q::and(
-                    [
-                      ['lastname', '=', 'perez'],
-                      ['phone_number', '=', '090909'],
-                      q::and(
-                        [
-                          ['lastname', '=', 'torres'],
-                          ['phone_number', '>', '717171'],
-                          ['phone_number', '=', '676767']
-                        ]
-                      )
-                    ]
-                  )
-                ]
-              )
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maria'],
+        q::and([ // FIXME: this and has only one subcondition
+          q::or([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL'],
+            q::and([
+              ['lastname', '=', 'perez'],
+              ['phone_number', '=', '090909'],
+              q::and([
+                ['lastname', '=', 'torres'],
+                ['phone_number', '>', '717171'],
+                ['phone_number', '=', '676767']
+              ])
+            ])
+          ])
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 2
-    $this->assert(count($res) == 2, count($res) . ' results found');
+    $this->assert(count($res) == 2, '2 results found');
   }
 
   public function test_and_or_not_simple()
@@ -244,25 +236,20 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          q::and(
-            [
-              ['lastname', '=', 'gonzales']
-            ]
-          ),
-          q::not(
-            [
-              ['lastname', '=', 'perez']
-            ]
-          )
-        ]
-    )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maria'],
+        q::and([ // FIXME: this and has only one subcondition
+          ['lastname', '=', 'gonzales']
+        ]),
+        q::not([  // FIXME: this or has only one subcondition
+          ['lastname', '=', 'perez']
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 1
-    $this->assert(count($res) == 1, count($res) . ' results found');
+    $this->assert(count($res) == 1, '1 results found');
   }
 
   public function test_not_1()
@@ -271,48 +258,35 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          ['firstname', '=', 'pablo'],
-          q::not(
-            [
-              q::and(
-                [
-                  ['lastname', '=', 'gonzales'],
-                  ['phone_number', 'IS NULL'],
-                  q::or(
-                    [
-                      ['lastname', '=', 'perez'],
-                      ['phone_number', '=', '090909'],
-                      q::and(
-                        [
-                          ['lastname', '=', 'torres'],
-                          ['phone_number', '=', '717171']
-                        ]
-                      ),
-                      q::and(
-                        [
-                          ['firstname', '=', 'Paula'],
-                          q::not(
-                            [
-                              ['lastname', '=', 'suarez']
-                            ]
-                          )
-                        ]
-                      )
-                    ]
-                  )
-                ]
-              )
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maria'],
+        ['firstname', '=', 'pablo'],
+        q::not([
+          q::and([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL'],
+            q::or([
+              ['lastname', '=', 'perez'],
+              ['phone_number', '=', '090909'],
+              q::and([
+                ['lastname', '=', 'torres'],
+                ['phone_number', '=', '717171']
+              ]),
+              q::and([
+                ['firstname', '=', 'Paula'],
+                q::not([ // FIXME: the NOT should take one condition not an array
+                  ['lastname', '=', 'suarez']
+                ])
+              ])
+            ])
+          ])
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 0
-    $this->assert(count($res) == 0, count($res) . ' results found');
+    $this->assert(count($res) == 0, '0 results found');
   }
 
   public function test_not_2()
@@ -321,24 +295,19 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'pablo'],
-          q::not(
-            [
-              q::and(
-                [
-                  ['lastname', '=', 'gonzales']
-                ]
-              )
-            ]
-          )
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'pablo'],
+        q::not([
+          q::and([ // FIXME: the and has only one subcondition
+            ['lastname', '=', 'gonzales']
+          ])
+        ])
+      ]),
+      20, 0
+    );
 
     //should be 1
-    $this->assert(count($res) == 1, count($res) . ' results found');
+    $this->assert(count($res) == 1, '1 results found');
   }
 
   public function test_not_simple()
@@ -347,12 +316,11 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::not(
-        [
-         ['firstname', '=', 'pablo']
-        ]
-      )
-    , 20, 0);
+      q::not([ // FIXME: the not should receive one subcondition, not an array
+        ['firstname', '=', 'pablo']
+      ]),
+      20, 0
+    );
 
     //should be 10
     $this->assert(count($res) == 10, count($res) . ' results found');
@@ -368,7 +336,7 @@ class TestQueries2 extends PhTestCase {
     );
 
     //should be 10
-    $this->assert($res == 10, 'count results: ' . $res);
+    $this->assert($res == 10, 'count_by results are 10');
   }
 
   public function test_count_by_2()
@@ -377,48 +345,34 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->countBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maria'],
-          ['firstname', '=', 'pablo'],
-          q::not(
-            [
-              q::and(
-                [
-                  ['lastname', '=', 'gonzales'],
-                  ['phone_number', 'IS NULL'],
-                  q::or(
-                    [
-                      ['lastname', '=', 'perez'],
-                      ['phone_number', '=', '090909'],
-                      q::and(
-                        [
-                          ['lastname', '=', 'torres'],
-                          ['phone_number', '=', '717171']
-                        ]
-                      ),
-                      q::and(
-                        [
-                          ['firstname', '=', 'Paula'],
-                          q::not(
-                            [
-                              ['lastname', '=', 'suarez']
-                            ]
-                          )
-                        ]
-                      )
-                    ]
-                  )
-                ]
-              )
-            ]
-          )
-        ]
-      )
+      q::and([
+        ['firstname', '=', 'maria'],
+        ['firstname', '=', 'pablo'],
+        q::not([
+          q::and([
+            ['lastname', '=', 'gonzales'],
+            ['phone_number', 'IS NULL'],
+            q::or([
+              ['lastname', '=', 'perez'],
+              ['phone_number', '=', '090909'],
+              q::and([
+                ['lastname', '=', 'torres'],
+                ['phone_number', '=', '717171']
+              ]),
+              q::and([
+                ['firstname', '=', 'Paula'],
+                q::not([ // FIXME: the not should receive one subcondition, not an array
+                  ['lastname', '=', 'suarez']
+                ])
+              ])
+            ])
+          ])
+        ])
+      ])
     );
 
     //should be 0
-    $this->assert($res == 0, 'count results: ' . $res);
+    $this->assert($res == 0, 'count_by results are 0');
   }
 
   public function test_count_by_3()
@@ -427,33 +381,31 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->countBy2(
-      q::not(
-        [
-          ['firstname', '=', 'pablo']
-        ]
-      )
+      q::not([ // FIXME: the not should receive one subcondition, not an array
+        ['firstname', '=', 'pablo']
+      ])
     );
 
     //should be 10
-    $this->assert($res == 10, 'count results: ' . $res);
+    $this->assert($res == 10, 'count_by results are 10');
   }
+
   public function test_with_accents()
   {
     global $Person;
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::and(
-        [
-          ['firstname', '=', 'maría'],
-          ['lastname', '=', 'perez'],
-          ['phone_number', '=', '090909']
-        ]
-      )
-    , 20, 0);
+      q::and([
+        ['firstname', '=', 'maría'],
+        ['lastname', '=', 'perez'],
+        ['phone_number', '=', '090909']
+      ]),
+      20, 0
+    );
 
     //should be 0
-    $this->assert(count($res) == 0, count($res) . ' results found');
+    $this->assert(count($res) == 0, '0 results found');
   }
 
   public function test_without_where()
@@ -463,16 +415,17 @@ class TestQueries2 extends PhTestCase {
 
     $res = $Person->findBy2([], 20, 0);
 
-    //should be 12 because should list all
-    $this->assert(count($res) == 12, count($res) . ' results found');
+    // should be 12 because should list all
+    $this->assert(count($res) == 12, '12 results found');
   }
 
-  public function test_without_count()
+  public function test_count_without_where()
   {
     global $Person;
     $this->bootstrap();
 
-    $res = $Person->countBy2([], 20, 0);
-    //should throw an exception because there is no where condition
+    $res = $Person->countBy2([]);
+
+    $this->assert($res == 12, '12 results found');
   }
 }
