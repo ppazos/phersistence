@@ -78,6 +78,7 @@ class PhersistentDefManager {
   // This should be executed after all the model is loaded.
   private function declareBackLinks()
   {
+    $hmd = [];
     foreach ($this->classDefinitions as $class => $defins)
     {
       $hmd = $defins->getHasManyDeclarations();
@@ -210,6 +211,16 @@ class PhersistentDefManager {
   public function get_db()
   {
     return $this->__ph_db;
+  }
+
+  public function findBy2($class_name, $where, $max, $offset, $sort, $order)
+  {
+    return $this->__ph_db->find_by2($class_name, $where, $max, $offset, $sort, $order);
+  }
+
+  public function countBy2($class_name, $where)
+  {
+    return $this->__ph_db->count_by2($class_name, $where);
   }
 }
 

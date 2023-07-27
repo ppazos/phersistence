@@ -7,6 +7,7 @@ use CaboLabs\PhBasic\BasicString;
 class PhersistentMySQL {
 
   private $driver;
+  public static $alias;
 
   public function __construct($dbhost, $dbuser, $dbpass, $dbname)
   {
@@ -412,7 +413,7 @@ class PhersistentMySQL {
 
     $records = array();
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE '. $backlink_name .'='. $owner_id);
-    
+
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
@@ -502,11 +503,12 @@ class PhersistentMySQL {
     return $expressions;
   }
 
-  private function get_single_expression($table_alias, $subconds)
+  static function get_single_expression($table_alias, $subconds)
   {
     $refattr  = $subconds[0]; // required!
-    $operator = $subconds[1]; // required!
+    $operator = $subconds[1] ?? ' '; // required!
     $refvalue = $subconds[2] ?? null; // null when the operator is "IS NULL" or on explicit ('id' = NULL) conditions.
+
     if (is_bool($refvalue))
     {
       $refvalue = ($refvalue ? 'true' : 'false');
@@ -545,11 +547,14 @@ class PhersistentMySQL {
     }
     else
     {
-      $refvalue = '"'. addslashes($refvalue) .'"';
+      if ($refvalue !== null)
+      {
+        $refvalue = '"'. addslashes($refvalue) .'"';
+      }
     }
 
     // simple cond render: alias.col op refvalue
-    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue;
+    return $table_alias .".". $refattr ." ". $operator  ." ". $refvalue; // revisar coloca alias. antes de ()
   }
 
   /**
@@ -1061,6 +1066,84 @@ class PhersistentMySQL {
     $r->close();
 
     return $rows;
+  }
+
+  public function find_by2($class_name, $where, $max, $offset, $sort, $order)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name($phi);
+    $alias = $table_name[0];
+
+    if (is_array($where))
+    {
+      // simple condition
+      $query_where = self::get_single_expression($alias, $where);
+    }
+    else // and, or, not
+    {
+      $query_where = $where->eval($alias);
+    }
+
+    $records = array();
+    $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
+    while ($row = $r->fetch_assoc())
+    {
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $instances = array();
+    foreach($records as $table)
+    {
+      $class = $this->full_class_name_to_simple_name($table['columns']['class']);
+      $phi = $GLOBALS[$class]->create();
+      $phi->setProperties($table['columns']);
+
+      $phi->set_id($table['columns']['id']);
+      $phi->set_class($table['columns']['class']);
+      $phi->set_deleted($table['columns']['deleted']);
+      $phi->set_is_dirty(false);
+
+      $instances[] = $phi;
+    }
+    return $instances;
+  }
+
+  public function count_by2($class_name, $where)
+  {
+    $class = $this->full_class_name_to_simple_name($class_name);
+    $phi = $GLOBALS[$class]->create();
+    $table_name = $this->get_table_name($phi);
+
+    $alias = $table_name[0];
+
+    if (is_array($where))
+    {
+      // simple condition
+      $query_where = self::get_single_expression($alias, $where);
+    }
+    else // and, or, not
+    {
+      $query_where = $where->eval($alias);
+    }
+
+    $records = array();
+    $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
+    while ($row = $r->fetch_assoc())
+    {
+      // FIXME: table is really row or record
+      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table['columns'] = $row;
+      $records[] = $table;
+    }
+    $r->close();
+
+    $string_count = $records[0]['columns']['count'];
+
+    return intval($string_count);
   }
 }
 
