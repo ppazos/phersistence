@@ -1,6 +1,6 @@
 <?php
 
-namespace CaboLabs\Phersistence\phersistent;
+namespace CaboLabs\Phersistence\phersistent\query;
 
 use CaboLabs\Phersistence\phersistent\PhersistentMySQL as e;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace CaboLabs\Phersistence\phersistent;
+namespace CaboLabs\Phersistence\phersistent\query;
 
 use CaboLabs\Phersistence\phersistent\PhersistentMySQL as e;
 
@@ -23,7 +23,7 @@ class PhOrCond {
     foreach ($this->conds as $value)
     {
       $gob_query_or .= (!is_array($value)) ? $value->eval($alias) : e::get_single_expression($alias, $value);
-      
+
       $gob_query_or .= ($last !== $value) ? " OR " : "";
     }
     $gob_query_or .= ')';
