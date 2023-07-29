@@ -186,9 +186,7 @@ class TestQueries2 extends PhTestCase {
         ]),
         q::and([
           q::eq('lastname', 'hernandez'),
-          q::or([ // FIXME: this or has only one subcondition
-            q::eq('phone_number', '343434')
-          ])
+          q::eq('phone_number', '343434')
         ])
       ]),
       20, 0
@@ -205,18 +203,16 @@ class TestQueries2 extends PhTestCase {
     $res = $Person->findBy2(
       q::and([
         q::eq('firstname', 'maria'),
-        q::and([ // FIXME: this and has only one subcondition
-          q::or([
-            q::eq('lastname', 'gonzales'),
-            q::isNull('phone_number'),
+        q::or([
+          q::eq('lastname', 'gonzales'),
+          q::isNull('phone_number'),
+          q::and([
+            q::eq('lastname', 'perez'),
+            q::eq('phone_number', '090909'),
             q::and([
-              q::eq('lastname', 'perez'),
-              q::eq('phone_number', '090909'),
-              q::and([
-                q::eq('lastname', 'torres'),
-                q::gt('phone_number', '717171'),
-                q::eq('phone_number', '676767')
-              ])
+              q::eq('lastname', 'torres'),
+              q::gt('phone_number', '717171'),
+              q::eq('phone_number', '676767')
             ])
           ])
         ])
@@ -235,12 +231,10 @@ class TestQueries2 extends PhTestCase {
     $res = $Person->findBy2(
       q::and([
         q::eq('firstname', 'maria'),
-        q::and([ // FIXME: this and has only one subcondition
-          q::eq('lastname', 'gonzales')
-        ]),
-        q::not([  // FIXME: this or has only one subcondition
+        q::eq('lastname', 'gonzales'),
+        q::not(
           q::eq('lastname', 'perez')
-        ])
+        )
       ]),
       20, 0
     );
@@ -257,7 +251,7 @@ class TestQueries2 extends PhTestCase {
       q::and([
         q::eq('firstname', 'maria'),
         q::eq('firstname', 'pablo'),
-        q::not([
+        q::not(
           q::and([
             q::eq('lastname', 'gonzales'),
             q::isNull('phone_number'),
@@ -270,13 +264,13 @@ class TestQueries2 extends PhTestCase {
               ]),
               q::and([
                 q::eq('firstname', 'Paula'),
-                q::not([ // FIXME: the NOT should take one condition not an array
+                q::not(
                   q::eq('lastname', 'suarez')
-                ])
+                )
               ])
             ])
           ])
-        ])
+        )
       ]),
       20, 0
     );
@@ -293,11 +287,9 @@ class TestQueries2 extends PhTestCase {
     $res = $Person->findBy2(
       q::and([
         q::eq('firstname', 'pablo'),
-        q::not([
-          q::and([ // FIXME: the and has only one subcondition
-            q::eq('lastname', 'gonzales')
-          ])
-        ])
+        q::not(
+          q::eq('lastname', 'gonzales')
+        )
       ]),
       20, 0
     );
@@ -311,9 +303,9 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->findBy2(
-      q::not([ // FIXME: the not should receive one subcondition, not an array
+      q::not(
         q::eq('firstname', 'pablo')
-      ]),
+      ),
       20, 0
     );
 
@@ -341,7 +333,7 @@ class TestQueries2 extends PhTestCase {
       q::and([
         q::eq('firstname', 'maria'),
         q::eq('firstname', 'pablo'),
-        q::not([
+        q::not(
           q::and([
             q::eq('lastname', 'gonzales'),
             q::isNull('phone_number'),
@@ -354,13 +346,13 @@ class TestQueries2 extends PhTestCase {
               ]),
               q::and([
                 q::eq('firstname', 'Paula'),
-                q::not([ // FIXME: the not should receive one subcondition, not an array
+                q::not(
                   q::eq('lastname', 'suarez'),
-                ])
+                )
               ])
             ])
           ])
-        ])
+        )
       ])
     );
 
@@ -373,9 +365,9 @@ class TestQueries2 extends PhTestCase {
     $this->bootstrap();
 
     $res = $Person->countBy2(
-      q::not([ // FIXME: the not should receive one subcondition, not an array
+      q::not(
         q::eq('firstname', 'pablo'),
-      ])
+      )
     );
 
     $this->assert($res == 10, 'count_by results are 10');

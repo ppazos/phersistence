@@ -6,23 +6,27 @@ use CaboLabs\Phersistence\phersistent\PhersistentMySQL as e;
 
 class PhNotCond {
 
-  private $conds = [];
+  private $cond;
 
-  public function __construct($conds = [])
+  public function __construct($cond)
   {
     // conds no sea vacio
-    $this->conds = $conds;
+    $this->cond = $cond;
   }
 
   public function eval($alias)
   {
-    $gob_query_not = '';
-    $gob_query_not .= 'NOT (';
+    $gob_query_not = 'NOT (';
 
-    foreach ($this->conds as $value)
+    if (is_array($this->cond))
     {
-      $gob_query_not .= (!is_array($value)) ? $value->eval($alias) : e::get_single_expression($alias, $value);
+      $gob_query_not .= e::get_single_expression($alias, $this->cond);
     }
+    else
+    {
+      $gob_query_not .= $this->cond->eval($alias);
+    }
+
     $gob_query_not .= ')';
     return $gob_query_not;
   }

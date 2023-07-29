@@ -8,25 +8,27 @@ class PhOrCond {
 
   private $conds = [];
 
-  public function __construct($conds = [])
+  public function __construct(array $conds = [])
   {
-    // conds no sea vacio
+    if (count($conds) < 2) throw new \Exception("Conditions should be at least 2 and there are ". count($conds));
     $this->conds = $conds;
   }
 
   public function eval($alias)
   {
-    $last = end($this->conds);
-    $gob_query_or = '';
-    $gob_query_or .= '(';
+    $gob_query_or = '(';
 
-    foreach ($this->conds as $value)
+    $count = count($this->conds);
+
+    foreach ($this->conds as $i => $cond)
     {
-      $gob_query_or .= (!is_array($value)) ? $value->eval($alias) : e::get_single_expression($alias, $value);
+      $gob_query_or .= (!is_array($cond)) ? $cond->eval($alias) : e::get_single_expression($alias, $cond);
 
-      $gob_query_or .= ($last !== $value) ? " OR " : "";
+      $gob_query_or .= ($i+1 < $count) ? " OR " : "";
     }
+
     $gob_query_or .= ')';
+
     return $gob_query_or;
   }
 }
