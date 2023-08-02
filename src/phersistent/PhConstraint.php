@@ -9,7 +9,7 @@ abstract class PhConstraint {
   // number constraints
   public static function min    ($min) { return new MinConstraint($min); }
   public static function max    ($max) { return new MaxConstraint($max); }
-  public static function lower  ($max) { return new LowerConstraint($max, $min = null); }
+  public static function lower  ($max) { return new LowerConstraint($max); }
   public static function greater($min) { return new GreaterConstraint($min); }
   public static function between($min, $max) { return new Between($min, $max); }
 
@@ -176,7 +176,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
       }
       $ret[$attr_flat] = $attr_keys_errors['errors'];
     }
-    
+
 
     return $ret;
   }
@@ -496,12 +496,10 @@ class MinConstraint extends PhConstraint {
 class LowerConstraint extends PhConstraint {
 
   protected $max;
-  protected $min;
 
-  public function __construct($max, $min)
+  public function __construct($max)
   {
     $this->max = $max;
-    $this->min = $min;
   }
 
   public function validate($class, $attr, $value, $object)
@@ -858,16 +856,13 @@ class Unique extends PhConstraint {
     $simpleclass = $parts[count($parts)-1];
     global ${$simpleclass};
 
-    $where = array(
-      array($attr, '=', $value)
-    );
+    $where = [
+      [$attr, '=', $value]
+    ];
+
     $res = ${$simpleclass}->findBy($where, 1, 0);
     if (count($res) == 0) return true; // there is no stored instance with the same value
     else if ($res[0]->id ==$object->id) return true; // if the stored instance is the same, there is no error
-
-    $res2 = ${$simpleclass}->findBy2($where, 1, 0);
-    if (count($res2) == 0) return true; // there is no stored instance with the same value
-    else if ($res2[0]->id ==$object->id) return true; // if the stored instance is the same, there is no error
 
     return new ValidationError($class, $attr, $value, $this);
   }
