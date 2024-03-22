@@ -18,7 +18,7 @@
   "version": "1.0.20",
   "require": {
     "php": "^7.0|^8.0",
-    "cabolabs/phtest": "^0.6",
+    "cabolabs/phtest": "^0.7",
     "cabolabs/phlogger": "^0.1",
     "cabolabs/phbasic": "^0.1"
   },
