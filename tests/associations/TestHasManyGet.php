@@ -2,14 +2,14 @@
 
 namespace tests\associations;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
  * two objects associated with a hasmany, and check the attribute values after a
  * get is executed.
  */
-class TestHasManyGet extends PhTestCase {
+class TestHasManyGet extends DebbieTestCase {
 
   // there is an issue the first test doesn't have a log
   public function test_dummy()

@@ -43,7 +43,7 @@ if ($argc < 2)
 }
 */
 
-$run = new \CaboLabs\PhTest\PhTestRun();
+$run = new \CaboLabs\Debbie\DebbieRun();
 $run->init('./tests');
 
 // clean the database after each test

@@ -2,14 +2,14 @@
 
 namespace tests\fields;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
  * objects that contain a serialized array field, and check the attribute values
  * after a get is executed.
  */
-class TestSerializedArrayField extends PhTestCase {
+class TestSerializedArrayField extends DebbieTestCase {
 
   // there is an issue the first test doesn't have a log
   public function test_dummy()
@@ -80,7 +80,7 @@ class TestSerializedArrayField extends PhTestCase {
     $id = $o->save();
 
     $this->assert($id !== NULL, 'Object is updated');
-    
+
     // update
     $o->del_from_codes('A01');
     $id = $o->save();

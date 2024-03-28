@@ -2,14 +2,14 @@
 
 namespace tests\associations;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
  * two objects associated with a hasmany, and check the attribute values after an
  * update.
  */
-class TestHasManyUpdate extends PhTestCase {
+class TestHasManyUpdate extends DebbieTestCase {
 
   // FIXME: there is a problem in the first test the log is not printed
   public function test_empty()
@@ -305,15 +305,15 @@ class TestHasManyUpdate extends PhTestCase {
    public function test_4_3()
    {
      $out = SetupTestData::hasmany_save_4();
- 
+
      // get all items to avoid losing them when the clean() is executed over the collection
      $addresses = $out['person']->get_addresses()->all();
- 
+
      $out['person']->clean_addresses(); // shouldn't turn on the is_dirty because there are no objects
- 
+
      $out['person']->save(); // shouldn't update because is not dirty
- 
- 
+
+
      // tests
      $this->assert($out['person']->size_addresses() === 0, 'Has many has 0 objects');
 

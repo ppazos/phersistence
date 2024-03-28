@@ -2,14 +2,14 @@
 
 namespace tests\associations;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
- * two objects associated with a hasone, and check the values of the hasone 
+ * two objects associated with a hasone, and check the values of the hasone
  * attribute and the hasone foreign key attribute.
  */
-class TestHasOneSaveCascade extends PhTestCase {
+class TestHasOneSaveCascade extends DebbieTestCase {
 
   public function test_1()
   {

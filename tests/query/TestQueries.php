@@ -2,14 +2,14 @@
 
 namespace tests\query;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
  * objects that contain a serialized array field, and check the attribute values
  * after a get is executed.
  */
-class TestQueries extends PhTestCase {
+class TestQueries extends DebbieTestCase {
 
   // there is an issue the first test doesn't have a log
   public function test_dummy()

@@ -2,7 +2,7 @@
 
 namespace tests\query;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 use CaboLabs\Phersistence\phersistent\query\PhQuery as q;
 
 /**
@@ -10,7 +10,7 @@ use CaboLabs\Phersistence\phersistent\query\PhQuery as q;
  * objects that contain a serialized array field, and check the attribute values
  * after a get is executed.
  */
-class TestQueries2 extends PhTestCase {
+class TestQueries2 extends DebbieTestCase {
 
   private function bootstrap()
   {

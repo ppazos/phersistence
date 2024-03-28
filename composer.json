@@ -4,7 +4,7 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/ppazos/PhTest"
+      "url": "https://github.com/CaboLabs/Debbie"
     },
     {
       "type": "vcs",
@@ -15,10 +15,10 @@
       "url": "https://github.com/ppazos/PhBasic"
     }
   ],
-  "version": "1.0.22",
+  "version": "1.0.23",
   "require": {
     "php": "^7.0|^8.0",
-    "cabolabs/phtest": "^0.8",
+    "cabolabs/debbie": "^0.8",
     "cabolabs/phlogger": "^0.1",
     "cabolabs/phbasic": "^0.1"
   },

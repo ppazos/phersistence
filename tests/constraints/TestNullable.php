@@ -2,12 +2,12 @@
 
 namespace tests\constraints;
 
-use CaboLabs\PhTest\PhTestCase;
+use CaboLabs\Debbie\DebbieTestCase;
 
 /**
  * The goal of these tests is to verify nullability checks in some fields depending on the defined constraints.
  */
-class TestNullable extends PhTestCase {
+class TestNullable extends DebbieTestCase {
 
   // there is an issue the first test doesn't have a log
   public function test_dummy()
