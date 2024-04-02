@@ -387,7 +387,26 @@ class TestQueries2 extends DebbieTestCase {
       20, 0
     );
 
-    $this->assert(count($res) == 0, '0 results found');
+    // NOTE: this test depends on the table collation, if it's '...ci' it's case
+    //       insensitive and will flatten the accents to lowercase vowel.
+    // We can get the collation from: SHOW TABLE STATUS WHERE name = 'person';
+    // in the column 'Collation'
+
+    //class_to_table_name(get_class($ph));
+    //echo \CaboLabs\Phersistence\phersistent\PhersistentMySQL::get_table_name($Person->create());
+    global $man;
+    $table = $man->get_db()->get_table_name_ph($Person);
+
+    $table_info = $Person->runRaw("SHOW TABLE STATUS WHERE name = '$table'");
+
+    if (str_ends_with($table_info[0]['Collation'], 'ci'))
+    {
+      $this->assert(count($res) == 1, '1 results found');
+    }
+    else
+    {
+      $this->assert(count($res) == 0, '0 results found');
+    }
   }
 
   public function test_without_where()

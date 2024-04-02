@@ -29,7 +29,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "CaboLabs\\Phersistence\\tests\\model\\": "tests/model"
+      "CaboLabs\\Phersistence\\tests\\model\\": "tests/model",
+      "tests\\associations\\": "tests/associations"
     }
   }
 }

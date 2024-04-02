@@ -3,6 +3,7 @@
 namespace tests\associations;
 
 use CaboLabs\Debbie\DebbieTestCase;
+use tests\associations\SetupTestData;
 
 /**
  * The goal of these tests is to verify the functionality of creating and saving
@@ -283,6 +284,7 @@ class TestHasManyUpdate extends DebbieTestCase {
     // setup
     $out = SetupTestData::hasmany_save_4();
 
+    // The person doesn't have this address, that is why the remove gives false
     $address = $Address->create([
       'line1'   => 'line1_1',
       'zipcode' => '11111',
@@ -299,6 +301,56 @@ class TestHasManyUpdate extends DebbieTestCase {
     $this->assert(!$is_removed, 'Not removed');
 
     $this->assert($out['person']->size_addresses() === 0, 'Has many has 0 objects');
+  }
+
+
+  public function test_has_many_set_properties()
+  {
+    $out = SetupTestData::hasmany_save_1();
+
+    $out['person']->setProperties(
+      [
+        'firstname' => 'Changed',
+        'addresses' => [
+          [
+            'line1'   => 'aaaa',
+            'zipcode' => 77777,
+            'state'   => 'AK'
+          ]
+        ]
+      ],
+      ['addresses' => 'DO_NOT_UPDATE'] // It shouldn't update the addresses because of this flag
+    );
+
+    $out['person']->save();
+
+    $this->assert($out['person']->size_addresses() === 3, 'Has many has 3 objects');
+
+    // To avoid orphan addresses, get and delete before setProperties
+    $orphan_addresses = $out['person']->get_addresses()->all();
+    foreach ($orphan_addresses as $address)
+    {
+      $address->delete();
+    }
+
+    // This will empty the addresses and create a new one, but doesn't
+    // delete the current addresses!
+    $out['person']->setProperties(
+      [
+        'firstname' => 'Changed',
+        'addresses' => [
+          [
+            'line1'   => 'aaaa',
+            'zipcode' => 77777,
+            'state'   => 'AK'
+          ]
+        ]
+      ]
+    );
+
+    $out['person']->save();
+
+    $this->assert($out['person']->size_addresses() === 1, 'Has many has 1 objects');
   }
 
    // save 4 + clean

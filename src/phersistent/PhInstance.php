@@ -33,7 +33,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       // NOTE: this will load all the hasmany items, if the amount is big, this will cause problems
       $this->get($hasManyName); // does the lazy load
     }
-    
+
     return $this->{$hasManyName}->add($ins);
   }
 
@@ -61,7 +61,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
     {
       // nullify backlink
       $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
-  
+
       // NOTE: this is innefficient when hasmany has thousands of object, it should be documented.
       foreach ($items as $ins)
       {
@@ -438,7 +438,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       {
         $hasone_attr_id_value = $props[$attr.'_id'];
         $this->{'set_'. $attr. '_id'}($hasone_attr_id_value);
-        
+
         if ($hasone_attr_id_value != NULL)
         {
           $this->{'set_'. $attr}(self::NOT_LOADED_ASSOC); // marking the hasone as not loaded
@@ -446,17 +446,53 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       }
       else if ($this->phclass->is_has_many($attr) && is_array($value))
       {
+        $attr_options = $options[$attr] ?? ''; // ['addresses' => 'DO_NOT_UPDATE']
+
+        // NOTE: the attr options is a string
+        if ('DO_NOT_UPDATE' == $attr_options) continue;
+
+        // =====
+        // This code does:
+        // 1. load the has many collection of it's NOT_LOADED
+        // 2. removes all items from it
+        // 3. nullifies the backlink from each item to the container item
+        // 4. saves the items now without the association to the container
+
         //echo "setProperties HAS MANY $attr". PHP_EOL;
         // if properties want to set has many, the has many is cleaned up
         // *** all the items are removed ***
         $cleanMethod = 'clean_'. $attr;
         $this->{$cleanMethod}($options[$attr] ?? []);
+        // =====
+
+
+        // NOTE: because of the code above, all previous items could be left orphans,
+        // one option would be to have an option to delete existing items, another would
+        // be to leave the deletion of existing items to the user, so they can get the
+        // existing items before the setProperties, then after the setProperties, delete
+        // each item on the list.
 
         $addToHMMethod = 'add_to_'. $attr;
+
+        // FIXME: note this expect $value to be a list of PhInstance not a list of arrays, if arrays of values are given, the add_to will fail!
         $hm = $value;
         foreach ($hm as $phi)
         {
-          $this->{$addToHMMethod}($phi); // verifies phi instanceof PhInstance
+          // in case an array with values is passed instead of a phi
+          if (is_array($phi))
+          {
+            // creates an instance of the class declared in the HO attr with the value array
+            $parts = explode('\\', $type[1]); // NOTE: for has many the type is an array, item 0 is the actual class of the items
+            $class = $parts[count($parts)-1];
+            $real_phi = $GLOBALS[$class]->create();
+            $real_phi->setProperties($phi); // could be recursive
+          }
+          else
+          {
+            $real_phi = $phi;
+          }
+
+          $this->{$addToHMMethod}($real_phi); // verifies phi instanceof PhInstance
         }
 
         // the set is done by the add_to_xxx
@@ -754,7 +790,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
     }
 
     $res = $this->phclass->save($this);
-    
+
     return $res; // returns the id of the saved object, > 0
   }
 

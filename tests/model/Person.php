@@ -11,7 +11,7 @@ class Person extends \CaboLabs\Phersistence\phersistent\Phersistent {
   public $lastname = self::TEXT;
   public $phone_number = self::TEXT;
 
-  public $addresses = array(PhCollection::class, Address::class);
+  public $addresses = [PhCollection::class, Address::class];
 
   function constraints()
   {
