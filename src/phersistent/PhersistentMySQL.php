@@ -210,27 +210,30 @@ class PhersistentMySQL {
       {
         $phi->set($attr.'_id', null); // FK should be emptied
       }
+      // if my attr_id was set to null, nullify the attr too, it should be like nullifying the attr
+      else if ($phi->get($attr .'_id') == null)
+      {
+        // NOTE: this could leave an orphan in the DB
+        $phi->set($attr, null); // value should be emptied
+      }
+      // the has one might be already saved, if not => save, else => update
+      else if ($value->get_id() == null) // insert
+      {
+        $idho = $this->save_instance_recursive($value);
+
+        // the recursive call sets the id
+        // $value->set_id($idho);           // id set on associated instance
+        $phi->set($attr .'_id', $idho); // FK set on owner
+      }
       else
       {
-        // the has one might be already saved, if not => save, else => update
-        if ($value->get_id() == null) // insert
+        $idho = $value->get_id();
+        if ($value->get_is_dirty()) // update has_one only if it's dirty
         {
-          $idho = $this->save_instance_recursive($value);
-
-          // the recursive call sets the id
-          // $value->set_id($idho);           // id set on associated instance
-          $phi->set($attr .'_id', $idho); // FK set on owner
+          $this->update_instance_recursive($value);
         }
-        else
-        {
-          $idho = $value->get_id();
-          if ($value->get_is_dirty()) // update has_one only if it's dirty
-          {
-            $this->update_instance_recursive($value);
-          }
-          //$idho = $this->update_instance_recursive($value);
-          $phi->set($attr .'_id', $idho); // FK set on owner
-        }
+        //$idho = $this->update_instance_recursive($value);
+        $phi->set($attr .'_id', $idho); // FK set on owner
       }
     }
 
