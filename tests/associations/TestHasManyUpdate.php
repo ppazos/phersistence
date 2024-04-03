@@ -353,24 +353,234 @@ class TestHasManyUpdate extends DebbieTestCase {
     $this->assert($out['person']->size_addresses() === 1, 'Has many has 1 objects');
   }
 
-   // save 4 + clean
-   public function test_4_3()
-   {
-     $out = SetupTestData::hasmany_save_4();
+  // save 4 + clean
+  public function test_4_3()
+  {
+    $out = SetupTestData::hasmany_save_4();
 
-     // get all items to avoid losing them when the clean() is executed over the collection
-     $addresses = $out['person']->get_addresses()->all();
+    // get all items to avoid losing them when the clean() is executed over the collection
+    $addresses = $out['person']->get_addresses()->all();
 
-     $out['person']->clean_addresses(); // shouldn't turn on the is_dirty because there are no objects
+    $out['person']->clean_addresses(); // shouldn't turn on the is_dirty because there are no objects
 
-     $out['person']->save(); // shouldn't update because is not dirty
+    $out['person']->save(); // shouldn't update because is not dirty
 
 
-     // tests
-     $this->assert($out['person']->size_addresses() === 0, 'Has many has 0 objects');
+    // tests
+    $this->assert($out['person']->size_addresses() === 0, 'Has many has 0 objects');
 
-     $this->assert(count($addresses) === 0, 'Has many has 0 objects');
-   }
+    $this->assert(count($addresses) === 0, 'Has many has 0 objects');
+  }
+
+
+  public function test_set_properties_has_many_no_orphans()
+  {
+    global $Address, $Person, $Employer;
+
+    // employer points to the same address as in the has many person
+
+    $addresses = [
+      $Address->create([
+        'line1'   => 'line1_1',
+        'zipcode' => '11111',
+        'state'   => 'MN'
+      ])
+    ];
+
+    $person = $Person->create([
+      'firstname'    => 'Test',
+      'lastname'     => 'One',
+      'phone_number' => '5551234'
+    ]);
+
+    foreach ($addresses as $address)
+    {
+      $person->add_to_addresses($address);
+    }
+
+    $person->save();
+
+    $this->assert($person->size_addresses() === 1, 'Has many has 1 object');
+
+
+    $employer = $Employer->create([
+      'company'   => 'test employer',
+      'ein'       => '4444',
+      'address'   => $addresses[0]
+    ]);
+
+    $employer->save();
+
+
+    $this->assert($Address->count() == 1, 'Only one address exists');
+
+
+    $person->setProperties([ // should add this new address
+      'addresses' => [
+        $Address->create([
+          'line1'   => 'line1_2',
+          'zipcode' => '22222',
+          'state'   => 'AK'
+        ])
+      ]
+    ]);
+
+    $person->save();
+
+    // by default the setProperties without the DO_NOT_MODIFY option will delete orphans but will not delete
+    // if it's not an orphan, since the same address referenced by the employer too.
+
+    // since the person->addresses removed the previous address, added a new one, and the previous wasn't deleted,
+    // ther should be 2 addresses in the DB
+    $this->assert($Address->count() == 2, 'Two addresses exist');
+  }
+
+  public function test_set_properties_has_many_orphans()
+  {
+    global $Address, $Person;
+
+    $addresses = [
+      $Address->create([
+        'line1'   => 'line1_1',
+        'zipcode' => '11111',
+        'state'   => 'MN'
+      ])
+    ];
+
+    $person = $Person->create([
+      'firstname'    => 'Test',
+      'lastname'     => 'One',
+      'phone_number' => '5551234'
+    ]);
+
+    foreach ($addresses as $address)
+    {
+      $person->add_to_addresses($address);
+    }
+
+    $person->save();
+
+    $this->assert($person->size_addresses() === 1, 'Has many has 1 object');
+
+    $this->assert($Address->count() == 1, 'Only one address exists');
+
+    $person->setProperties([ // should add this new address
+      'addresses' => [
+        $Address->create([
+          'line1'   => 'line1_2',
+          'zipcode' => '22222',
+          'state'   => 'AK'
+        ])
+      ]
+    ]);
+
+    $person->save();
+
+    // since no other instance references the previous address, the setProperties deletes the orphan from the DB
+    $this->assert($Address->count() == 1, 'Previous address was deleted');
+  }
+
+  public function test_set_properties_has_many_keep_orphans()
+  {
+    global $Address, $Person;
+
+    $addresses = [
+      $Address->create([
+        'line1'   => 'line1_1',
+        'zipcode' => '11111',
+        'state'   => 'MN'
+      ])
+    ];
+
+    $person = $Person->create([
+      'firstname'    => 'Test',
+      'lastname'     => 'One',
+      'phone_number' => '5551234'
+    ]);
+
+    foreach ($addresses as $address)
+    {
+      $person->add_to_addresses($address);
+    }
+
+    $person->save();
+
+    $this->assert($person->size_addresses() === 1, 'Has many has 1 object');
+
+    $this->assert($Address->count() == 1, 'Only one address exists');
+
+    // updates the has many but do not deletes the orphans
+    $person->setProperties(
+      [
+        'addresses' => [ // should add this new address
+          $Address->create([
+            'line1'   => 'line1_2',
+            'zipcode' => '22222',
+            'state'   => 'AK'
+          ])
+        ]
+      ],
+      [
+        'addresses' => ['KEEP_ORPHANS']
+      ]
+    );
+
+    $person->save();
+
+    $this->assert($Address->count() == 2, 'Previous orphan address is not deleted');
+  }
+
+  public function test_set_properties_has_many_do_not_update()
+  {
+    global $Address, $Person;
+
+    $addresses = [
+      $Address->create([
+        'line1'   => 'line1_1',
+        'zipcode' => '11111',
+        'state'   => 'MN'
+      ])
+    ];
+
+    $person = $Person->create([
+      'firstname'    => 'Test',
+      'lastname'     => 'One',
+      'phone_number' => '5551234'
+    ]);
+
+    foreach ($addresses as $address)
+    {
+      $person->add_to_addresses($address);
+    }
+
+    $person->save();
+
+    $this->assert($person->size_addresses() === 1, 'Has many has 1 object');
+
+    $this->assert($Address->count() == 1, 'Only one address exists');
+
+    // updates the has many but do not deletes the orphans
+    $person->setProperties(
+      [
+        'addresses' => [ // should add this new address
+          $Address->create([
+            'line1'   => 'line1_2',
+            'zipcode' => '22222',
+            'state'   => 'AK'
+          ])
+        ]
+      ],
+      [
+        'addresses' => ['DO_NOT_UPDATE']
+      ]
+    );
+
+    $person->save();
+
+    $this->assert($person->get_addresses()[0]->get_line1() == 'line1_1', 'Address was not modified');
+
+    $this->assert($Address->count() == 1, 'One address exists');
+  }
 }
 
 ?>

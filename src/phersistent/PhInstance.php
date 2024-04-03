@@ -480,11 +480,17 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
         // DELETE_ORPHANS will try to delete from the DB the items in the has many,
         // but only if they are not referenced by other items. For the non-orphan items,
         // only the backlink to the parent will be nullified.
-        $filtered = array_filter($attr_options, function($item) {
-          return str_starts_with($item, 'DELETE');
-        });
+        // $filtered = array_filter($attr_options, function($item) {
+        //   return str_starts_with($item, 'DELETE');
+        // });
 
-        if (count($filtered) == 0)
+        // if (count($filtered) == 0)
+        // {
+        //   $attr_options[] = 'DELETE_ORPHANS';
+        // }
+
+        // delete orphans by default if the keep orphans option is not set
+        if (!in_array('KEEP_ORPHANS', $attr_options))
         {
           $attr_options[] = 'DELETE_ORPHANS';
         }
@@ -654,7 +660,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       }
 
       // only is_dirty if the clean was done, it's not done if the collection is empty
-      if ($this->cleanFrom($attr, $args))
+      if ($this->cleanFrom($attr, $args[0]))
       {
         $this->is_dirty = true;
       }
