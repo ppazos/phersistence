@@ -34,7 +34,7 @@ class TestHasOneUpdateCascade extends DebbieTestCase {
     $out = SetupTestData::hasone_save_cascade_1();
 
     $out['e']->set_payor_id(NULL);
-    $result = $out['e']->save();
+    $result = $out['e']->save(); // Sets the payor_id again to 1 because the payor is not null
 
 
     // tests

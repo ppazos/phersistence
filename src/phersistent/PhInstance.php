@@ -37,7 +37,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
     return $this->{$hasManyName}->add($ins);
   }
 
-  private function cleanFrom($hasManyName, $options = array())
+  private function cleanFrom($hasManyName, $options = [])
   {
     if ($this->{$hasManyName} === self::NOT_LOADED_ASSOC) // not loaded
     {
@@ -48,29 +48,44 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
     // the collection is empty, there is no clean to do
     if ($this->{$hasManyName}->size() == 0) return false;
 
-    // to nullify the backlinks
+
     $items = $this->{$hasManyName}->all();
 
+    // NOTE: doing a clean will leave orphan items in the database, because are removed from the parent here.
     // removes all objects from the collection without any checks
     $this->{$hasManyName}->clean();
 
-    // special option to tell the clean to avoid updating the contained items,
-    // this is used when the developer wants to delete the previous items after
-    // a setProperties that sets the hasmany collection is executed
-    if (!in_array('DO_NOT_UPDATE', $options))
+    // try to delete orphans, if we can't, just nullify the backlink
+    if (in_array('DELETE_ORPHANS', $options))
     {
-      // nullify backlink
-      $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
-
+      foreach ($items as $ins)
+      {
+        try
+        {
+          $ins->delete();
+        }
+        catch (\Exception $e)
+        {
+          // nullify backlink
+          $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
+          $ins->{'set_'. $backlink_name}(NULL);
+          $ins->save();
+        }
+      }
+    }
+    // nullify backlinks
+    else
+    {
       // NOTE: this is innefficient when hasmany has thousands of object, it should be documented.
       foreach ($items as $ins)
       {
+        // nullify backlink
+        $backlink_name = $this->phclass->backlink_name($this, $hasManyName);
         $ins->{'set_'. $backlink_name}(NULL);
         $ins->save();
       }
     }
 
-    // clean done
     return true;
   }
 
@@ -446,23 +461,43 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       }
       else if ($this->phclass->is_has_many($attr) && is_array($value))
       {
-        $attr_options = $options[$attr] ?? ''; // ['addresses' => 'DO_NOT_UPDATE']
+        // NOTE: the options[attr] could be a single string or an array of labels
+        // $attr_options will always be an array
+        $attr_options = $options[$attr] ?? []; // ['addresses' => 'DO_NOT_UPDATE']
+        if (is_string($attr_options)) $attr_options = [$attr_options];
 
-        // NOTE: the attr options is a string
-        if ('DO_NOT_UPDATE' == $attr_options) continue;
+
+        // Do not touch this has many collection on setProperties, even if values are given
+        if (in_array('DO_NOT_UPDATE', $attr_options)) continue;
 
         // =====
         // This code does:
         // 1. load the has many collection of it's NOT_LOADED
         // 2. removes all items from it
-        // 3. nullifies the backlink from each item to the container item
-        // 4. saves the items now without the association to the container
+        // 3. deletes or nullifies the backlink from each item to the container item
+        // 4. saves the items with the nullified backlink
 
-        //echo "setProperties HAS MANY $attr". PHP_EOL;
-        // if properties want to set has many, the has many is cleaned up
-        // *** all the items are removed ***
+        // DELETE_ORPHANS will try to delete from the DB the items in the has many,
+        // but only if they are not referenced by other items. For the non-orphan items,
+        // only the backlink to the parent will be nullified.
+        // $filtered = array_filter($attr_options, function($item) {
+        //   return str_starts_with($item, 'DELETE');
+        // });
+
+        // if (count($filtered) == 0)
+        // {
+        //   $attr_options[] = 'DELETE_ORPHANS';
+        // }
+
+        // delete orphans by default if the keep orphans option is not set
+        if (!in_array('KEEP_ORPHANS', $attr_options))
+        {
+          $attr_options[] = 'DELETE_ORPHANS';
+        }
+
+        // Remove and delete items
         $cleanMethod = 'clean_'. $attr;
-        $this->{$cleanMethod}($options[$attr] ?? []);
+        $this->{$cleanMethod}($attr_options);
         // =====
 
 
@@ -625,7 +660,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       }
 
       // only is_dirty if the clean was done, it's not done if the collection is empty
-      if ($this->cleanFrom($attr, $args))
+      if ($this->cleanFrom($attr, $args[0]))
       {
         $this->is_dirty = true;
       }
@@ -743,7 +778,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
        if ($c != null)
           $parentAttrs = get_class_vars($c);
        else
-          $parentAttrs = array();
+          $parentAttrs = [];
 
        $declaredAttrs = array_diff($thisAttrs, $parentAttrs);
 
@@ -766,7 +801,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
 
        if ($c != null)
        {
-          $def['__parent'] = array();
+          $def['__parent'] = [];
           $def = &$def['__parent'];
        }
     }
@@ -823,7 +858,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
    */
   public function getAllHasMany()
   {
-    $hasmany = array();
+    $hasmany = [];
     foreach ($this->phclass->getHasManyDeclarations() as $attr=>$rel)
     {
       // FIXME: this loads from DB and the validate uses it, so everytime

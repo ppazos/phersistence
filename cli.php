@@ -55,7 +55,18 @@ $run->after_each_test(function() use ($d) {
 
 
 // case or cases specific
-if ($argc == 3)
+if ($argc >= 4)
+{
+   $methods = [];
+
+   for ($i = 3; $i < $argc; $i++) {
+      $methods[] = $argv[$i];
+   }
+
+   $run->run_case($argv[1], $argv[2], $methods);
+}
+// suite specified
+else if ($argc == 3)
 {
    $run->run_case($argv[1], $argv[2]);
 }
