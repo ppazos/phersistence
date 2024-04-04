@@ -660,7 +660,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       }
 
       // only is_dirty if the clean was done, it's not done if the collection is empty
-      if ($this->cleanFrom($attr, $args[0]))
+      if ($this->cleanFrom($attr, $args[0] ?? [])) // if clean_xxx is called directly, it might not have $args[0]
       {
         $this->is_dirty = true;
       }
