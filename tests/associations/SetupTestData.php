@@ -6,7 +6,7 @@ class SetupTestData {
 
   static function hasone_save_cascade_1()
   {
-    global $Employer, $Payor;
+    global $Employer;
 
     $e = $Employer->create([
       'payor' => [
@@ -24,7 +24,7 @@ class SetupTestData {
 
   static function hasone_save_cascade_2()
   {
-    global $Employer, $Payor;
+    global $Employer;
 
     $e = $Employer->create([
       'company'   => 'test employer',

@@ -28,23 +28,21 @@ class TestHasOneUpdateCascade extends DebbieTestCase {
     $this->assert($out['e']->payor === NULL, 'Hasone attribute is NULL');
   }
 
-  // save has one 1 + update setting null has one id
+  // save has one 1 + update setting null has one id shouldn't have any effect when saving/updating
   public function test_1_2()
   {
     $out = SetupTestData::hasone_save_cascade_1();
 
+    // Setting the xxx_id attribute directly to NULL shouldn't have any effect.
     $out['e']->set_payor_id(NULL);
-    $result = $out['e']->save(); // Sets the payor_id again to 1 because the payor is not null
-
+    $result = $out['e']->save();
 
     // tests
     $this->assert($result !== NULL, 'Update successful');
 
-    $this->assert($out['e']->payor_id === NULL, 'FK attribute is NULL');
+    $this->assert($out['e']->payor_id !== NULL, 'FK attribute is not NULL');
 
-    //echo $out['e']->payor_id; // = 1
-
-    $this->assert($out['e']->payor === NULL, 'Hasone attribute is NULL');
+    $this->assert($out['e']->payor !== NULL, 'Hasone attribute is not NULL');
   }
 
   // save has one 1 + update setting another object in hasone attribute
@@ -115,18 +113,15 @@ class TestHasOneUpdateCascade extends DebbieTestCase {
   {
     $out = SetupTestData::hasone_save_cascade_2();
 
-    $out['e']->set_payor_id(NULL);
+    $out['e']->set_payor_id(NULL); // setting the xxx_id to NULL shouldn't have any effect
     $result = $out['e']->save();
-
 
     // tests
     $this->assert($result !== NULL, 'Update successful');
 
-    $this->assert($out['e']->payor_id === NULL, 'FK attribute is NULL');
+    $this->assert($out['e']->payor_id !== NULL, 'FK attribute is not NULL');
 
-    //echo $out['e']->payor_id; // = 1
-
-    $this->assert($out['e']->payor === NULL, 'Hasone attribute is NULL');
+    $this->assert($out['e']->payor !== NULL, 'Hasone attribute is not NULL');
   }
 
   // save has one 2 + update setting another object in hasone attribute
@@ -197,18 +192,16 @@ class TestHasOneUpdateCascade extends DebbieTestCase {
   {
     $out = SetupTestData::hasone_save_cascade_3();
 
+    // Setting the xxx_id attribute directly to NULL shouldn't have any effect.
     $out['e']->set_payor_id(NULL);
     $result = $out['e']->save();
-
 
     // tests
     $this->assert($result !== NULL, 'Update successful');
 
-    $this->assert($out['e']->payor_id === NULL, 'FK attribute is NULL');
+    $this->assert($out['e']->payor_id !== NULL, 'FK attribute is not NULL');
 
-    //echo $out['e']->payor_id; // = 1
-
-    $this->assert($out['e']->payor === NULL, 'Hasone attribute is NULL');
+    $this->assert($out['e']->payor !== NULL, 'Hasone attribute is not NULL');
   }
 
   // save has one 3 + update setting another object in hasone attribute
@@ -279,18 +272,16 @@ class TestHasOneUpdateCascade extends DebbieTestCase {
   {
     $out = SetupTestData::hasone_save_cascade_4();
 
+    // Setting the xxx_id attribute directly to NULL shouldn't have any effect.
     $out['e']->set_payor_id(NULL);
     $result = $out['e']->save();
-
 
     // tests
     $this->assert($result !== NULL, 'Update successful');
 
-    $this->assert($out['e']->payor_id === NULL, 'FK attribute is NULL');
+    $this->assert($out['e']->payor_id !== NULL, 'FK attribute is not NULL');
 
-    //echo $out['e']->payor_id; // = 1
-
-    $this->assert($out['e']->payor === NULL, 'Hasone attribute is NULL');
+    $this->assert($out['e']->payor !== NULL, 'Hasone attribute is not NULL');
   }
 
   // save has one 3 + update setting another object in hasone attribute
