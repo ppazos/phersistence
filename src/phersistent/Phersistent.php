@@ -542,7 +542,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
       }
     }
 
-    return in_array($this->{$attr}, [self::INT, self::LONG, self::FLOAT, self::DOUBLE]);
+    return in_array($this->{$attr}, [self::INT, self::LONG, self::FLOAT, self::DOUBLE, self::DECIMAL]);
   }
 
   public function is_int($attr)
