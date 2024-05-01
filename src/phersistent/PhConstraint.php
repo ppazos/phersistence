@@ -32,7 +32,7 @@ class FieldValidator {
 
   public static function validate($phi, $attr, $cs)
   {
-    $errors = array();
+    $errors = [];
 
     /* the default value for nullable was changed from false to true, so if not
        constraint is defined, we consider it is nullable, like it happens in the database.
@@ -81,7 +81,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   private $field_errors;
   private $position = 0;
 
-  public function __construct($field_errors = array())
+  public function __construct($field_errors = [])
   {
     $this->field_errors = $field_errors;
   }
@@ -93,7 +93,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
 
   public function getAllErrorMessages()
   {
-    $errs = array();
+    $errs = [];
     foreach ($this->field_errors as $field => $validation_errors)
     {
       // if field is has one, validation errors is object validation errors
@@ -124,7 +124,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   // something like person => address => line1 => [ValidationError]
   public function getSimplifiedFieldErrors()
   {
-    $errors = array();
+    $errors = [];
     $this->collect_errors($this, $errors);
     return $errors;
   }
@@ -136,7 +136,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
       // list of single errors
       if (is_array($error))
       {
-        $collected[$field] = array();
+        $collected[$field] = [];
 
         foreach ($error as $error_i)
         {
@@ -146,7 +146,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
       // is another validation_errors object
       else
       {
-        $collected[$field] = array();
+        $collected[$field] = [];
 
         // recursion
         $this->collect_errors($error, $collected[$field]);
@@ -159,7 +159,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   public function getSimplifiedFlatFieldErrors()
   {
     $errors = $this->collect_errors_flat($this);
-    $ret = array();
+    $ret = [];
 
     // fix attribute names for the final flat array
     foreach ($errors as $attr_keys_errors)
@@ -183,7 +183,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
 
   private function collect_errors_flat($validation_errors)
   {
-    $attr_errors = array();
+    $attr_errors = [];
     foreach ($validation_errors->getFieldErrors() as $field => $error)
     {
       // list of single errors or array of has many errors for each item
@@ -221,7 +221,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
           // if it's a single error
           $attr_errors[] = [
             'errors' => $error,
-            'keys' => array($field)
+            'keys' => [$field]
           ];
         }
       }
@@ -248,7 +248,7 @@ class ObjectValidationErrors implements \Iterator, \ArrayAccess, \Countable {
   }
 
   // for merging two or more ObjevtValidationErrors
-  public function addAll($errors = array())
+  public function addAll($errors = [])
   {
     $this->field_errors = array_merge($this->field_errors, $errors);
   }

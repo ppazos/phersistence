@@ -158,7 +158,7 @@ class MySQL {
 
   function get_tables()
   {
-    $tables = array();
+    $tables = [];
     $ts = $this->query('SHOW TABLES');
     while ($row = $ts->fetch_assoc())
     {
@@ -181,7 +181,7 @@ class MySQL {
 
   function get_create_tables()
   {
-    $create_tables = array();
+    $create_tables = [];
     $tables = $this->get_tables();
     foreach ($tables as $table)
     {
@@ -271,7 +271,7 @@ class MySQL {
   {
     // in mysql >= 5.6 innodb supports fulltext indexes
     // in lower versions that is supported only by MyISAM
-    // in 5.5 the default table type is inoodb and that breacks the fulltext index creation
+    // in 5.5 the default table type is inoodb and that breaks the fulltext index creation
     if ($this->server_version() >= 50600)
       $this->execute('CREATE TABLE '.$table_name .' (id INT NOT NULL AUTO_INCREMENT, PRIMARY KEY (id))');
     else

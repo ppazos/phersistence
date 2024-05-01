@@ -50,7 +50,7 @@ class PhersistentDefManager {
     }
     
 
-    $this->classDefinitions = array('Phersistent'=>new Phersistent());
+    $this->classDefinitions = ['Phersistent'=>new Phersistent()];
 
     // all declared phersistent classes before creating the manager
     foreach (get_declared_classes() as $aClassName)
@@ -152,7 +152,7 @@ class PhersistentDefManager {
     return $this->classDefinitions[$def];
   }
 
-  public function create($def, $attrs = array())
+  public function create($def, $attrs = [])
   {
     // TODO: check $def exists
     return $this->classDefinitions[$def]->create($attrs);
