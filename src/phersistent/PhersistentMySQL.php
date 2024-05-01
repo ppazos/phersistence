@@ -1023,6 +1023,9 @@ class PhersistentMySQL {
       case Phersistent::DOUBLE:
         return 'DOUBLE';
       break;
+      case Phersistent::DECIMAL:
+        return 'DECIMAL';
+      break;
       case Phersistent::BOOLEAN:
         return 'BOOLEAN'; // synonym of TINYINT(1)
       break;

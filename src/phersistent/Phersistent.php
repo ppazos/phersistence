@@ -20,6 +20,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   const LONG     = 'long';
   const FLOAT    = 'float';
   const DOUBLE   = 'double';
+  const DECIMAL  = 'decimal';
   const BOOLEAN  = 'boolean';
   const DATE     = 'date';
   const TIME     = 'time';
