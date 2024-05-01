@@ -370,18 +370,18 @@ class PhersistentMySQL {
 
     $table_name = $this->get_table_name($phi);
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT * FROM '. $table_name .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }
     $r->close();
 
-    $instances = array();
+    $instances = [];
     foreach($records as $table)
     {
       // the row class chould be the same as $class_name or a subclass, si we need
@@ -416,19 +416,19 @@ class PhersistentMySQL {
 
     $table_name = $this->get_table_name($phi);
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE '. $backlink_name .'='. $owner_id);
 
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }
     $r->close();
 
-    $instances = array();
+    $instances = [];
     foreach($records as $table)
     {
       // the row class chould be the same as $class_name or a subclass, si we need
@@ -461,7 +461,7 @@ class PhersistentMySQL {
   {
     // echo 'find_by_where_recursive'. PHP_EOL;
     // print_r($subtree);
-    $expressions = array();
+    $expressions = [];
     foreach ($subtree as $k=>$subconds)
     {
       if ($k === 'AND' || $k === 'OR')
@@ -599,18 +599,18 @@ class PhersistentMySQL {
     $expr = $this->find_by_where_recursive($where, $alias);
     $query_where = $expr[0];
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE '. $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }
     $r->close();
 
-    $instances = array();
+    $instances = [];
     foreach($records as $table)
     {
       // the row class chould be the same as $class_name or a subclass, si we need
@@ -640,12 +640,12 @@ class PhersistentMySQL {
     $expr = $this->find_by_where_recursive($where, $alias); // just generates the criteria from the recursive struture in $where
     $query_where = $expr[0];
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }
@@ -662,7 +662,7 @@ class PhersistentMySQL {
   public function get_row($table_name, $id)
   {
     // Does lazy loading, so foreigns are not loaded.
-    $record = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+    $record = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
 
     $r = $this->driver->query('SELECT * FROM '. $table_name .' WHERE id='. $id);
 
@@ -791,15 +791,15 @@ class PhersistentMySQL {
     // and the join tables referencing the main and the assoc table
     // saving order will be always main + associated, saving associated first
     // to copy keys to owners, then join tables, always checking for loops.
-    $table = array();
+    $table = [];
 
     if ($phi == null) return $table;
 
     $table['table_name'] = $this->get_table_name($phi);
-    $table['columns'] = array(); // simple column values
-    $table['foreigns'] = array(); // associated objects referenced by FKs
-    $table['many_back'] = array();
-    $table['many_join'] = array();
+    $table['columns'] = []; // simple column values
+    $table['foreigns'] = []; // associated objects referenced by FKs
+    $table['many_back'] = [];
+    $table['many_join'] = [];
 
     $fields = $phi->getDefinition()->get_all_fields();
 
@@ -815,7 +815,7 @@ class PhersistentMySQL {
           //$backlink_name = $this->backlink_name($phi, $attr);
           $backlink_name = $phi->getDefinition()->backlink_name($phi, $attr);
 
-          $table['many_back'][$backlink_name] = array();
+          $table['many_back'][$backlink_name] = [];
 
 
           // TEST
@@ -1066,7 +1066,7 @@ class PhersistentMySQL {
   public function runRaw($sql)
   {
     $r = $this->driver->query($sql); // this checks for errors and throws exceptions
-    $rows = array();
+    $rows = [];
     while ($row = $r->fetch_assoc())
     {
       $rows[] = $row;
@@ -1093,17 +1093,17 @@ class PhersistentMySQL {
       $query_where = $where->eval($alias);
     }
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT * FROM '. $table_name .' as '. $alias .' WHERE ' . $query_where .' ORDER BY '. $sort .' '. $order .' LIMIT '. $offset .', '. $max);
     while ($row = $r->fetch_assoc())
     {
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }
     $r->close();
 
-    $instances = array();
+    $instances = [];
     foreach($records as $table)
     {
       $class = $this->full_class_name_to_simple_name($table['columns']['class']);
@@ -1138,12 +1138,12 @@ class PhersistentMySQL {
       $query_where = $where->eval($alias);
     }
 
-    $records = array();
+    $records = [];
     $r = $this->driver->query('SELECT COUNT(id) as count FROM '. $table_name .' as '. $alias .' WHERE '. $query_where);
     while ($row = $r->fetch_assoc())
     {
       // FIXME: table is really row or record
-      $table = array('table_name' => $table_name, 'columns' => array(), 'foreigns' => array());
+      $table = ['table_name' => $table_name, 'columns' => [], 'foreigns' => []];
       $table['columns'] = $row;
       $records[] = $table;
     }

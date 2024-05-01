@@ -158,7 +158,7 @@ class MySQL {
 
   function get_tables()
   {
-    $tables = array();
+    $tables = [];
     $ts = $this->query('SHOW TABLES');
     while ($row = $ts->fetch_assoc())
     {
@@ -181,7 +181,7 @@ class MySQL {
 
   function get_create_tables()
   {
-    $create_tables = array();
+    $create_tables = [];
     $tables = $this->get_tables();
     foreach ($tables as $table)
     {

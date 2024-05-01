@@ -5,7 +5,7 @@ namespace CaboLabs\Phersistence\phersistent;
 class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implements Traversable {
 
   protected $position = 0;
-  protected $items = array();
+  protected $items = [];
 
   public function add(PhInstance $instance)
   {
@@ -13,7 +13,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
     return true;
   }
 
-  public function add_all($instances = array())
+  public function add_all($instances = [])
   {
     foreach ($instances as $ins)
     {
@@ -23,7 +23,7 @@ class PhCollection implements \Iterator, \ArrayAccess, \Countable { // implement
 
   public function clean()
   {
-    $this->items = array();
+    $this->items = [];
     $this->rewind();
   }
 

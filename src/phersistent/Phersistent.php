@@ -34,8 +34,8 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   // and to differentiate from the NULL value that is valid for has one.
   const NOT_LOADED_ASSOC = -1;
 
-  private $__many = array();
-  private $__one = array();
+  private $__many = [];
+  private $__one = [];
   private $__manager;
   protected $__constraints;
   protected $__functions; // = array();
@@ -120,18 +120,18 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   // owned or inherited.
   public function constraints()
   {
-    return array();
+    return [];
   }
 
   public function functions()
   {
-    return array();
+    return [];
   }
 
   // default values for fields
   public function init()
   {
-    return array();
+    return [];
   }
 
   public function functionExists($func)
@@ -189,7 +189,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   /*
   * New instance of this class.
   */
-  public function create($attrs = array())
+  public function create($attrs = [])
   {
     $ins = new PhInstance();
 
@@ -342,13 +342,13 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
     return $this->__manager->listHasManyInstances($owner, $hm_attr, $hm_class);
   }
 
-  public function findBy($where = array(), $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
+  public function findBy($where = [], $max = 10, $offset = 0, $sort = 'id', $order = 'ASC')
   {
     if (count($where) == 0) return $this->listAll($max, $offset, $sort, $order);
     return $this->__manager->findBy(get_class($this), $where, $max, $offset, $sort, $order);
   }
 
-  public function countBy($where = array())
+  public function countBy($where = [])
   {
     if (empty($where)) return $this->count();
     return $this->__manager->countBy(get_class($this), $where);
@@ -385,7 +385,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
   public function get_all_fields()
   {
     $raw_fields = get_object_vars($this);
-    return array_diff_key($raw_fields, array('__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>'', '__constraints'=>''));
+    return array_diff_key($raw_fields, ['__one'=>'', '__many'=>'', '__manager'=>'', '__functions'=>'', '__constraints'=>'']);
   }
 
   /**
@@ -444,6 +444,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
     }
     return $this->__one[$field];
   }
+
   public function get_has_many($field)
   {
     if (!$this->is_has_many($field))
@@ -541,7 +542,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
       }
     }
 
-    return in_array($this->{$attr}, array(self::INT, self::LONG, self::FLOAT, self::DOUBLE));
+    return in_array($this->{$attr}, [self::INT, self::LONG, self::FLOAT, self::DOUBLE]);
   }
 
   public function is_int($attr)
@@ -560,7 +561,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
       }
     }
 
-    return in_array($this->{$attr}, array(self::INT, self::LONG));
+    return in_array($this->{$attr}, [self::INT, self::LONG]);
   }
 
   public function is_real($attr)
@@ -594,7 +595,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
       return $this->__constraints[$attr];
     }
 
-    return array();
+    return [];
   }
 
   // true if the attribute has a nullable(true) constraint or no nullable constraint at all (default is nullable),
@@ -629,7 +630,7 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
 
     //echo "---------- CLASS ". $parent . PHP_EOL;
 
-    $subclasses = array();
+    $subclasses = [];
     foreach (get_declared_classes() as $class)
     {
       if (is_subclass_of($class, $parent)) $subclasses[] = $class;

@@ -181,7 +181,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
     // array_diff generates non sequential indexes
     // doing json_encode over non sequential indexes generates a JSON object not an array
     // array_values, reindexes from 0
-    $this->{$sarrayAttr} = array_values(array_diff($this->{$sarrayAttr}, array($value)));
+    $this->{$sarrayAttr} = array_values(array_diff($this->{$sarrayAttr}, [$value]));
   }
 
   private function hasValue($sarrayAttr, $value)
@@ -206,7 +206,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
       // get reference to callable function like:
       // $v = Array($this,"checkDemo");
       // $v("hello");
-      $equality_function = array($this->phclass, $attr.'_equality'); // this is a reference to the method!
+      $equality_function = [$this->phclass, $attr.'_equality']; // this is a reference to the method!
       $this->{$attr} = new $rel->collectionType($equality_function);
     }
     else
@@ -285,7 +285,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
   }
 
   // options for now is to tell the hasmany to avoid updating the items when the collection is cleaned
-  public function setProperties($props = array(), $options = array())
+  public function setProperties($props = [], $options = [])
   {
     // loops over the declared fields and get the values from props.
     // any other values not declared are ignored from props.
@@ -751,7 +751,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
 
     // TODO: missing hasMany, the issue is hasMany is a call to a function, not a declaration yet.
 
-    $definition = array();
+    $definition = [];
     $c = $this->getClass();
     $def = &$definition;
     while ($c != null)
@@ -839,7 +839,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
    */
   public function getAllHasOne()
   {
-    $hasone = array();
+    $hasone = [];
     foreach ($this->phclass->getHasOneDeclarations() as $attr=>$rel)
     {
       // TEST
@@ -895,7 +895,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
   public function validate($cascade = true, $set = true)
   {
     //echo 'INSTANCE validate '. $this->getClass() . PHP_EOL;
-    $errors = array();
+    $errors = [];
 
     /* this validation was iterating though all the attrs even if those didnt
        have a constraint, below is a better solution, iterating though the constraints
@@ -961,7 +961,7 @@ class PhInstance extends stdClass { // extends to avoid dynamic property depreca
           $hm_errors = $hmi->validate();
           if ($hm_errors !== true)
           {
-            if (!isset($errors[$attr])) $errors[$attr] = array();
+            if (!isset($errors[$attr])) $errors[$attr] = [];
              // the index is important to know which instance violated the constriants
             $errors[$attr][$i] = $hm_errors;
           }

@@ -44,7 +44,7 @@ class PhSet extends PhCollection {
     return parent::add($instance);
   }
 
-  public function add_all($instances = array())
+  public function add_all($instances = [])
   {
     foreach ($instances as $ins)
     {
