@@ -100,7 +100,18 @@ n       | NULL        | true             | `b_id` = NULL, then `b_id` = n (B.2)
 n       | b1          | false            | `a` loaded from the database and `b` was accessed to read, so it was loaded
 n       | b1          | true             | same as above, and includes: `b_id` = n, then `b_id` = m / n != m (B.3)
 
-<a href="#6">[6]</a>: if this case happens is because `b_id` wasn't NULL and was set as NULL, so the `is_dirty_b_id` should be true.
-<a href="#7">[7]</a>: `is_dirty_b_id` can't be true because `b` = NULL and `b_id` is NULL too (this should be checked before save because in the middle `b_id` could be set to something then to NULL again)
-<a href="#8">[8]</a>: this case had a `b1` assigned to `b` but the `b_id` was set to NULL, so it can't have `is_dirty_b_id` in false.
-<a href="#9">[9]</a>: if `b` = NULL, there is no hasone associated so on this case `b_id` was modified, so `is_dirty_b_id` can't be false.
++ <a href="#6">[6]</a>: if this case happens is because `b_id` wasn't NULL and was set as NULL, so the `is_dirty_b_id` should be true.
++ <a href="#7">[7]</a>: `is_dirty_b_id` can't be true because `b` = NULL and `b_id` is NULL too (this should be checked before save because in the middle `b_id` could be set to something then to NULL again)
++ <a href="#8">[8]</a>: this case had a `b1` assigned to `b` but the `b_id` was set to NULL, so it can't have `is_dirty_b_id` in false.
++ <a href="#9">[9]</a>: if `b` = NULL, there is no hasone associated so on this case `b_id` was modified, so `is_dirty_b_id` can't be false.
+
+
+# Important design decisions
+
+## 1. Empty strings (TEXT) are stored as NULL
+
+Because of https://github.com/ppazos/phersistence/blob/master/src/phersistent/PhersistentMySQL.php#L729 all empty strings are stored as NULL.
+
+Because of that, all TEXT fields that allow empty values should be nullable(true).
+
+Note that creates a small difference between what is stored and what is retrieved, so always consider this rule when storing empty string values.
