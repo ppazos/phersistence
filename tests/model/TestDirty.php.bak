@@ -1,0 +1,101 @@
+<?php
+
+namespace tests\model;
+
+use CaboLabs\Debbie\DebbieTestCase;
+
+class TestDirty extends DebbieTestCase {
+
+  public function test_dummy()
+  {
+
+  }
+
+  public function test_is_dirty_on_create()
+  {
+    global $Employer;
+
+    $employer = $Employer->create(['name' => 'CaboLabs']);
+
+    $this->assert($employer->get_is_dirty() === true, 'New instance is dirty');
+
+    $employer->save();
+
+    $this->assert($employer->get_is_dirty() === false, 'Saved instance is not dirty');
+  }
+
+  public function test_is_dirty_with_associations()
+  {
+    global $Employer, $Member, $PhoneNumber;
+
+    $employer = $Employer->create(['name' => 'CaboLabs']);
+    $employer->save();
+
+    $this->assert($employer->get_is_dirty() === false, 'Employer is not dirty after save');
+
+    $member = $Member->create([
+      'name' => 'Pablo',
+      'employer' => $employer,
+      'phones' => [
+        $PhoneNumber->create(['number' => '555 456 4563'])
+      ]
+    ]);
+
+    $this->assert($member->get_is_dirty() === true, 'New member is dirty');
+    $this->assert($employer->get_is_dirty() === false, 'Associated employer is not dirty');
+
+    $member->save();
+
+    $this->assert($member->get_is_dirty() === false, 'Saved member is not dirty');
+    $this->assert($employer->get_is_dirty() === false, 'Associated employer is still not dirty');
+  }
+
+  public function test_is_dirty_on_load()
+  {
+    global $Employer, $Member, $PhoneNumber;
+
+    $employer = $Employer->create(['name' => 'CaboLabs']);
+    $employer->save();
+
+    $member = $Member->create([
+      'name' => 'Pablo',
+      'employer' => $employer,
+      'phones' => [
+        $PhoneNumber->create(['number' => '555 456 4563'])
+      ]
+    ]);
+    $member->save();
+
+    $loaded_employer = $Employer->get($employer->get_id());
+    $this->assert($loaded_employer->get_is_dirty() === false, 'Loaded employer is not dirty');
+
+    $loaded_member = $Member->get($member->get_id());
+    $this->assert($loaded_member->get_is_dirty() === false, 'Loaded member is not dirty');
+
+    $phones = $loaded_member->get_phones();
+    foreach ($phones as $phone) {
+      $this->assert($phone->get_is_dirty() === false, 'Loaded phone is not dirty');
+    }
+  }
+
+  public function test_is_dirty_after_set_properties()
+  {
+    global $Employer, $Member;
+
+    $employer = $Employer->create(['name' => 'CaboLabs']);
+    $employer->save();
+
+    $member = $Member->create(['name' => 'Pablo', 'employer' => $employer]);
+    $member->save();
+
+    $member->setProperties(['employer_id' => $employer->get_id()]);
+
+    $this->assert($member->get_is_dirty() === true, 'Member is dirty after setProperties');
+
+    $member->save();
+
+    $this->assert($member->get_is_dirty() === false, 'Member is not dirty after save');
+  }
+}
+
+?>

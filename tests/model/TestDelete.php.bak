@@ -1,0 +1,37 @@
+<?php
+
+namespace tests\model;
+
+use CaboLabs\Debbie\DebbieTestCase;
+
+class TestDelete extends DebbieTestCase {
+
+  public function test_dummy()
+  {
+
+  }
+
+  public function test_delete_sets_deleted_flag()
+  {
+    global $NumberTest;
+
+    $o = $NumberTest->create([
+      'number1' => 0,
+      'number2' => 0,
+      'number3' => 0.0,
+      'number4' => 0.0
+    ]);
+
+    $o->save();
+
+    $o->delete(true);
+
+    $this->assert($o->get_deleted() === true, 'Deleted flag is set');
+
+    $loaded = $NumberTest->get($o->get_id());
+
+    $this->assert($loaded->get_deleted() === true, 'Deleted flag persists');
+  }
+}
+
+?>
