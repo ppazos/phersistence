@@ -618,6 +618,36 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
     return $attr_is_nullable;
   }
 
+  public function beginTransaction($is_read_only = false)
+  {
+    $this->__manager->transactionStart($is_read_only);
+  }
+
+  public function commitTransaction()
+  {
+    $this->__manager->transactionCommit();
+  }
+
+  public function rollbackTransaction()
+  {
+    $this->__manager->transactionRollback();
+  }
+
+  public function transaction(callable $fn)
+  {
+    $this->beginTransaction();
+    try
+    {
+      $fn();
+      $this->commitTransaction();
+    }
+    catch (\Exception $e)
+    {
+      $this->rollbackTransaction();
+      throw $e;
+    }
+  }
+
   public function runRaw($sql)
   {
     return $this->__manager->runRaw($sql);
