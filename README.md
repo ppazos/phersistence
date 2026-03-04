@@ -7,6 +7,7 @@ Phersistence
 $ php cli.php associations
 $ php cli.php constraints
 $ php cli.php fields
+$ php cli.php transactions
 ```
 
 # Optimizations for has-one
@@ -105,6 +106,60 @@ n       | b1          | true             | same as above, and includes: `b_id` =
 + <a href="#8">[8]</a>: this case had a `b1` assigned to `b` but the `b_id` was set to NULL, so it can't have `is_dirty_b_id` in false.
 + <a href="#9">[9]</a>: if `b` = NULL, there is no hasone associated so on this case `b_id` was modified, so `is_dirty_b_id` can't be false.
 
+
+# Transactions (MySQL)
+
+Transactions allow grouping multiple read/write operations so they either all succeed (commit) or all fail (rollback), leaving the database in a consistent state.
+
+## Closure-based (recommended)
+
+Use `transaction(callable $fn)` on any model. The transaction is committed if `$fn` returns normally, and automatically rolled back if any exception is thrown — the exception is always re-thrown to the caller.
+
+```php
+$Order->transaction(function() use ($Order, $phi_order, $Item, $phi_item) {
+    $Order->save($phi_order);
+    $Item->save($phi_item);
+    // any exception here → automatic rollback of both saves
+});
+```
+
+This is the safest option because rollback is guaranteed even if you forget to handle exceptions.
+
+## Manual control
+
+Use `beginTransaction()`, `commitTransaction()`, and `rollbackTransaction()` for finer-grained control. **Always wrap in try/catch** — if an exception propagates without an explicit rollback, the transaction is left open on the connection and MySQL will only close it when the connection is dropped.
+
+```php
+$Order->beginTransaction();
+try {
+    $Order->save($phi_order);
+    $Item->save($phi_item);
+    $Order->commitTransaction();
+} catch (\Exception $e) {
+    $Order->rollbackTransaction();
+    throw $e;
+}
+```
+
+## Cross-model scope
+
+All model globals share the same database connection, so a transaction started from any one model covers operations on all other models. You only need to call `beginTransaction` / `commitTransaction` / `rollbackTransaction` once:
+
+```php
+$Order->beginTransaction();   // covers $Item, $Customer, etc.
+$Order->save($phi_order);
+$Item->save($phi_item);       // same transaction
+$Customer->delete($phi_c, true);
+$Order->commitTransaction();
+```
+
+## Exception in the middle
+
+| API | Exception behaviour |
+|-----|---------------------|
+| `transaction(callable $fn)` | Rollback is automatic; exception is re-thrown |
+| Manual without try/catch | Transaction is left dangling — **avoid this** |
+| Manual with try/catch | Rollback happens in the catch block; safe |
 
 # Important design decisions
 

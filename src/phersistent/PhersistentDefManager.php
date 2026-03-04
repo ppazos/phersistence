@@ -203,6 +203,21 @@ class PhersistentDefManager {
     $this->__ph_db->delete_instance($phi, $logical);
   }
 
+  public function transactionStart($is_read_only = false)
+  {
+    $this->__ph_db->transaction_start($is_read_only);
+  }
+
+  public function transactionCommit()
+  {
+    $this->__ph_db->transaction_commit();
+  }
+
+  public function transactionRollback()
+  {
+    $this->__ph_db->transaction_rollback();
+  }
+
   public function runRaw($sql)
   {
     return $this->__ph_db->runRaw($sql);

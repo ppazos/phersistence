@@ -1063,6 +1063,21 @@ class PhersistentMySQL {
     return $class;
   }
 
+  public function transaction_start($is_read_only = false)
+  {
+    $this->driver->transaction_start($is_read_only);
+  }
+
+  public function transaction_commit()
+  {
+    $this->driver->transaction_commit();
+  }
+
+  public function transaction_rollback()
+  {
+    $this->driver->transaction_rollback();
+  }
+
   public function runRaw($sql)
   {
     $r = $this->driver->query($sql); // this checks for errors and throws exceptions
