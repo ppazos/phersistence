@@ -381,7 +381,7 @@ class MySQL {
   }
 
   /** ******************************
-   * Worksing with transactions
+   * Working with transactions
    */
   function transaction_start($is_read_only = false)
   {
