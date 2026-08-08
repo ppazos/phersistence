@@ -1091,6 +1091,11 @@ class PhersistentMySQL {
     return $rows;
   }
 
+  public function executeRaw($sql, $params = [])
+  {
+    return $this->driver->executeRaw($sql, $params);
+  }
+
   public function find_by2($class_name, $where, $max, $offset, $sort, $order)
   {
     $class = $this->full_class_name_to_simple_name($class_name);

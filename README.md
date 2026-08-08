@@ -161,6 +161,63 @@ $Order->commitTransaction();
 | Manual without try/catch | Transaction is left dangling — **avoid this** |
 | Manual with try/catch | Rollback happens in the catch block; safe |
 
+# Raw SQL execution
+
+## executeRaw (recommended)
+
+Use `executeRaw($sql, $params = [])` to run SQL with bound parameters. Parameters are passed separately from the query string — they are never interpolated, so user-supplied values cannot alter the query structure.
+
+```php
+// SELECT: returns array of associative rows
+$rows = $Person->executeRaw(
+    "SELECT * FROM person WHERE firstname = ? AND lastname = ?",
+    [$firstname, $lastname]
+);
+
+// SELECT by int id
+$rows = $Person->executeRaw("SELECT * FROM person WHERE id = ?", [$id]);
+
+// UPDATE / INSERT / DELETE: returns int (affected rows)
+$affected = $Person->executeRaw(
+    "UPDATE person SET lastname = ? WHERE id = ?",
+    [$new_lastname, $id]
+);
+```
+
+Without parameters, `executeRaw` falls back to a plain query (same behavior as `runRaw`):
+
+```php
+$rows = $Person->executeRaw("SELECT * FROM person ORDER BY lastname");
+```
+
+## Parameter type inference
+
+Types are inferred automatically from the PHP value passed:
+
+| PHP type | MySQLi bind type |
+|----------|-----------------|
+| `int`    | `i`             |
+| `float`  | `d`             |
+| anything else (string, null, …) | `s` |
+
+## runRaw (deprecated)
+
+`runRaw($sql)` executes a raw SQL string with no parameter binding. It is still available for backward compatibility but should not be used for any query that includes external input. Migrate to `executeRaw` gradually.
+
+```php
+// Old — avoid for queries with user input
+$rows = $Person->runRaw("SELECT * FROM person WHERE id = $id");
+
+// New — safe
+$rows = $Person->executeRaw("SELECT * FROM person WHERE id = ?", [$id]);
+```
+
+## Run executeRaw tests
+
+```sh
+$ php cli.php query TestExecuteRaw
+```
+
 # Important design decisions
 
 ## 1. Empty strings (TEXT) are stored as NULL
