@@ -78,12 +78,12 @@ class MySQL {
 
   function close()
   {
-     PhLogger::log("MySQL::close ". $this->connection->host_info);
-     if ($this->connection !== NULL)
-     {
-        mysqli_close($this->connection);
-        $this->connection = NULL;
-     }
+    PhLogger::log("MySQL::close ". $this->connection->host_info);
+    if ($this->connection !== NULL)
+    {
+      mysqli_close($this->connection);
+      $this->connection = NULL;
+    }
   }
 
   /** ******************************
@@ -143,6 +143,64 @@ class MySQL {
     //$this->last_result = $result;
 
     return $result;
+  }
+
+  function executeRaw(string $sql, array $params = [])
+  {
+    PhLogger::log("MySQL::executeRaw ". $sql);
+
+    if (!$this->connection)
+    {
+      throw new \Exception("No connection to MySQL");
+    }
+
+    if (empty($params))
+    {
+      $result = $this->query($sql);
+      $rows = [];
+      while ($row = $result->fetch_assoc())
+      {
+        $rows[] = $row;
+      }
+      $result->close();
+      return $rows;
+    }
+
+    $stmt = $this->connection->prepare($sql);
+    if (!$stmt)
+    {
+      throw new \Exception("Prepare failed: " . $this->connection->error);
+    }
+
+    $types = '';
+    foreach ($params as $param)
+    {
+      if (is_int($param))       $types .= 'i';
+      elseif (is_float($param)) $types .= 'd';
+      else                      $types .= 's';
+    }
+
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $this->query_count++;
+
+    if ($result === false)
+    {
+      $affected = $stmt->affected_rows;
+      $stmt->close();
+      return $affected;
+    }
+
+    $rows = [];
+    while ($row = $result->fetch_assoc())
+    {
+      $rows[] = $row;
+    }
+    $result->close();
+    $stmt->close();
+    return $rows;
   }
 
 

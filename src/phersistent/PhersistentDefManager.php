@@ -223,6 +223,11 @@ class PhersistentDefManager {
     return $this->__ph_db->runRaw($sql);
   }
 
+  public function executeRaw($sql, $params = [])
+  {
+    return $this->__ph_db->executeRaw($sql, $params);
+  }
+
   public function get_db()
   {
     return $this->__ph_db;

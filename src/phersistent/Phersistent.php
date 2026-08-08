@@ -648,9 +648,17 @@ class Phersistent extends stdClass { // extends to avoid dynamic property deprec
     }
   }
 
+  /**
+   * @deprecated Use executeRaw() with parameter binding to prevent SQL injection.
+   */
   public function runRaw($sql)
   {
     return $this->__manager->runRaw($sql);
+  }
+
+  public function executeRaw($sql, $params = [])
+  {
+    return $this->__manager->executeRaw($sql, $params);
   }
 
   // Returns the Phersistent subclasses of this Phersistent class
