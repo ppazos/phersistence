@@ -1,0 +1,60 @@
+<?php
+
+namespace CaboLabs\Phersistence\drivers;
+
+/**
+ * Database driver contract. Migrations and the ORM depend on this interface, not on a specific database.
+ *
+ * Portable column types accepted by add_column() and modify_column():
+ *   int, long, float, double, decimal, boolean, date, time, datetime, text, string(N)
+ * These match the Phersistent data type names (string(N) is a bounded text, e.g. string(255)).
+ * Drivers may pass through any other type string unchanged for backward compatibility,
+ * but migrations must only use the portable types.
+ *
+ * Schema operations fail loudly: creating something that exists, or dropping/altering
+ * something that doesn't, throws an exception.
+ */
+interface Driver {
+
+  /* Connection */
+  function connect($dbhost, $dbuser, $dbpass, $dbname = null);
+  function select_db($dbname);
+  function close();
+
+  /* Query */
+  function execute($q);
+  function query($q);
+  function executeRaw(string $sql, array $params = []);
+  function last_insert_id();
+
+  /* Inspection */
+  function table_exists($table_name);
+  function get_tables();
+  function column_exists($table_name, $column_name);
+  function index_exists($table_name, $index_name);
+  function fk_exists($table_name, $fk_name);
+
+  /* Schema manipulation */
+  function create_table($table_name);
+  function drop_table($table_name);
+  function rename_table($table_name, $new_table_name);
+  function add_column($table_name, $column_name, $data_type, $nullable, $default = null);
+  function modify_column($table_name, $column_name, $data_type, $nullable, $default = null);
+  function rename_column($table_name, $column_name, $new_column_name);
+  function drop_column($table_name, $column_name);
+  function add_unique($table_name, $column_names, $constraint_name);
+  function add_index($table_name, $column_names, $index_name);
+  function add_fulltext_index($table_name, $column_names, $index_name);
+  function drop_index($table_name, $index_name);
+  function add_fk($table_name, $column_name, $fk_name, $ref_table_name, $ref_column_name);
+  function drop_fk($table_name, $fk_name);
+
+  /* Transactions */
+  function transaction_start($is_read_only = false);
+  function transaction_commit();
+  function transaction_rollback();
+
+  /* Locking: used to prevent concurrent migration runs. Returns true if the lock was acquired. */
+  function acquire_lock($name, $timeout_seconds = 0);
+  function release_lock($name);
+}

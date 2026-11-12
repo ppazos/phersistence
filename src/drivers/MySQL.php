@@ -4,7 +4,7 @@ namespace CaboLabs\Phersistence\drivers;
 
 use \CaboLabs\PhLogger\PhLogger;
 
-class MySQL {
+class MySQL implements Driver {
 
   private $connection = NULL;
   private $using_dbname;
@@ -360,10 +360,13 @@ class MySQL {
     }
     */
 
-    $default_string = '';
-    if (!is_null($default)) $default_string = 'DEFAULT '. $default;
+    $this->require_table($table_name);
+    if ($this->column_exists($table_name, $column_name))
+    {
+      throw new \Exception("Column '$column_name' already exists in table '$table_name'");
+    }
 
-    $this->execute('ALTER TABLE '.$table_name .' ADD COLUMN '. $column_name .' '. $data_type .' '. ($nullable ? 'NULL' : 'NOT NULL') .' '. $default_string);
+    $this->execute('ALTER TABLE '.$table_name .' ADD COLUMN '. $column_name .' '. $this->column_definition($data_type, $nullable, $default));
   }
 
   /**
@@ -433,9 +436,143 @@ class MySQL {
     $this->execute('ALTER TABLE '. $table_name .' ADD CONSTRAINT '. $fk_name .' FOREIGN KEY ('. $column_name .') REFERENCES '. $ref_table_name .'('. $ref_column_name .')');
   }
 
-  function remove_column()
+  function fk_exists($table_name, $fk_name)
   {
-    // TDB
+    $rows = $this->executeRaw(
+      "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = 'FOREIGN KEY'",
+      [$this->using_dbname, $table_name, $fk_name]
+    );
+    return count($rows) > 0;
+  }
+
+  function drop_table($table_name)
+  {
+    $this->require_table($table_name);
+    $this->execute('DROP TABLE '. $table_name);
+  }
+
+  function rename_table($table_name, $new_table_name)
+  {
+    $this->require_table($table_name);
+    if ($this->table_exists($new_table_name))
+    {
+      throw new \Exception("Table '$new_table_name' already exists");
+    }
+    $this->execute('RENAME TABLE '. $table_name .' TO '. $new_table_name);
+  }
+
+  /**
+   * Changes type, nullability and default of an existing column. The column definition is replaced as a whole.
+   */
+  function modify_column($table_name, $column_name, $data_type, $nullable, $default = null)
+  {
+    $this->require_column($table_name, $column_name);
+    $this->execute('ALTER TABLE '. $table_name .' MODIFY COLUMN '. $column_name .' '. $this->column_definition($data_type, $nullable, $default));
+  }
+
+  function rename_column($table_name, $column_name, $new_column_name)
+  {
+    $this->require_column($table_name, $column_name);
+    if ($this->column_exists($table_name, $new_column_name))
+    {
+      throw new \Exception("Column '$new_column_name' already exists in table '$table_name'");
+    }
+    $this->execute('ALTER TABLE '. $table_name .' RENAME COLUMN '. $column_name .' TO '. $new_column_name);
+  }
+
+  function drop_column($table_name, $column_name)
+  {
+    $this->require_column($table_name, $column_name);
+    $this->execute('ALTER TABLE '. $table_name .' DROP COLUMN '. $column_name);
+  }
+
+  /**
+   * Drops an index or a unique constraint (in MySQL both are indexes).
+   */
+  function drop_index($table_name, $index_name)
+  {
+    $this->require_table($table_name);
+    if (!$this->index_exists($table_name, $index_name))
+    {
+      throw new \Exception("Index '$index_name' doesn't exist in table '$table_name'");
+    }
+    $this->execute('DROP INDEX '. $index_name .' ON '. $table_name);
+  }
+
+  function drop_fk($table_name, $fk_name)
+  {
+    $this->require_table($table_name);
+    if (!$this->fk_exists($table_name, $fk_name))
+    {
+      throw new \Exception("Foreign key '$fk_name' doesn't exist in table '$table_name'");
+    }
+    $this->execute('ALTER TABLE '. $table_name .' DROP FOREIGN KEY '. $fk_name);
+  }
+
+  /** *******************************
+   * Locking
+   */
+  function acquire_lock($name, $timeout_seconds = 0)
+  {
+    $rows = $this->executeRaw('SELECT GET_LOCK(?, ?) AS l', [$name, $timeout_seconds]);
+    return (int)$rows[0]['l'] === 1;
+  }
+
+  function release_lock($name)
+  {
+    $rows = $this->executeRaw('SELECT RELEASE_LOCK(?) AS l', [$name]);
+    return (int)$rows[0]['l'] === 1;
+  }
+
+  /** *******************************
+   * Schema helpers
+   */
+
+  private function require_table($table_name)
+  {
+    if (!$this->table_exists($table_name))
+    {
+      throw new \Exception("Table '$table_name' doesn't exist");
+    }
+  }
+
+  private function require_column($table_name, $column_name)
+  {
+    $this->require_table($table_name);
+    if (!$this->column_exists($table_name, $column_name))
+    {
+      throw new \Exception("Column '$column_name' doesn't exist in table '$table_name'");
+    }
+  }
+
+  private function column_definition($data_type, $nullable, $default)
+  {
+    $def = $this->map_type($data_type) .' '. ($nullable ? 'NULL' : 'NOT NULL');
+    if (!is_null($default)) $def .= ' DEFAULT '. $default;
+    return $def;
+  }
+
+  /**
+   * Maps a portable type (see Driver) to a MySQL type. Unknown types are passed through unchanged (legacy).
+   */
+  function map_type($type)
+  {
+    if (preg_match('/^string\((\d+)\)$/i', $type, $m)) return 'VARCHAR('. $m[1] .')';
+
+    switch (strtolower($type))
+    {
+      case 'int':      return 'INT';
+      case 'long':     return 'BIGINT';
+      case 'float':    return 'FLOAT';
+      case 'double':   return 'DOUBLE';
+      case 'decimal':  return 'DECIMAL';
+      case 'boolean':  return 'BOOLEAN';
+      case 'date':     return 'DATE';
+      case 'time':     return 'TIME';
+      case 'datetime': return 'DATETIME';
+      case 'text':     return 'TEXT';
+    }
+    return $type;
   }
 
   /** ******************************
