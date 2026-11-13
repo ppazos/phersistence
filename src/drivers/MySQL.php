@@ -157,6 +157,13 @@ class MySQL implements Driver {
     if (empty($params))
     {
       $result = $this->query($sql);
+
+      // statements that don't return a result set (INSERT, UPDATE, DELETE, ...) return the affected rows
+      if ($result === true)
+      {
+        return mysqli_affected_rows($this->connection);
+      }
+
       $rows = [];
       while ($row = $result->fetch_assoc())
       {
@@ -573,6 +580,114 @@ class MySQL implements Driver {
       case 'text':     return 'TEXT';
     }
     return $type;
+  }
+
+  /** ******************************
+   * Data manipulation
+   */
+
+  /**
+   * Inserts a row ($row is a column => value map). Returns the new id.
+   */
+  function insert($table_name, array $row)
+  {
+    if (empty($row)) throw new \Exception('insert needs at least one column');
+    $this->require_table($table_name);
+
+    $cols = array_map([$this, 'ident'], array_keys($row));
+    $this->executeRaw(
+      'INSERT INTO '. $this->ident($table_name) .' ('. implode(', ', $cols) .') VALUES ('. implode(', ', array_fill(0, count($row), '?')) .')',
+      $this->bindable(array_values($row))
+    );
+    return $this->last_insert_id();
+  }
+
+  /**
+   * Returns the rows matching $where (all rows if empty), optionally sorted by a column name.
+   */
+  function select($table_name, array $where = [], $order_by = null)
+  {
+    $this->require_table($table_name);
+    list($cond, $params) = $this->where_clause($where);
+
+    $sql = 'SELECT * FROM '. $this->ident($table_name) . $cond;
+    if (!is_null($order_by)) $sql .= ' ORDER BY '. $this->ident($order_by);
+
+    return $this->executeRaw($sql, $params);
+  }
+
+  /**
+   * Updates the rows matching $where. $where can't be empty, to update every row use an explicit condition.
+   * Returns the number of affected rows.
+   */
+  function update($table_name, array $values, array $where)
+  {
+    if (empty($values)) throw new \Exception('update needs at least one column');
+    if (empty($where))  throw new \Exception('update needs a condition');
+    $this->require_table($table_name);
+
+    $sets = [];
+    foreach (array_keys($values) as $col) $sets[] = $this->ident($col) .' = ?';
+
+    list($cond, $params) = $this->where_clause($where);
+    return $this->executeRaw(
+      'UPDATE '. $this->ident($table_name) .' SET '. implode(', ', $sets) . $cond,
+      array_merge($this->bindable(array_values($values)), $params)
+    );
+  }
+
+  /**
+   * Deletes the rows matching $where. $where can't be empty, use delete_all() to delete every row.
+   * Returns the number of affected rows.
+   */
+  function delete($table_name, array $where)
+  {
+    if (empty($where)) throw new \Exception('delete needs a condition, use delete_all to delete every row');
+    $this->require_table($table_name);
+
+    list($cond, $params) = $this->where_clause($where);
+    return $this->executeRaw('DELETE FROM '. $this->ident($table_name) . $cond, $params);
+  }
+
+  function delete_all($table_name)
+  {
+    $this->require_table($table_name);
+    return $this->execute('DELETE FROM '. $this->ident($table_name));
+  }
+
+  private function ident($name)
+  {
+    if (!is_string($name) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name))
+    {
+      throw new \Exception("Invalid identifier '$name'");
+    }
+    return $name;
+  }
+
+  private function bindable(array $values)
+  {
+    return array_map(function($v) { return is_bool($v) ? (int)$v : $v; }, $values);
+  }
+
+  private function where_clause(array $where)
+  {
+    if (empty($where)) return ['', []];
+
+    $parts = [];
+    $params = [];
+    foreach ($where as $col => $val)
+    {
+      if (is_null($val))
+      {
+        $parts[] = $this->ident($col) .' IS NULL';
+      }
+      else
+      {
+        $parts[] = $this->ident($col) .' = ?';
+        $params[] = $val;
+      }
+    }
+    return [' WHERE '. implode(' AND ', $parts), $this->bindable($params)];
   }
 
   /** ******************************

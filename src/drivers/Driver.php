@@ -49,6 +49,13 @@ interface Driver {
   function add_fk($table_name, $column_name, $fk_name, $ref_table_name, $ref_column_name);
   function drop_fk($table_name, $fk_name);
 
+  /* Data manipulation (prepared statements). $where is a column => value map joined with AND; null means IS NULL. */
+  function insert($table_name, array $row);
+  function select($table_name, array $where = [], $order_by = null);
+  function update($table_name, array $values, array $where);
+  function delete($table_name, array $where);
+  function delete_all($table_name);
+
   /* Transactions */
   function transaction_start($is_read_only = false);
   function transaction_commit();
