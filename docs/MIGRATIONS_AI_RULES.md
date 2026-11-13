@@ -265,7 +265,22 @@ Use all four phases: create a temporary table in `setup()`, the new table in `sc
 
 ## If a migration fails
 
-1. Read the error and `status`. The failed migration is marked `failed` and blocks later runs.
-2. The `data()` changes of the failed migration were rolled back. Schema changes were not (database DDL cannot be rolled back), so the schema may be half-changed.
-3. Do not edit the failed migration without telling the developer. Explain what state the database is in.
-4. After the developer (or you, if asked) leaves the database in a state where the migration can run, use `clear-failed <slug>`, fix the migration file (it never completed, so editing is allowed), and `migrate` again.
+`migrate` stops at the failed migration and prints a report with the failed phase, the state it left the database in, and the next steps. Show that report to the developer in full. Do not summarize it away.
+
+What stays and what doesn't:
+
+| Failed phase | Remains in the database | Rolled back | Did not run |
+|--------------|-------------------------|-------------|-------------|
+| `setup()` | `setup()` changes made before the error | | `schema()`, `data()`, `cleanup()` |
+| `schema()` | `setup()` and the `schema()` changes made before the error | | `data()`, `cleanup()` |
+| `data()` | `setup()` and `schema()` | `data()` changes | `cleanup()` |
+| `cleanup()` | `setup()`, `schema()`, `data()` and the `cleanup()` changes made before the error | | |
+
+Schema changes cannot be rolled back because database DDL is not transactional. The failed migration is marked `failed` and blocks later runs. Migrations after it were not run.
+
+Steps:
+
+1. Run `status` and inspect the database to see which changes were applied.
+2. Leave the database in a state where the migration can run again: undo its schema changes by hand, or keep them and adjust the migration so it does not repeat them. Do not do this on your own: tell the developer what you found and propose the fix.
+3. Fix the cause of the error in the migration file. It never completed, so editing it is allowed.
+4. Run `clear-failed <slug>` to remove the failed record, then run `migrate` again.

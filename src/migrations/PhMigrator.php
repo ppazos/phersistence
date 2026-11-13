@@ -221,7 +221,7 @@ class PhMigrator {
       {
         case 'failed':
         case 'running':
-          throw new PhMigrationException("Migration '{$s['slug']}' is {$s['state']}. Fix the database by hand and run clear_failed('{$s['slug']}') before migrating again.". ($s['error'] ? " Error: {$s['error']}" : ''));
+          throw new PhMigrationException("Migration '{$s['slug']}' is {$s['state']}". ($s['error'] ? " ({$s['error']})" : '') .". Its schema changes may remain in the database. Inspect the database, leave it in a state where the migration can run, fix the migration if needed, then run 'clear-failed {$s['slug']}' before migrating again.");
         case 'modified':
           throw new PhMigrationException("Applied migration '{$s['slug']}' was modified (checksum mismatch). Never edit an applied migration; write a new one.");
         case 'missing':
@@ -275,29 +275,68 @@ class PhMigrator {
 
     $migration = new $class($this->driver);
     $in_transaction = false;
+    $phase = 'setup';
 
     try
     {
       $migration->setup();
+
+      $phase = 'schema';
       $migration->schema();
 
+      $phase = 'data';
       $this->driver->transaction_start();
       $in_transaction = true;
       $migration->data();
       $this->driver->transaction_commit();
       $in_transaction = false;
 
+      $phase = 'cleanup';
       $migration->cleanup();
     }
     catch (\Throwable $e)
     {
       if ($in_transaction) $this->driver->transaction_rollback();
 
-      $this->record($m['slug'], $m['ts'], $m['checksum'], self::FAILED, $batch, $e->getMessage());
-      throw new PhMigrationException("Migration '{$m['slug']}' failed: ". $e->getMessage(), 0, $e);
+      $this->record($m['slug'], $m['ts'], $m['checksum'], self::FAILED, $batch, "phase $phase: ". $e->getMessage());
+      throw new PhMigrationException(self::failure_report($m['slug'], $phase, $e->getMessage()), 0, $e);
     }
 
     $this->record($m['slug'], $m['ts'], $m['checksum'], self::OK, $batch);
+  }
+
+  /**
+   * Explains what state a failed migration left the database in and what to do next.
+   * Database DDL is not transactional, so schema changes made before the error are kept.
+   */
+  public static function failure_report($slug, $phase, $error)
+  {
+    $state = [
+      'setup'   => ['setup() changes made before the error were NOT rolled back (they may be partially applied).',
+                    'schema(), data() and cleanup() did not run.'],
+      'schema'  => ['setup() completed and its changes remain.',
+                    'schema() changes made before the error were NOT rolled back (they may be partially applied).',
+                    'data() and cleanup() did not run.'],
+      'data'    => ['setup() and schema() completed and their changes remain (database DDL is not transactional).',
+                    'data() changes were rolled back.',
+                    'cleanup() did not run.'],
+      'cleanup' => ['setup(), schema() and data() completed and their changes remain.',
+                    'cleanup() changes made before the error were NOT rolled back (they may be partially applied).']
+    ][$phase];
+
+    $lines = ["Migration '$slug' failed in phase $phase: $error", '', 'State of the database:'];
+    foreach ($state as $l) $lines[] = '  - '. $l;
+
+    array_push($lines, '',
+      'What to do next:',
+      "  1. Run 'status' and inspect the database to see which schema changes were applied.",
+      '  2. Leave the database in a state where the migration can run again: undo the schema changes it made by hand,',
+      '     or keep them and adjust the migration so it does not repeat them.',
+      "  3. Fix the cause of the error in the migration file (it never completed, so editing it is allowed).",
+      "  4. Run 'clear-failed $slug' to remove the failed record, then run 'migrate' again.",
+      "Migrations after '$slug' were not run."
+    );
+    return implode("\n", $lines);
   }
 
   /**

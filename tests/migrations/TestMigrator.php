@@ -139,7 +139,7 @@ class TestMigrator extends DebbieTestCase {
     $this->assert($d->table_exists('mig_t1'), 'schema stays (DDL is not transactional)');
     $this->assert(count($d->executeRaw('SELECT * FROM mig_t1', [])) === 0, 'data rolled back');
     $this->assert(array_column($m->status(), 'state') === ['failed'], 'status failed');
-    $this->assert($this->throws(function() use ($m) { $m->migrate(); }, 'clear_failed'), 'blocked while failed');
+    $this->assert($this->throws(function() use ($m) { $m->migrate(); }, 'clear-failed'), 'blocked while failed');
 
     $m->clear_failed('mt_fail');
     $this->assert(array_column($m->status(), 'state') === ['pending'], 'pending after clear');
@@ -171,6 +171,38 @@ class TestMigrator extends DebbieTestCase {
     file_put_contents($this->dir .'/bad name.php', '<?php');
     $this->assert($this->throws(function() use ($m) { $m->status(); }, 'Invalid migration file name'), 'invalid file name refused');
     unlink($this->dir .'/bad name.php');
+
+    $this->teardown_dir();
+  }
+
+  // the failure report says which phase failed, what stayed in the database and what to do next
+  public function test_6()
+  {
+    global $d;
+    $this->setup_dir();
+
+    $this->write('20260101000000', 'mt_report_schema', '
+      function setup()  { $this->driver->create_table("mig_t1"); }
+      function schema() { $this->driver->create_table("mig_t2"); throw new \Exception("schema boom"); }');
+    $m = new PhMigrator($d, $this->dir);
+
+    $msg = '';
+    try { $m->migrate(); } catch (PhMigrationException $e) { $msg = $e->getMessage(); }
+
+    $this->assert(strpos($msg, 'failed in phase schema: schema boom') !== false, 'names phase and error');
+    $this->assert(strpos($msg, 'NOT rolled back') !== false, 'says schema changes remain');
+    $this->assert(strpos($msg, "clear-failed mt_report_schema") !== false, 'suggests clear-failed');
+    $this->assert(strpos($msg, 'What to do next') !== false, 'has next steps');
+    $this->assert($d->table_exists('mig_t1') && $d->table_exists('mig_t2'), 'changes really remain');
+
+    $status = $m->status();
+    $this->assert(strpos($status[0]['error'], 'phase schema') !== false, 'history keeps the phase');
+
+    // data phase: schema stays, data rolled back
+    $report = PhMigrator::failure_report('x', 'data', 'e');
+    $this->assert(strpos($report, 'data() changes were rolled back') !== false && strpos($report, 'schema() completed and their changes remain') !== false, 'data phase report');
+    $this->assert(strpos(PhMigrator::failure_report('x', 'cleanup', 'e'), 'data() completed and their changes remain') !== false, 'cleanup phase report');
+    $this->assert(strpos(PhMigrator::failure_report('x', 'setup', 'e'), 'did not run') !== false, 'setup phase report');
 
     $this->teardown_dir();
   }
