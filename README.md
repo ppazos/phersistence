@@ -218,6 +218,33 @@ $rows = $Person->executeRaw("SELECT * FROM person WHERE id = ?", [$id]);
 $ php cli.php query TestExecuteRaw
 ```
 
+# Migrations
+
+Schema and data changes are versioned as migration files that live in your project, in the `/migrations` folder by default. Run them with `vendor/bin/phersistence`:
+
+```sh
+$ vendor/bin/phersistence make add_customer_email   # creates migrations/<timestamp>_add_customer_email.php
+$ vendor/bin/phersistence status
+$ vendor/bin/phersistence migrate
+```
+
+Create a `phersistence.php` file in your project root with the connection:
+
+```php
+<?php
+return ['host' => 'localhost', 'user' => 'app', 'pass' => 'secret', 'db' => 'app_db'];
+```
+
+A migration can implement `setup()`, `schema()`, `data()` (transactional) and `cleanup()`, which run in that order. Migrations only use the driver-neutral API (`$this->driver`), they are forward-only, and the history is kept in the `ph_migrations` table. Migrations are not run automatically, the developer runs them.
+
+Full rules, API, recipes and the handling of out-of-order migrations are in [docs/MIGRATIONS_AI_RULES.md](docs/MIGRATIONS_AI_RULES.md). That document is written for AI agents that generate migrations: copy its "Short version" section into your project's `CLAUDE.md`.
+
+## Run the migrations tests
+
+```sh
+$ php cli.php migrations
+```
+
 # Important design decisions
 
 ## 1. Empty strings (TEXT) are stored as NULL

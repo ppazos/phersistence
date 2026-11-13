@@ -1,7 +1,5 @@
 # Migrations: rules for AI agents
 
-Status: design spec for issue #105. The runner and CLI are not implemented yet; this document defines the contract they must follow.
-
 Copy the "Short version" section into the `CLAUDE.md` (or equivalent) of any project that uses Phersistence.
 
 ## Short version
@@ -40,10 +38,36 @@ Schema changes are not transactional (database DDL commits implicitly). If `sche
 
 ## Which API to use
 
-- **Schema:** the driver-neutral API (`create_table`, `add_column`, `add_index`, `add_unique`, `add_fk`, `drop_column`, ...) with portable types (`string(255)`, `int`, `bool`, `text`, `datetime`). Never pass database-specific type strings.
-- **Data:** the ORM (`findBy`, `save`, `delete`, ...) or the driver-neutral API.
-- **Raw SQL (`executeRaw`):** last resort, only when the API cannot express the operation. Always use parameter binding. Leave a comment saying why raw SQL was needed.
-- **Model classes inside migrations:** models change over time and a migration written against today's model can break later. Prefer the driver-level API. Use model classes only for seed data and say so in a comment.
+Inside a migration, `$this->driver` is the database driver. Use only its driver-neutral methods.
+
+**Portable column types:** `int`, `long`, `float`, `double`, `decimal`, `boolean`, `date`, `time`, `datetime`, `text`, `string(N)` (for example `string(255)`). Never pass database-specific type strings.
+
+**Schema**
+
+| Method | Notes |
+|--------|-------|
+| `create_table($table)` | Adds the `id` primary key column automatically. Add the other columns with `add_column`. |
+| `drop_table($table)`, `rename_table($table, $new)` | |
+| `add_column($table, $column, $type, $nullable, $default = null)` | A mandatory column on a table with rows needs a `$default`, or see "Adding a mandatory column" below. String defaults must be quoted: `"'none'"`. |
+| `modify_column($table, $column, $type, $nullable, $default = null)` | Replaces the whole column definition (type, nullability, default). |
+| `rename_column($table, $column, $new)`, `drop_column($table, $column)` | |
+| `add_index`, `add_unique`, `add_fulltext_index`, `add_fk` | |
+| `drop_index($table, $name)`, `drop_fk($table, $name)` | `drop_index` also drops unique constraints. |
+| `table_exists`, `column_exists`, `index_exists`, `fk_exists` | For inspection only. Do not use them to silence conflicts (see hard rules). |
+
+**Data** (all use prepared statements; `$where` is a `column => value` map joined with AND, `null` means `IS NULL`)
+
+| Method | Notes |
+|--------|-------|
+| `insert($table, $row)` | Returns the new id. |
+| `select($table, $where = [], $order_by = null)` | Returns an array of rows. |
+| `update($table, $values, $where)` | `$where` is required. Returns affected rows. |
+| `delete($table, $where)` | `$where` is required. Returns affected rows. |
+| `delete_all($table)` | Explicit way to empty a table. |
+
+**Raw SQL (`executeRaw($sql, $params)`):** last resort, only when the methods above cannot express the operation. Always use parameter binding. Leave a comment saying why raw SQL was needed.
+
+**Model classes inside migrations:** models change over time and a migration written against today's model can break later. Do not use them in migrations. Use the driver methods above.
 
 ## Hard rules
 
@@ -53,7 +77,7 @@ Schema changes are not transactional (database DDL commits implicitly). If `sche
 - **Be explicit about guards.** Schema operations fail loudly if the target already exists or is missing (for example, `add_column` on an existing column). Do not add silent `if exists` workarounds to hide a conflict. If a conflict appears, stop and tell the developer.
 - **Destructive changes need confirmation.** Dropping tables or columns, and deleting or overwriting data, require the developer to approve first. Show what will be affected.
 - **Do not run `migrate` on your own.** Run it only when the developer asks. Report the outcome faithfully, including failures.
-- **Do not touch `ph_migrations` directly.**
+- **Do not touch `ph_migrations` directly.** The only tools for it are the CLI commands below.
 
 ## Ordering and out-of-order migrations
 
@@ -82,61 +106,166 @@ The timestamp sorts pending migrations, but it is not a hard key by itself. The 
 7. Run `vendor/bin/phersistence migrate` only if the developer asked you to.
 8. If the run fails, report the exact error and the migration status. Do not edit the failed migration; ask the developer how to proceed.
 
-## CLI summary
+## CLI
+
+Installed by composer as `vendor/bin/phersistence`. It reads `phersistence.php` from the project root (override with `--config=<file>`), which returns the connection data:
+
+```php
+<?php
+return [
+   'host' => 'localhost', 'user' => 'app', 'pass' => 'secret', 'db' => 'app_db',
+   'migrations' => 'migrations'   // optional, default 'migrations'
+];
+```
 
 | Command | Effect |
 |---------|--------|
 | `make <slug>` | Create a migration file from the template. |
-| `status` | List applied, pending, failed, and out-of-order migrations. |
+| `status` | List migrations with their state: `applied`, `pending`, `out_of_order`, `failed`, `running`, `modified`, `missing`. |
 | `migrate` | Run pending migrations in timestamp order. Fails on out-of-order. |
 | `migrate --allow-out-of-order` | Run pending migrations even if out-of-order (warns). |
 | `rebase <slug>` | Give an unapplied migration a fresh timestamp. |
-| `baseline` | Mark the initial schema migration as applied without running it, for databases that already have the schema. |
+| `baseline <slug>` | Mark a migration as applied without running it, for databases that already have its changes. |
+| `clear-failed <slug>` | Remove the record of a failed migration so it can run again, after the developer fixed the database by hand. |
 
-## Examples
+Add `--verbose` to any command to log every SQL statement. Exit code is 0 on success and 1 on error.
 
-### Add a column
+## Recipes
+
+Every recipe below is covered by tests in `tests/migrations/TestMigrationScenarios.php`.
+
+### Add a table
 
 ```php
-class AddPersonEmail extends PhMigration
+class CreateCustomer extends PhMigration
 {
    public function schema()
    {
-      $this->driver->add_column('person', 'email', 'string(255)', true);
+      $this->driver->create_table('customer'); // adds id
+      $this->driver->add_column('customer', 'name', 'string(100)', false);
    }
 }
 ```
 
-### Add a column and backfill it
+### Add a nullable column, or a mandatory column with a static default
 
 ```php
-class AddPersonFullname extends PhMigration
+public function schema()
 {
-   public function schema()
-   {
-      $this->driver->add_column('person', 'fullname', 'string(512)', true);
-   }
-
-   public function data()
-   {
-      // Uses the ORM for the backfill; kept small and independent of later model changes.
-      foreach ($this->driver->query('person') as $row) {
-         // update fullname from firstname and lastname
-      }
-   }
+   $this->driver->add_column('customer', 'email', 'string(255)', true);
+   $this->driver->add_column('customer', 'active', 'boolean', false, 1); // old rows get 1
 }
 ```
 
-### Split a table (uses all phases)
+### Adding a mandatory column whose value must be computed
+
+Add it nullable, fill it in `data()`, and make it mandatory in `cleanup()`:
 
 ```php
-class SplitAddressFromPerson extends PhMigration
+public function schema()
 {
-   public function setup()   { /* create a temporary mapping table */ }
-   public function schema()  { /* create the new address table */ }
-   public function data()    { /* copy rows through the mapping table */ }
-   public function cleanup() { /* drop the mapping table and the old columns */ }
+   $this->driver->add_column('customer', 'code', 'string(20)', true);
+}
+
+public function data()
+{
+   foreach ($this->driver->select('customer') as $row) {
+      $this->driver->update('customer', ['code' => 'C'. $row['id']], ['id' => $row['id']]);
+   }
+}
+
+public function cleanup()
+{
+   $this->driver->modify_column('customer', 'code', 'string(20)', false);
 }
 ```
 
-The bodies above are placeholders; the final examples will be completed when the runner API is implemented.
+### Change the type of a column
+
+```php
+public function schema()
+{
+   $this->driver->modify_column('customer', 'name', 'string(200)', false);
+   $this->driver->modify_column('customer', 'visits', 'long', false, 0);
+}
+```
+
+Existing values are converted by the database. If the conversion can lose data (for example `text` to `string(10)`), say so to the developer before writing it.
+
+### Change nullable / mandatory
+
+To make a column mandatory when it may contain nulls, fix the nulls first or the migration fails:
+
+```php
+public function data()
+{
+   $this->driver->update('customer', ['name' => 'unknown'], ['name' => null]);
+}
+
+public function cleanup()
+{
+   $this->driver->modify_column('customer', 'name', 'string(100)', false);
+}
+```
+
+To make it optional, call `modify_column` in `schema()` with `$nullable = true`.
+
+### Drop or rename a column or table
+
+```php
+public function schema()
+{
+   $this->driver->drop_column('customer', 'legacy');
+   $this->driver->rename_column('customer', 'name', 'full_name');
+   $this->driver->drop_table('old_stuff');
+   $this->driver->rename_table('customer', 'client');
+}
+```
+
+Dropping is destructive: ask the developer first.
+
+### Seed default data
+
+```php
+public function data()
+{
+   foreach (['admin', 'editor'] as $role) {
+      $this->driver->insert('role', ['name' => $role]);
+   }
+}
+```
+
+### Delete data
+
+```php
+public function data()
+{
+   $this->driver->delete('customer', ['kind' => 'test']);
+}
+```
+
+Ask the developer first and say which rows are affected.
+
+### Indexes, unique constraints and foreign keys
+
+```php
+public function schema()
+{
+   $this->driver->add_unique('customer', ['email'], 'customer_email_uq');
+   $this->driver->add_index('order', ['customer_id'], 'order_customer_idx');
+   $this->driver->add_fk('order', 'customer_id', 'fk_order_customer', 'customer', 'id');
+}
+```
+
+Remove them with `drop_index` and `drop_fk` using the same names.
+
+### Move data to a new table through an intermediate structure
+
+Use all four phases: create a temporary table in `setup()`, the new table in `schema()`, copy the data in `data()`, and drop the temporary table and the legacy column in `cleanup()`. See `test_split_table_with_intermediate_structure` in `tests/migrations/TestMigrationScenarios.php`.
+
+## If a migration fails
+
+1. Read the error and `status`. The failed migration is marked `failed` and blocks later runs.
+2. The `data()` changes of the failed migration were rolled back. Schema changes were not (database DDL cannot be rolled back), so the schema may be half-changed.
+3. Do not edit the failed migration without telling the developer. Explain what state the database is in.
+4. After the developer (or you, if asked) leaves the database in a state where the migration can run, use `clear-failed <slug>`, fix the migration file (it never completed, so editing is allowed), and `migrate` again.

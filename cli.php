@@ -22,8 +22,9 @@ $ph_db = new \CaboLabs\Phersistence\phersistent\PhersistentMySQL('localhost', 'u
 $man = new \CaboLabs\Phersistence\phersistent\PhersistentDefManager('tests/model', $ph_db);
 $d = $ph_db->get_driver();
 
-// generates schema
-require_once('src/db/schema.php');
+// generates the schema running the migrations of the test database
+$migrator = new \CaboLabs\Phersistence\migrations\PhMigrator($d, 'tests/db/migrations');
+$migrator->migrate();
 
 
 //print_r($argv);
