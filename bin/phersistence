@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+// Finds the composer autoloader whether phersistence is the root project or a dependency.
+$candidates = [
+  __DIR__ . '/../../../autoload.php',   // vendor/cabolabs/phersistence/bin
+  __DIR__ . '/../vendor/autoload.php',  // phersistence checked out on its own
+  getcwd() . '/vendor/autoload.php'
+];
+
+foreach ($candidates as $autoload)
+{
+  if (file_exists($autoload))
+  {
+    require $autoload;
+    break;
+  }
+}
+
+if (!class_exists('CaboLabs\Phersistence\migrations\PhMigrationCli'))
+{
+  fwrite(STDERR, "Can't find the composer autoloader. Run composer install." . PHP_EOL);
+  exit(1);
+}
+
+// SQL logging is noise for a command line tool, --verbose turns it on
+if (!in_array('--verbose', $argv))
+{
+  \CaboLabs\PhLogger\PhLogger::$on = false;
+}
+
+$cli = new \CaboLabs\Phersistence\migrations\PhMigrationCli();
+exit($cli->run(array_values(array_diff(array_slice($argv, 1), ['--verbose']))));
