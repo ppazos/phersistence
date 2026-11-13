@@ -12,6 +12,7 @@ class MySQL implements Driver {
   //private $last_result;
   private $query_count;
   private $transaction_on = false;
+  private $credentials = null;
 
 
   // https://docs.oracle.com/cd/E19078-01/mysql/mysql-refman-5.0/error-handling.html
@@ -46,6 +47,7 @@ class MySQL implements Driver {
   {
     if (!function_exists('mysqli_connect')) throw new \Exception("MySQLi not loaded");
 
+    $this->credentials = [$dbhost, $dbuser, $dbpass];
     $this->connection = mysqli_connect($dbhost, $dbuser, $dbpass);
 
     PhLogger::log("MySQL::connect ". $this->connection->host_info);
@@ -688,6 +690,120 @@ class MySQL implements Driver {
       }
     }
     return [' WHERE '. implode(' AND ', $parts), $this->bindable($params)];
+  }
+
+  /** ******************************
+   * Columns and rows
+   */
+
+  function describe_table($table_name)
+  {
+    $this->require_table($table_name);
+    $cols = [];
+    $r = $this->query('DESCRIBE '. $this->ident($table_name));
+    while ($row = $r->fetch_assoc())
+    {
+      $cols[] = ['name' => $row['Field'], 'type' => $row['Type'], 'nullable' => $row['Null'] == 'YES', 'default' => $row['Default']];
+    }
+    $r->close();
+    return $cols;
+  }
+
+  function count_rows($table_name)
+  {
+    $this->require_table($table_name);
+    $r = $this->executeRaw('SELECT COUNT(*) AS c FROM '. $this->ident($table_name), []);
+    return (int)$r[0]['c'];
+  }
+
+  /** ******************************
+   * Databases
+   */
+
+  function current_database()
+  {
+    return $this->using_dbname;
+  }
+
+  function connection_for($database_name)
+  {
+    if (is_null($this->credentials)) throw new \Exception('No connection to MySQL');
+
+    $d = new MySQL();
+    $d->connect($this->credentials[0], $this->credentials[1], $this->credentials[2], $database_name);
+    return $d;
+  }
+
+  function list_databases()
+  {
+    $rows = $this->executeRaw('SELECT SCHEMA_NAME AS n FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME', []);
+    return array_column($rows, 'n');
+  }
+
+  /**
+   * Creates $target_name and copies every table of the current database: structure, indexes, foreign keys and rows.
+   * Views, triggers, routines and events are not copied (see unsupported_objects()).
+   * If anything fails the partial copy is dropped.
+   */
+  function clone_database($target_name)
+  {
+    $this->ident($target_name);
+    if ($target_name == $this->using_dbname) throw new \Exception('The target database is the current database');
+    if (in_array($target_name, $this->list_databases())) throw new \Exception("Database '$target_name' already exists");
+
+    $source = $this->using_dbname;
+    $this->execute('CREATE DATABASE '. $target_name);
+
+    try
+    {
+      $t = $this->connection_for($target_name);
+      $t->execute('SET FOREIGN_KEY_CHECKS=0');
+
+      foreach ($this->get_tables() as $table)
+      {
+        // base tables only, views are reported as unsupported
+        $res = $this->query('SHOW CREATE TABLE '. $this->ident($table));
+        $row = $res->fetch_assoc();
+        $res->close();
+        if (!isset($row['Create Table'])) continue;
+
+        $t->execute($row['Create Table']);
+        $t->execute('INSERT INTO '. $table .' SELECT * FROM '. $source .'.'. $table);
+      }
+
+      $t->execute('SET FOREIGN_KEY_CHECKS=1');
+      $t->close();
+    }
+    catch (\Throwable $e)
+    {
+      $this->execute('DROP DATABASE '. $target_name);
+      throw $e;
+    }
+  }
+
+  function drop_database($database_name)
+  {
+    $this->ident($database_name);
+    if ($database_name == $this->using_dbname) throw new \Exception('Refusing to drop the current database');
+    $this->execute('DROP DATABASE '. $database_name);
+  }
+
+  function unsupported_objects()
+  {
+    $db = $this->using_dbname;
+    $objects = [];
+
+    $queries = [
+      'view'    => 'SELECT TABLE_NAME AS n FROM information_schema.VIEWS WHERE TABLE_SCHEMA = ?',
+      'trigger' => 'SELECT TRIGGER_NAME AS n FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = ?',
+      'routine' => 'SELECT ROUTINE_NAME AS n FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = ?',
+      'event'   => 'SELECT EVENT_NAME AS n FROM information_schema.EVENTS WHERE EVENT_SCHEMA = ?'
+    ];
+    foreach ($queries as $type => $sql)
+    {
+      foreach ($this->executeRaw($sql, [$db]) as $row) $objects[] = $type .' '. $row['n'];
+    }
+    return $objects;
   }
 
   /** ******************************

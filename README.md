@@ -235,6 +235,8 @@ Create a `phersistence.php` file in your project root with the connection:
 return ['host' => 'localhost', 'user' => 'app', 'pass' => 'secret', 'db' => 'app_db'];
 ```
 
+To try the pending migrations on a disposable copy of the database before touching the real one, run `vendor/bin/phersistence simulate`. It reports the result and the changes it made on the copy. The copy is dropped after a success and kept after a failure so you can investigate and rehearse the fix (`--keep` and `--cleanup-on-failure` change that, `clean-simulations` drops them all).
+
 A migration can implement `setup()`, `schema()`, `data()` (transactional) and `cleanup()`, which run in that order. Migrations only use the driver-neutral API (`$this->driver`), they are forward-only, and the history is kept in the `ph_migrations` table. Migrations are not run automatically, the developer runs them.
 
 Full rules, API, recipes and the handling of out-of-order migrations are in [docs/MIGRATIONS_AI_RULES.md](docs/MIGRATIONS_AI_RULES.md). That document is written for AI agents that generate migrations: copy its "Short version" section into your project's `CLAUDE.md`.

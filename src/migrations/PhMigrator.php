@@ -11,7 +11,7 @@ use CaboLabs\Phersistence\drivers\Driver;
 class PhMigrator {
 
   const HISTORY_TABLE = 'ph_migrations';
-  const LOCK_NAME     = 'phersistence_migrations';
+  const LOCK_PREFIX   = 'phersistence_migrations_';
 
   const FILE_PATTERN = '/^(\d{14})_([a-z][a-z0-9_]*)\.php$/';
 
@@ -56,9 +56,12 @@ class PhMigrator {
     $this->driver->add_unique($t, ['slug'], 'ph_migrations_slug_unique');
   }
 
+  /**
+   * Reads the history. Read only: if the history table doesn't exist yet the history is empty and nothing is created.
+   */
   private function history()
   {
-    $this->ensure_history();
+    if (!$this->driver->table_exists(self::HISTORY_TABLE)) return [];
     $rows = $this->driver->executeRaw('SELECT slug, ts, checksum, status, batch, executed_at, error FROM '. self::HISTORY_TABLE .' ORDER BY ts, slug', []);
     $h = [];
     foreach ($rows as $r) $h[$r['slug']] = $r;
@@ -67,6 +70,7 @@ class PhMigrator {
 
   private function record($slug, $ts, $checksum, $status, $batch, $error = null)
   {
+    $this->ensure_history();
     $t = self::HISTORY_TABLE;
     $now = date('Y-m-d H:i:s');
     $exists = $this->driver->executeRaw("SELECT slug FROM $t WHERE slug = ?", [$slug]);
@@ -84,6 +88,7 @@ class PhMigrator {
 
   private function next_batch()
   {
+    $this->ensure_history();
     $r = $this->driver->executeRaw('SELECT MAX(batch) AS b FROM '. self::HISTORY_TABLE, []);
     return ((int)($r[0]['b'] ?? 0)) + 1;
   }
@@ -195,22 +200,30 @@ class PhMigrator {
    */
   public function migrate($allow_out_of_order = false)
   {
-    if (!$this->driver->acquire_lock(self::LOCK_NAME, 0))
+    // advisory locks are server wide, so the name includes the database to not block other databases
+    $lock = self::LOCK_PREFIX . substr(md5($this->driver->current_database()), 0, 20);
+
+    if (!$this->driver->acquire_lock($lock, 0))
     {
       throw new PhMigrationException('Another migration run is in progress');
     }
 
     try
     {
+      $this->ensure_history();
       return $this->run_pending($allow_out_of_order);
     }
     finally
     {
-      $this->driver->release_lock(self::LOCK_NAME);
+      $this->driver->release_lock($lock);
     }
   }
 
-  private function run_pending($allow_out_of_order)
+  /**
+   * Validates that migrating is possible and returns the pending migrations in order, without changing anything.
+   * Throws if anything unresolved (failed, interrupted, modified, missing, out-of-order) is found.
+   */
+  public function check_pending($allow_out_of_order = false)
   {
     $status = $this->status();
 
@@ -246,7 +259,12 @@ class PhMigrator {
       }
     }
 
-    $pending = array_values(array_filter($status, function($s) { return $s['state'] == 'pending' || $s['state'] == 'out_of_order'; }));
+    return array_values(array_filter($status, function($s) { return $s['state'] == 'pending' || $s['state'] == 'out_of_order'; }));
+  }
+
+  private function run_pending($allow_out_of_order)
+  {
+    $pending = $this->check_pending($allow_out_of_order);
     if (count($pending) == 0) return [];
 
     $batch = $this->next_batch();

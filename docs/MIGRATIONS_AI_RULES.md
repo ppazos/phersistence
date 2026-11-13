@@ -103,8 +103,9 @@ The timestamp sorts pending migrations, but it is not a hard key by itself. The 
 4. Fill in only the phases you need, following the rules above.
 5. Show the result to the developer and flag anything destructive.
 6. Run `vendor/bin/phersistence status` to check for pending or out-of-order migrations.
-7. Run `vendor/bin/phersistence migrate` only if the developer asked you to.
-8. If the run fails, report the exact error and the migration status. Do not edit the failed migration; ask the developer how to proceed.
+7. If the migration changes or deletes data, or drops or alters anything, run `vendor/bin/phersistence simulate` and show the report to the developer.
+8. Run `vendor/bin/phersistence migrate` only if the developer asked you to.
+9. If the run fails, report the exact error and the migration status. Do not edit the failed migration; ask the developer how to proceed.
 
 ## CLI
 
@@ -124,11 +125,33 @@ return [
 | `status` | List migrations with their state: `applied`, `pending`, `out_of_order`, `failed`, `running`, `modified`, `missing`. |
 | `migrate` | Run pending migrations in timestamp order. Fails on out-of-order. |
 | `migrate --allow-out-of-order` | Run pending migrations even if out-of-order (warns). |
+| `simulate` | Run the pending migrations on a disposable copy of the database and report the result and the changes. The real database is not modified. See "Simulating" below. |
+| `simulate --keep` | Keep the copy after a successful simulation (dropped by default). |
+| `simulate --cleanup-on-failure` | Drop the copy when the simulation fails (kept by default). |
+| `simulations` | List the simulation databases. |
+| `clean-simulations` | Drop every simulation database. |
 | `rebase <slug>` | Give an unapplied migration a fresh timestamp. |
 | `baseline <slug>` | Mark a migration as applied without running it, for databases that already have its changes. |
 | `clear-failed <slug>` | Remove the record of a failed migration so it can run again, after the developer fixed the database by hand. |
 
 Add `--verbose` to any command to log every SQL statement. Exit code is 0 on success and 1 on error.
+
+## Simulating
+
+`simulate` copies the database to `<db>_sim_<timestamp>` on the same server (tables, indexes, foreign keys and rows), runs the pending migrations on the copy, and prints:
+- the migrations that ran, and the failure report if one failed;
+- the changes on the copy: tables and columns added, changed or dropped, and row count changes;
+- a warning for objects that were not copied (views, triggers, routines, events), which the simulation does not cover.
+
+The real database is only read. It runs the same checks as `migrate` first (out-of-order, modified, failed, missing) and stops before copying if any of them fails, or if nothing is pending.
+
+By default the copy is dropped after a successful simulation and **kept after a failed one**, so the developer can connect to it, see the partial state, and rehearse the manual fix before doing it on the real database. Never drop a kept copy yourself: leave that to the developer, or run `clean-simulations` only when asked.
+
+Rules for agents:
+- Run `simulate` before `migrate` when the migration changes or deletes data, drops anything, or changes a column's type or nullability, and show the developer the report.
+- If the simulation fails, show the report in full and do not run `migrate`.
+- A successful simulation shows the migrations work on a copy of today's data. It does not show lock times or load on a big real database, and it is a snapshot.
+- The user needs the `CREATE DATABASE` privilege. Use it on development databases, not production servers.
 
 ## Recipes
 

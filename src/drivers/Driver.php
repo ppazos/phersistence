@@ -56,6 +56,18 @@ interface Driver {
   function delete($table_name, array $where);
   function delete_all($table_name);
 
+  /* Inspection of columns and rows */
+  function describe_table($table_name); // [['name' => , 'type' => , 'nullable' => bool, 'default' => ], ...]
+  function count_rows($table_name);
+
+  /* Databases: used to simulate migrations on a disposable copy */
+  function current_database();
+  function connection_for($database_name); // new driver instance connected to another database with the same credentials
+  function list_databases();
+  function clone_database($target_name);   // creates the target and copies the tables (structure, constraints and data) of the current database
+  function drop_database($database_name);  // refuses to drop the current database
+  function unsupported_objects();          // objects clone_database does not copy (views, triggers, routines, events), as 'type name' strings
+
   /* Transactions */
   function transaction_start($is_read_only = false);
   function transaction_commit();

@@ -21,6 +21,9 @@ Commands:
   make <slug>              Create a migration file from the template
   status                   List migrations and their state
   migrate                  Run pending migrations in order
+  simulate                 Run pending migrations on a disposable copy of the database and report the result
+  simulations              List the simulation databases
+  clean-simulations        Drop every simulation database
   rebase <slug>            Give a pending migration a fresh timestamp
   baseline <slug>          Mark a migration as applied without running it
   clear-failed <slug>      Remove the failed record of a migration so it can run again
@@ -29,8 +32,10 @@ Commands:
 Options:
   --config=<file>          Config file (default ./phersistence.php)
   --path=<folder>          Migrations folder (overrides the config, default ./migrations)
+  --keep                   With simulate: keep the copy after a successful run (it is dropped by default)
+  --cleanup-on-failure     With simulate: drop the copy when the run fails (it is kept by default, to investigate and rehearse the fix)
   --verbose                Log every SQL statement
-  --allow-out-of-order     With migrate: run pending migrations older than the latest applied one
+  --allow-out-of-order     With migrate or simulate: run pending migrations older than the latest applied one
 TXT;
 
   private $driver;
@@ -63,7 +68,7 @@ TXT;
       return $command === null ? 1 : 0;
     }
 
-    $known = ['make', 'status', 'migrate', 'rebase', 'baseline', 'clear-failed'];
+    $known = ['make', 'status', 'migrate', 'simulate', 'simulations', 'clean-simulations', 'rebase', 'baseline', 'clear-failed'];
     if (!in_array($command, $known))
     {
       $this->say("Unknown command '$command'");
@@ -89,6 +94,20 @@ TXT;
           $ran = $migrator->migrate(isset($options['allow-out-of-order']));
           $this->say(count($ran) ? 'Done: '. count($ran) .' migration(s) applied' : 'Nothing to migrate');
         break;
+        case 'simulate':
+          $ok = $this->simulate($options);
+          if (!$ok) return 1;
+        break;
+        case 'simulations':
+          $sims = (new PhMigrationSimulator($this->driver, $this->path, $this->out))->list_simulations();
+          foreach ($sims as $db) $this->say($db);
+          if (count($sims) == 0) $this->say('No simulation databases');
+        break;
+        case 'clean-simulations':
+          $dropped = (new PhMigrationSimulator($this->driver, $this->path, $this->out))->clean();
+          foreach ($dropped as $db) $this->say("Dropped $db");
+          if (count($dropped) == 0) $this->say('No simulation databases');
+        break;
         case 'rebase':
           $migrator->rebase($this->arg($positional, 'slug'));
         break;
@@ -111,6 +130,55 @@ TXT;
     }
 
     return 0;
+  }
+
+  /**
+   * @return boolean false if the simulation failed
+   */
+  private function simulate(array $options)
+  {
+    $sim = new PhMigrationSimulator($this->driver, $this->path, $this->out);
+    $r = $sim->simulate([
+      'keep'               => isset($options['keep']),
+      'cleanup_on_failure' => isset($options['cleanup-on-failure']),
+      'allow_out_of_order' => isset($options['allow-out-of-order'])
+    ]);
+
+    if (count($r['pending']) == 0)
+    {
+      $this->say('Nothing to simulate: no pending migrations');
+      return true;
+    }
+
+    $this->say('');
+    $this->say('Simulation on '. $r['database'] .' (the real database was not modified)');
+    $this->say('Pending: '. implode(', ', $r['pending']));
+    foreach ($r['unsupported'] as $o) $this->say('WARNING: not copied, the simulation does not cover: '. $o);
+
+    foreach ($r['ran'] as $slug) $this->say("  applied  $slug");
+    if (!$r['ok'])
+    {
+      $this->say('');
+      $this->say('SIMULATION FAILED');
+      $this->say($r['error']);
+    }
+
+    $this->say('');
+    $this->say(count($r['diff']) ? 'Changes on the copy:' : 'No schema or row count changes on the copy');
+    foreach ($r['diff'] as $l) $this->say('  '. $l);
+
+    $this->say('');
+    if ($r['kept'])
+    {
+      $this->say("The copy '{$r['database']}' was kept. Use it to investigate or to rehearse the fix, then run 'clean-simulations' to drop it.");
+    }
+    else
+    {
+      $this->say('The copy was dropped.');
+    }
+
+    $this->say($r['ok'] ? 'SIMULATION OK: the pending migrations can be run on the real database' : 'The real database is unchanged.');
+    return $r['ok'];
   }
 
   private function status(PhMigrator $migrator)
